@@ -1,0 +1,65 @@
+import { auth }       from "@/auth";
+import db              from "@/lib/db";
+import { NextRequest } from "next/server";
+
+export async function GET() {
+  const session = await auth();
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+  const inputs = db.prepare(`
+    SELECT p.id, p.name, p.foreman, p.contract_value,
+           COALESCE(pi.gross_margin,        0.575) AS gross_margin,
+           COALESCE(pi.materials_share,     0.225) AS materials_share,
+           COALESCE(pi.wages_share,         0.20)  AS wages_share,
+           COALESCE(pi.blended_hourly_rate, 125)   AS blended_hourly_rate,
+           COALESCE(pi.blended_hourly_wage, 37)    AS blended_hourly_wage,
+           COALESCE(pi.rough_hours_est,     p.rough_hours_allowed) AS rough_hours_est,
+           COALESCE(pi.finish_hours_est,    p.finish_hours_allowed) AS finish_hours_est
+    FROM projects p
+    LEFT JOIN project_inputs pi ON pi.project_id = p.id
+    ORDER BY p.foreman, p.name
+  `).all();
+
+  return Response.json(inputs);
+}
+
+export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+  const role = (session.user as any).role;
+  if (role !== "owner" && role !== "admin") {
+    return Response.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const body = await req.json() as {
+    project_id: number;
+    gross_margin: number;
+    materials_share: number;
+    wages_share: number;
+    blended_hourly_rate: number;
+    blended_hourly_wage: number;
+    rough_hours_est: number;
+    finish_hours_est: number;
+  };
+
+  db.prepare(`
+    INSERT INTO project_inputs
+      (project_id, gross_margin, materials_share, wages_share,
+       blended_hourly_rate, blended_hourly_wage, rough_hours_est, finish_hours_est)
+    VALUES
+      (@project_id, @gross_margin, @materials_share, @wages_share,
+       @blended_hourly_rate, @blended_hourly_wage, @rough_hours_est, @finish_hours_est)
+    ON CONFLICT(project_id) DO UPDATE SET
+      gross_margin        = excluded.gross_margin,
+      materials_share     = excluded.materials_share,
+      wages_share         = excluded.wages_share,
+      blended_hourly_rate = excluded.blended_hourly_rate,
+      blended_hourly_wage = excluded.blended_hourly_wage,
+      rough_hours_est     = excluded.rough_hours_est,
+      finish_hours_est    = excluded.finish_hours_est,
+      updated_at          = datetime('now')
+  `).run(body);
+
+  return Response.json({ ok: true });
+}
