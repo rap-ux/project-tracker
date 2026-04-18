@@ -9,9 +9,14 @@ if (!fs.existsSync(DB_DIR)) {
   fs.mkdirSync(DB_DIR, { recursive: true });
 }
 
+
 const db = new Database(DB_PATH);
 db.pragma("journal_mode = WAL");
+db.pragma("busy_timeout = 30000");
 db.pragma("foreign_keys = ON");
+
+// Skip all init during build — avoids SQLITE_BUSY_SNAPSHOT across 26 parallel workers
+if (process.env.NEXT_PHASE !== "phase-production-build") {
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 db.exec(`
@@ -552,7 +557,9 @@ if (stageCount === 0) {
 // Seed default users note
 const userCount = (db.prepare("SELECT COUNT(*) as c FROM users").get() as { c: number }).c;
 if (userCount === 0) {
-  // Run `npm run seed-users` to create users: cole@totallywiredelectric.com / nicole@totallywiredelectric.com (owners), taimez/damon (foremen)
+  // Run `npm run seed-users` to create users
 }
+
+} // end: skip init during build
 
 export default db;
