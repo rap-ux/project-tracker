@@ -156,18 +156,23 @@ export async function POST(req: NextRequest, ctx: Ctx) {
                   || file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
       if (isXlsx) {
         await wb.xlsx.load(buf);
+        const ws = wb.worksheets[0];
+        ws.eachRow(row => {
+          const cells: (string | number | null)[] = [];
+          for (let ci = 1; ci <= row.cellCount; ci++) {
+            const cell = row.getCell(ci);
+            cells.push(xlCell(cell));
+          }
+          rows.push(cells);
+        });
       } else {
-        await wb.csv.load(Buffer.from(buf));
-      }
-      const ws = wb.worksheets[0];
-      ws.eachRow(row => {
-        const cells: (string | number | null)[] = [];
-        for (let ci = 1; ci <= row.cellCount; ci++) {
-          const cell = row.getCell(ci);
-          cells.push(xlCell(cell));
+        // CSV — parse as plain text, no ExcelJS needed
+        const csvText = Buffer.from(buf).toString("utf-8");
+        for (const line of csvText.split(/\r?\n/)) {
+          if (!line.trim()) continue;
+          rows.push(line.split(",").map(c => c.replace(/^"|"$/g, "").trim()));
         }
-        rows.push(cells);
-      });
+      }
     } catch {
       return Response.json({ error: "Could not parse file." }, { status: 400 });
     }
