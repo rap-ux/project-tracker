@@ -18,7 +18,7 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
 
   const { id }   = await ctx.params;
   const projectId = parseInt(id);
-  const body      = await req.json() as { stage: string; start_date: string | null; end_date: string | null }[];
+  const body      = await req.json() as { stage: string; start_date: string | null; end_date: string | null; status?: string; notes?: string | null }[];
 
   if (!Array.isArray(body) || body.length === 0) {
     return Response.json({ error: "Expected array of stage objects" }, { status: 400 });
