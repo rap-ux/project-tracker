@@ -555,11 +555,12 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
               <p className="font-medium">No upload history yet</p>
             </div>
           ) : historyBatches.map(batch => {
-            const statusConfig = {
+            const statusMap: Record<string, { label: string; badge: string; icon: string }> = {
               applied:   { label: "Applied",   badge: "bg-green-100 text-green-800",  icon: "✅" },
               reverted:  { label: "Reverted",  badge: "bg-gray-100  text-gray-600",   icon: "↩️" },
               discarded: { label: "Discarded", badge: "bg-red-100   text-red-700",    icon: "🗑" },
-            }[batch.status] ?? { label: batch.status, badge: "bg-gray-100 text-gray-600", icon: "•" };
+            };
+            const statusConfig = statusMap[batch.status] ?? { label: batch.status, badge: "bg-gray-100 text-gray-600", icon: "•" };
 
             return (
               <div key={batch.id} className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 flex items-center justify-between gap-4">
