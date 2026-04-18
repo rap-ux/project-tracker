@@ -554,10 +554,26 @@ if (stageCount === 0) {
   }
 }
 
-// Seed default users note
+// ── Seed default users ───────────────────────────────────────────────────────
 const userCount = (db.prepare("SELECT COUNT(*) as c FROM users").get() as { c: number }).c;
 if (userCount === 0) {
-  // Run `npm run seed-users` to create users
+  const bcrypt = require("bcryptjs");
+  const insUser = db.prepare(`
+    INSERT INTO users (name, email, password_hash, role, foreman_name)
+    VALUES (@name, @email, @password_hash, @role, @foreman_name)
+  `);
+  const defaultUsers = [
+    { name: "Rafael John Rivera", email: "rap@totallywiredelectric.com",    password: "Admin123", role: "owner",   foreman_name: null },
+    { name: "Cole Dixon",          email: "cole@totallywiredelectric.com",   password: "Admin123", role: "owner",   foreman_name: null },
+    { name: "Nicole Dixon",        email: "nicole@totallywiredelectric.com", password: "Admin123", role: "owner",   foreman_name: null },
+    { name: "Dean",                email: "dean@twe.com",                    password: "TWE2026",  role: "foreman", foreman_name: "Dean" },
+    { name: "Taimez",              email: "taimez@twe.com",                  password: "TWE2026",  role: "foreman", foreman_name: "Taimez" },
+  ];
+  db.transaction((users: typeof defaultUsers) => {
+    for (const u of users) {
+      insUser.run({ ...u, password_hash: bcrypt.hashSync(u.password, 10) });
+    }
+  })(defaultUsers);
 }
 
 } // end: skip init during build
