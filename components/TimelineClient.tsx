@@ -124,7 +124,7 @@ export default function TimelineClient({ projects, stagesByProject }: Props) {
       // Update local stage cache immediately
       setLocalStages(prev => {
         const pid     = editDraft.project_id;
-        const existed = prev[pid]?.some((s: any) => s.stage === editDraft.stage);
+        const existed = prev[pid]?.some((s: any) => s.stage === editDraft.stage) ?? false;
         const updated = existed
           ? (prev[pid] ?? []).map((s: any) => s.stage === editDraft.stage ? { ...s, ...editDraft } : s)
           : [...(prev[pid] ?? []), { ...editDraft }];
@@ -383,7 +383,7 @@ export default function TimelineClient({ projects, stagesByProject }: Props) {
                           </div>
                         ) : (
                           <div className="flex items-center justify-center gap-1">
-                            {saveMsg?.key === rowKey && (
+                            {saveMsg?.key === rowKey && saveMsg && (
                               <span className={`text-xs font-medium ${saveMsg.ok ? "text-green-600" : "text-red-500"}`}>
                                 {saveMsg.text}
                               </span>

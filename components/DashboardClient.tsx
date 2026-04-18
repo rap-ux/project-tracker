@@ -591,7 +591,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                     </td>
                     <td className="px-2 py-3 text-center relative">
                       {/* Inline import feedback */}
-                      {importMsg?.id === p.id && (
+                      {importMsg?.id === p.id && importMsg && (
                         <span className={`absolute -top-1 right-8 text-[10px] whitespace-nowrap px-2 py-0.5 rounded-full shadow-sm z-40 ${importMsg.ok ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
                           {importMsg.text}
                         </span>
