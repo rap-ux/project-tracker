@@ -11,17 +11,51 @@ import UserMenu              from "./UserMenu";
 
 interface NavbarProps { userName: string; role: string; userEmail?: string; userTitle?: string; }
 
-const OWNER_LINKS: Array<{ href: string; label: string; superOnly?: boolean }> = [
-  { href: "/",          label: "Home"      },
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/inputs",    label: "Inputs"    },
-  { href: "/forecast",  label: "Forecast"  },
-  { href: "/timeline",  label: "Timeline"  },
-  { href: "/analytics", label: "Analytics" },
-  { href: "/bonuses",   label: "Bonuses"   },
-  { href: "/clients",   label: "Clients"   },
-  { href: "/uploads",   label: "Uploads"   },
-  { href: "/report",    label: "Report",    superOnly: true },
+type IconKey =
+  | "home" | "dashboard" | "inputs" | "forecast" | "timeline"
+  | "analytics" | "bonuses" | "clients" | "uploads" | "report";
+
+// Line-style icons matching the Switchboard aesthetic (2px stroke, rounded caps)
+function NavIcon({ name, size = 16 }: { name: IconKey; size?: number }) {
+  const common = {
+    width: size, height: size, viewBox: "0 0 24 24", fill: "none" as const,
+    stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const,
+  };
+  switch (name) {
+    case "home":
+      return (<svg {...common}><path d="M3 12L12 4l9 8"/><path d="M5 10v10h14V10"/></svg>);
+    case "dashboard":
+      return (<svg {...common}><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>);
+    case "inputs":
+      return (<svg {...common}><line x1="4" y1="7" x2="14" y2="7"/><circle cx="17" cy="7" r="2.5"/><line x1="10" y1="17" x2="20" y2="17"/><circle cx="7" cy="17" r="2.5"/></svg>);
+    case "forecast":
+      return (<svg {...common}><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>);
+    case "timeline":
+      return (<svg {...common}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>);
+    case "analytics":
+      return (<svg {...common}><line x1="4" y1="20" x2="20" y2="20"/><rect x="6" y="11" width="3" height="9"/><rect x="11" y="6" width="3" height="14"/><rect x="16" y="13" width="3" height="7"/></svg>);
+    case "bonuses":
+      return (<svg {...common}><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>);
+    case "clients":
+      return (<svg {...common}><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M15 18c0-2 2-4 4-4s2 1 2 1"/></svg>);
+    case "uploads":
+      return (<svg {...common}><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/><polyline points="8 9 12 5 16 9"/><line x1="12" y1="5" x2="12" y2="16"/></svg>);
+    case "report":
+      return (<svg {...common}><path d="M7 2h8l4 4v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><polyline points="14 2 14 7 19 7"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>);
+  }
+}
+
+const OWNER_LINKS: Array<{ href: string; label: string; icon: IconKey; superOnly?: boolean }> = [
+  { href: "/",          label: "Home",      icon: "home"      },
+  { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
+  { href: "/inputs",    label: "Inputs",    icon: "inputs"    },
+  { href: "/forecast",  label: "Forecast",  icon: "forecast"  },
+  { href: "/timeline",  label: "Timeline",  icon: "timeline"  },
+  { href: "/analytics", label: "Analytics", icon: "analytics" },
+  { href: "/bonuses",   label: "Bonuses",   icon: "bonuses"   },
+  { href: "/clients",   label: "Clients",   icon: "clients"   },
+  { href: "/uploads",   label: "Uploads",   icon: "uploads"   },
+  { href: "/report",    label: "Report",    icon: "report",    superOnly: true },
 ];
 
 // Super-admin emails — links flagged superOnly only appear for these users
@@ -63,9 +97,10 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
               const active = path === l.href;
               return (
                 <Link key={l.href} href={l.href}
-                  className="relative text-sm px-3 xl:px-4 py-4 transition-colors whitespace-nowrap"
+                  className="relative flex items-center gap-1.5 text-sm px-3 xl:px-4 py-4 transition-colors whitespace-nowrap"
                   style={{ color: active ? "#00BAD6" : "rgba(235,241,245,0.55)" }}>
-                  {l.label}
+                  <NavIcon name={l.icon} />
+                  <span>{l.label}</span>
                   {active && (
                     <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full" style={{ backgroundColor: "#00BAD6" }} />
                   )}
@@ -170,7 +205,10 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
                       backgroundColor: active ? "rgba(0,186,214,0.15)" : "transparent",
                       color: active ? "#00BAD6" : "rgba(235,241,245,0.85)",
                     }}>
-                    <span>{l.label}</span>
+                    <span className="flex items-center gap-3">
+                      <NavIcon name={l.icon} size={18} />
+                      {l.label}
+                    </span>
                     {active && <span className="text-xs">●</span>}
                   </Link>
                 );
