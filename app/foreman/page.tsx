@@ -62,7 +62,7 @@ export default async function ForemanPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar userName={session.user?.name ?? "Foreman"} role="foreman" />
+      <Navbar userName={session.user?.name ?? "Foreman"} role="foreman" userEmail={session.user?.email ?? undefined} />
 
       <main className="flex-1 max-w-screen-lg mx-auto w-full px-4 py-6 space-y-6">
 

@@ -7,8 +7,9 @@ import { useState }    from "react";
 import GlobalActivityButton from "./GlobalActivityButton";
 import AlertsBell            from "./AlertsBell";
 import GlobalSearch          from "./GlobalSearch";
+import UserMenu              from "./UserMenu";
 
-interface NavbarProps { userName: string; role: string; }
+interface NavbarProps { userName: string; role: string; userEmail?: string; }
 
 const OWNER_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
@@ -21,7 +22,7 @@ const OWNER_LINKS = [
   { href: "/report",    label: "Report"    },
 ];
 
-export default function Navbar({ userName, role }: NavbarProps) {
+export default function Navbar({ userName, role, userEmail }: NavbarProps) {
   const path    = usePathname();
   const isOwner = role === "owner" || role === "admin";
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -73,19 +74,10 @@ export default function Navbar({ userName, role }: NavbarProps) {
         <AlertsBell />
         <GlobalActivityButton />
 
-        {/* Desktop user info */}
-        <div className="hidden sm:block text-right">
-          <p className="text-xs sm:text-sm font-medium leading-tight truncate max-w-[140px]" style={{ color: "#EBF1F5" }}>{userName}</p>
-          <p className="text-[10px] sm:text-xs leading-tight capitalize" style={{ color: "#00BAD6" }}>{role}</p>
+        {/* Desktop user menu (avatar + dropdown) */}
+        <div className="hidden sm:block">
+          <UserMenu userName={userName} role={role} userEmail={userEmail} />
         </div>
-
-        {/* Desktop sign out */}
-        <button
-          onClick={() => signOut({ callbackUrl: "/signed-out" })}
-          className="hidden sm:block text-xs px-3 py-1.5 rounded-md transition-colors border border-white/10 hover:border-white/25"
-          style={{ color: "rgba(235,241,245,0.7)" }}>
-          Sign out
-        </button>
 
         {/* Mobile hamburger */}
         <button
@@ -123,17 +115,32 @@ export default function Navbar({ userName, role }: NavbarProps) {
             style={{ top: "52px", backgroundColor: "#101010" }}>
             <div className="flex flex-col px-4 py-3 gap-0.5">
               {/* User info row on mobile */}
-              <div className="sm:hidden flex items-center justify-between pb-3 mb-2 border-b border-white/10">
-                <div>
-                  <p className="text-sm font-medium" style={{ color: "#EBF1F5" }}>{userName}</p>
-                  <p className="text-xs capitalize" style={{ color: "#00BAD6" }}>{role}</p>
+              <div className="sm:hidden flex flex-col gap-2 pb-3 mb-2 border-b border-white/10">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+                    style={{ backgroundColor: "#00BAD6" }}>
+                    {userName.split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate" style={{ color: "#EBF1F5" }}>{userName}</p>
+                    {userEmail && <p className="text-[11px] truncate" style={{ color: "rgba(235,241,245,0.5)" }}>{userEmail}</p>}
+                    <p className="text-[10px] capitalize" style={{ color: "#00BAD6" }}>{role}</p>
+                  </div>
                 </div>
-                <button
-                  onClick={() => signOut({ callbackUrl: "/signed-out" })}
-                  className="text-xs px-3 py-1.5 rounded-md border border-white/20"
-                  style={{ color: "rgba(235,241,245,0.85)" }}>
-                  Sign out
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => { setMobileOpen(false); signOut({ callbackUrl: "/login?switch=1" }); }}
+                    className="flex-1 text-xs px-3 py-1.5 rounded-md border border-white/20 transition-colors hover:bg-white/5"
+                    style={{ color: "rgba(235,241,245,0.85)" }}>
+                    ↔ Switch account
+                  </button>
+                  <button
+                    onClick={() => { setMobileOpen(false); signOut({ callbackUrl: "/signed-out" }); }}
+                    className="flex-1 text-xs px-3 py-1.5 rounded-md border border-red-400/40 transition-colors hover:bg-red-500/10"
+                    style={{ color: "#fca5a5" }}>
+                    Sign out
+                  </button>
+                </div>
               </div>
 
               {/* Nav links */}

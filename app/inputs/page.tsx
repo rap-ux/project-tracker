@@ -28,7 +28,7 @@ export default async function InputsPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar userName={session.user?.name ?? "Admin"} role={role} />
+      <Navbar userName={session.user?.name ?? "Admin"} role={role} userEmail={session.user?.email ?? undefined} />
       <InputsClient inputs={inputs} role={role} />
     </div>
   );

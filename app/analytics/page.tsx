@@ -37,7 +37,7 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar userName={session.user?.name ?? "Admin"} role={role} />
+      <Navbar userName={session.user?.name ?? "Admin"} role={role} userEmail={session.user?.email ?? undefined} />
       <AnalyticsClient projects={projects} finishDateByProject={finishDateByProject} />
     </div>
   );
