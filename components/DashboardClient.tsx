@@ -2,6 +2,9 @@
 
 import React, { useState, useRef } from "react";
 import Link from "next/link";
+import ChangeOrdersPanel     from "./ChangeOrdersPanel";
+import CommentsPanel           from "./CommentsPanel";
+import { toCSV, downloadCSV }  from "@/lib/csv";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const fmt$   = (n: number) => "$" + (n ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
@@ -86,6 +89,8 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
   const [activating,      setActivating]      = useState(false);
   const [openDropdown,    setOpenDropdown]    = useState<number | null>(null);
   const [activitiesByProject, setActivitiesByProject] = useState<Record<number, any[]>>({});
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [bulkStatus,  setBulkStatus]  = useState<string>("");
   // Live preview of calculated project_completion in the edit modal
   const [draftStage,      setDraftStage]      = useState<string>("");
   const [draftStagePct,   setDraftStagePct]   = useState<number>(0);
@@ -118,6 +123,87 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
     }
   }
 
+  function toggleSelect(id: number) {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+  function selectAllVisible(items: any[]) {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      const allSelected = items.every(i => next.has(i.id));
+      if (allSelected) items.forEach(i => next.delete(i.id));
+      else             items.forEach(i => next.add(i.id));
+      return next;
+    });
+  }
+  async function bulkUpdateStage(newStage: string) {
+    if (!newStage || selectedIds.size === 0) return;
+    setBulkStatus(`Updating ${selectedIds.size}…`);
+    await Promise.all(Array.from(selectedIds).map(id =>
+      fetch(`/api/projects/${id}`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: newStage }),
+      })
+    ));
+    setBulkStatus("✅ Updated");
+    setTimeout(() => { setBulkStatus(""); window.location.reload(); }, 800);
+  }
+  async function bulkDelete() {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Delete ${selectedIds.size} project(s)? This cannot be undone.`)) return;
+    setBulkStatus(`Deleting ${selectedIds.size}…`);
+    await Promise.all(Array.from(selectedIds).map(id =>
+      fetch(`/api/projects/${id}`, { method: "DELETE" })
+    ));
+    setBulkStatus("✅ Deleted");
+    setTimeout(() => { setBulkStatus(""); window.location.reload(); }, 600);
+  }
+  function exportCurrentCSV(list: any[], filenameHint: string) {
+    const rows = list.map((p: any) => ({
+      name:            p.name,
+      foreman:         p.foreman,
+      stage:           p.stage,
+      is_pipeline:     p.is_pipeline ? "Minor" : "Active",
+      region:          p.region,
+      builder:         p.builder,
+      contacts:        p.contacts,
+      phone:           p.phone,
+      contract_value:  p.contract_value,
+      total_invoiced:  p.total_invoiced,
+      project_completion_pct: Math.round((p.project_completion ?? 0) * 100),
+      stage_completion_pct:   Math.round((p.stage_completion   ?? 0) * 100),
+      actual_materials:       p.actual_materials ?? "",
+      est_materials_budget:   p.est_materials_budget ?? "",
+      actual_total_hours:     p.actual_total_hours ?? "",
+      goal_hours:             p.goal_hours ?? "",
+      updated_at:             p.updated_at ?? "",
+    }));
+    const csv = toCSV(rows, [
+      { key: "name",           label: "Project"     },
+      { key: "foreman",        label: "Foreman"     },
+      { key: "stage",          label: "Stage"       },
+      { key: "is_pipeline",    label: "Type"        },
+      { key: "region",         label: "Region"      },
+      { key: "builder",        label: "Builder"     },
+      { key: "contacts",       label: "Contact"     },
+      { key: "phone",          label: "Phone"       },
+      { key: "contract_value", label: "Contract $"  },
+      { key: "total_invoiced", label: "Invoiced $"  },
+      { key: "project_completion_pct", label: "Project %" },
+      { key: "stage_completion_pct",   label: "Stage %"   },
+      { key: "actual_materials",       label: "Actual Materials $" },
+      { key: "est_materials_budget",   label: "Est Materials $"    },
+      { key: "actual_total_hours",     label: "Actual Hours" },
+      { key: "goal_hours",             label: "Goal Hours"   },
+      { key: "updated_at",             label: "Updated"      },
+    ]);
+    const today = new Date().toISOString().slice(0, 10);
+    downloadCSV(`projects-${filenameHint}-${today}.csv`, csv);
+  }
+
   async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || importProjectId == null) return;
@@ -145,6 +231,12 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
 
   const currentList = view === "active" ? projects : pipeline;
   const allForemen  = ["all", ...Array.from(new Set(currentList.map((p: any) => p.foreman))).sort()];
+  // For @mentions in comments — include foreman names + owners (first names matching user accounts)
+  const availableUsers = Array.from(new Set([
+    ...projects.map((p: any) => p.foreman).filter(Boolean),
+    ...pipeline.map((p: any) => p.foreman).filter(Boolean),
+    "Rafael", "Cole", "Nicole",
+  ])).sort();
 
   const filtered = currentList
     .filter((p: any) => {
@@ -340,8 +432,13 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
           </select>
         </div>
 
-        {isAdmin && (
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => exportCurrentCSV(filtered, view)}
+            title="Export current filtered rows as CSV"
+            className="text-sm px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition-colors">
+            ⬇ CSV
+          </button>
+          {isAdmin && <>
             <button onClick={() => setShowAddForm(true)}
               className="text-sm px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
               + Add Project
@@ -351,11 +448,68 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
               className="text-sm px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors inline-block">
               📤 Uploads
             </Link>
-            {/* Hidden input for per-project import — triggered from dropdown */}
             <input ref={importRef} type="file" accept=".xlsx,.csv" className="hidden" onChange={handleImportFile} />
-          </div>
-        )}
+          </>}
+        </div>
       </div>
+
+      {/* Stale QBO warning */}
+      {(() => {
+        if (uploads.length === 0) return null;
+        const latest = uploads[0];
+        const dt = new Date((latest.uploaded_at ?? "").replace(" ", "T") + "Z");
+        const days = Math.floor((Date.now() - dt.getTime()) / 86400000);
+        if (days < 7) return null;
+        return (
+          <div className={`rounded-xl border-l-4 px-4 py-2.5 text-xs flex items-center gap-2 ${
+            days >= 14 ? "bg-red-50 border-red-500"
+            : "bg-amber-50 border-amber-500"
+          }`}>
+            <span className="text-base">{days >= 14 ? "🚨" : "⚠️"}</span>
+            <span className="text-gray-700">
+              <strong>QBO data is {days} days old</strong> — last upload {dt.toLocaleDateString()}.
+              Materials / hours / invoiced totals may be out of date.
+            </span>
+            <Link href="/uploads"
+              className="ml-auto text-xs px-3 py-1 bg-white border border-gray-300 hover:bg-gray-50 rounded font-medium">
+              Upload now →
+            </Link>
+          </div>
+        );
+      })()}
+
+      {/* Bulk action bar (shows when rows selected) */}
+      {isAdmin && selectedIds.size > 0 && (
+        <div className="sticky top-[52px] z-30 bg-slate-800 text-white rounded-xl shadow-lg px-4 py-2.5 flex flex-wrap items-center gap-3">
+          <span className="text-sm font-semibold">{selectedIds.size} selected</span>
+          <select
+            onChange={e => { if (e.target.value) bulkUpdateStage(e.target.value); e.target.value = ""; }}
+            className="text-xs bg-slate-700 text-white border border-slate-600 rounded px-2 py-1">
+            <option value="">Set stage…</option>
+            <option value="Contracting Phase">Contracting Phase</option>
+            <option value="Underground">Underground</option>
+            <option value="Rough">Rough</option>
+            <option value="Finish">Finish</option>
+            <option value="Extras">Extras</option>
+          </select>
+          <button
+            onClick={() => exportCurrentCSV(filtered.filter(p => selectedIds.has(p.id)), "selected")}
+            className="text-xs px-3 py-1 bg-white text-slate-800 rounded font-medium hover:bg-gray-100">
+            ⬇ Export selected
+          </button>
+          <button
+            onClick={bulkDelete}
+            className="text-xs px-3 py-1 bg-red-500 hover:bg-red-600 rounded font-medium">
+            Delete
+          </button>
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            className="text-xs px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded font-medium">
+            Clear
+          </button>
+          {bulkStatus && <span className="text-xs text-amber-200">{bulkStatus}</span>}
+        </div>
+      )}
 
       {reportMsg && <p className="text-sm text-gray-700 bg-white border rounded-lg px-4 py-2 shadow-sm">{reportMsg}</p>}
 
@@ -624,6 +778,15 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-slate-800 text-white text-xs uppercase tracking-wide">
+                {isAdmin && (
+                  <th className="px-3 py-3 text-center w-8">
+                    <input type="checkbox"
+                      checked={filtered.length > 0 && filtered.every((p: any) => selectedIds.has(p.id))}
+                      onChange={() => selectAllVisible(filtered)}
+                      className="cursor-pointer w-3.5 h-3.5 accent-cyan-500"
+                      title="Select all visible" />
+                  </th>
+                )}
                 <th className="px-4 py-3 text-left">Project</th>
                 <th className="px-4 py-3 text-left">Foreman</th>
                 <th className="px-4 py-3 text-left">Stage</th>
@@ -656,10 +819,19 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                 return (
                   <React.Fragment key={p.id}>
                   <tr className={`hover:bg-gray-50 transition-colors border-b border-gray-100 ${
-                    inc.projectStatus.key === "critical" ? "bg-red-50/60" :
-                    inc.projectStatus.key === "at-risk"  ? "bg-orange-50/40" :
-                    overMat                              ? "bg-yellow-50/40" : ""
+                    selectedIds.has(p.id)                  ? "bg-cyan-50/60" :
+                    inc.projectStatus.key === "critical"   ? "bg-red-50/60" :
+                    inc.projectStatus.key === "at-risk"    ? "bg-orange-50/40" :
+                    overMat                                ? "bg-yellow-50/40" : ""
                   }`}>
+                    {isAdmin && (
+                      <td className="px-3 py-3 text-center">
+                        <input type="checkbox"
+                          checked={selectedIds.has(p.id)}
+                          onChange={() => toggleSelect(p.id)}
+                          className="cursor-pointer w-3.5 h-3.5 accent-cyan-500" />
+                      </td>
+                    )}
                     <td className="px-4 py-3 font-medium text-gray-900">
                       {p.name}
                     </td>
@@ -821,7 +993,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
 
                   {expandedRows.has(p.id) && (
                     <tr className="border-b border-gray-100" style={{ backgroundColor: "#f8fffe" }}>
-                      <td colSpan={isAdmin ? 12 : isForeman ? 9 : 11} className="px-6 py-4">
+                      <td colSpan={isAdmin ? 13 : isForeman ? 9 : 11} className="px-6 py-4">
                         <div className="flex flex-col gap-3">
                           {/* Insight line */}
                           <div className="flex items-start gap-2 text-sm text-gray-700">
@@ -1014,6 +1186,12 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                               </div>
                             );
                           })()}
+
+                          {/* ── Change Orders ── */}
+                          {!isForeman && <ChangeOrdersPanel projectId={p.id} isAdmin={isAdmin} />}
+
+                          {/* ── Comments / @mentions ── */}
+                          <CommentsPanel projectId={p.id} availableUsers={availableUsers} />
                         </div>
                       </td>
                     </tr>

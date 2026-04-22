@@ -5,6 +5,7 @@ import Link            from "next/link";
 import { usePathname } from "next/navigation";
 import { useState }    from "react";
 import GlobalActivityButton from "./GlobalActivityButton";
+import AlertsBell            from "./AlertsBell";
 
 interface NavbarProps { userName: string; role: string; }
 
@@ -13,6 +14,7 @@ const OWNER_LINKS = [
   { href: "/inputs",    label: "Inputs"    },
   { href: "/forecast",  label: "Forecast"  },
   { href: "/timeline",  label: "Timeline"  },
+  { href: "/analytics", label: "Analytics" },
   { href: "/clients",   label: "Clients"   },
   { href: "/uploads",   label: "Uploads"   },
   { href: "/report",    label: "Report"    },
@@ -64,8 +66,9 @@ export default function Navbar({ userName, role }: NavbarProps) {
         )}
       </div>
 
-      {/* ── Right: Activity + user + sign out ── */}
+      {/* ── Right: Alerts + Activity + user + sign out ── */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <AlertsBell />
         <GlobalActivityButton />
 
         {/* Desktop user info */}

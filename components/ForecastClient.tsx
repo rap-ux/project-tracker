@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { toCSV, downloadCSV } from "@/lib/csv";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const MILESTONES = [
@@ -212,6 +213,27 @@ export default function ForecastClient({ rows, role }: Props) {
               ? { backgroundColor: "#101010", borderColor: "#101010", color: "#fff" }
               : { backgroundColor: "#fff", borderColor: "#d1d5db", color: "#9ca3af" }}>
             {includeMinor ? "Minor Projects: Shown" : "Minor Projects: Hidden"}
+          </button>
+
+          <button
+            onClick={() => {
+              // Export monthly cash flow + milestone table
+              const monthRows = monthKeys.map(mk => ({
+                month: monthLabel(mk),
+                total: totalByMonth[mk],
+                past: mk < toYYYYMM(TODAY) ? "Past" : "Upcoming",
+                breakdown: byMonth[mk].map(p => `${p.projectName} (${p.milestone}: ${fmt$(p.amount)})`).join(" | "),
+              }));
+              const csv = toCSV(monthRows, [
+                { key: "month", label: "Month" },
+                { key: "total", label: "Total $" },
+                { key: "past",  label: "When"   },
+                { key: "breakdown", label: "Breakdown" },
+              ]);
+              downloadCSV(`forecast-cashflow-${new Date().toISOString().slice(0, 10)}.csv`, csv);
+            }}
+            className="text-xs px-3 py-1 rounded-full border border-gray-300 bg-white font-medium text-gray-700 hover:bg-gray-50">
+            ⬇ CSV
           </button>
 
           {msg && <p className="text-sm text-gray-700 bg-white border rounded-lg px-4 py-2 shadow-sm">{msg}</p>}

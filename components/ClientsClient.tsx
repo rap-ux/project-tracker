@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { toCSV, downloadCSV } from "@/lib/csv";
 
 const fmt$ = (n: number) => "$" + (n ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
 
@@ -174,6 +175,28 @@ export default function ClientsClient({ projects: initial, role }: { projects: P
           Include minor projects
         </label>
         <span className="text-xs text-gray-400 ml-auto">{filtered.length} of {projects.length} projects</span>
+        <button
+          onClick={() => {
+            const csv = toCSV(filtered.map(p => ({
+              name: p.name, foreman: p.foreman, stage: p.stage,
+              type: p.is_pipeline ? "Minor" : "Active",
+              region: p.region, builder: p.builder, contacts: p.contacts, phone: p.phone,
+              contract_value: p.contract_value, notes: p.project_notes,
+              basecamp: p.basecamp_link, drive: p.drive_folder,
+            })), [
+              { key: "name", label: "Project" }, { key: "foreman", label: "Foreman" },
+              { key: "stage", label: "Stage" }, { key: "type", label: "Type" },
+              { key: "region", label: "Region" }, { key: "builder", label: "Builder / GC" },
+              { key: "contacts", label: "Contact" }, { key: "phone", label: "Phone" },
+              { key: "contract_value", label: "Contract $" }, { key: "notes", label: "Notes" },
+              { key: "basecamp", label: "Basecamp Link" }, { key: "drive", label: "Drive Folder" },
+            ]);
+            downloadCSV(`clients-${new Date().toISOString().slice(0, 10)}.csv`, csv);
+          }}
+          title="Export current filtered rows as CSV"
+          className="text-sm px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition-colors">
+          ⬇ CSV
+        </button>
         {isAdmin && (
           <button
             onClick={() => setAdding(true)}

@@ -126,6 +126,34 @@ db.exec(`
     details    TEXT,
     created_at TEXT    DEFAULT (datetime('now'))
   );
+
+  CREATE TABLE IF NOT EXISTS change_orders (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id  INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    description TEXT    NOT NULL,
+    amount      REAL    NOT NULL DEFAULT 0,
+    status      TEXT    NOT NULL DEFAULT 'Quoted',
+    co_date     TEXT,
+    created_by  TEXT    NOT NULL,
+    created_at  TEXT    DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS project_comments (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id  INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    user_name   TEXT    NOT NULL,
+    body        TEXT    NOT NULL,
+    mentions    TEXT,
+    created_at  TEXT    DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS alerts_dismissed (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_email TEXT    NOT NULL,
+    alert_key  TEXT    NOT NULL,
+    dismissed_at TEXT  DEFAULT (datetime('now')),
+    UNIQUE(user_email, alert_key)
+  );
 `);
 
 // ── Migrations ────────────────────────────────────────────────────────────────
