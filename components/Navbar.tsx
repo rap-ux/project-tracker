@@ -3,6 +3,7 @@
 import { signOut }     from "next-auth/react";
 import Link            from "next/link";
 import { usePathname } from "next/navigation";
+import GlobalActivityButton from "./GlobalActivityButton";
 
 interface NavbarProps { userName: string; role: string; }
 
@@ -62,6 +63,7 @@ export default function Navbar({ userName, role }: NavbarProps) {
 
       {/* ── User + sign out ── */}
       <div className="flex items-center gap-4">
+        <GlobalActivityButton />
         <div className="text-right">
           <p className="text-sm font-medium leading-tight" style={{ color: "#EBF1F5" }}>{userName}</p>
           <p className="text-xs leading-tight capitalize" style={{ color: "#00BAD6" }}>{role}</p>
