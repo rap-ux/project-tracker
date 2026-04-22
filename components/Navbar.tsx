@@ -11,7 +11,7 @@ import UserMenu              from "./UserMenu";
 
 interface NavbarProps { userName: string; role: string; userEmail?: string; userTitle?: string; }
 
-const OWNER_LINKS = [
+const OWNER_LINKS: Array<{ href: string; label: string; superOnly?: boolean }> = [
   { href: "/",          label: "Home"      },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/inputs",    label: "Inputs"    },
@@ -21,14 +21,19 @@ const OWNER_LINKS = [
   { href: "/bonuses",   label: "Bonuses"   },
   { href: "/clients",   label: "Clients"   },
   { href: "/uploads",   label: "Uploads"   },
-  { href: "/report",    label: "Report"    },
+  { href: "/report",    label: "Report",    superOnly: true },
 ];
+
+// Super-admin emails — links flagged superOnly only appear for these users
+const SUPER_ADMIN_EMAILS = ["rap@totallywiredelectric.com"];
 
 export default function Navbar({ userName, role, userEmail, userTitle }: NavbarProps) {
   const path    = usePathname();
   const isOwner = role === "owner" || role === "admin";
   const [mobileOpen, setMobileOpen] = useState(false);
   const displayRole = userTitle && userTitle.trim() ? userTitle : role;
+  const isSuperAdmin = !!userEmail && SUPER_ADMIN_EMAILS.includes(userEmail);
+  const visibleLinks = OWNER_LINKS.filter(l => !l.superOnly || isSuperAdmin);
 
   return (
     <nav
@@ -51,7 +56,7 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
         {/* ── Desktop Nav links ── */}
         {isOwner && (
           <div className="hidden lg:flex items-center">
-            {OWNER_LINKS.map(l => {
+            {visibleLinks.map(l => {
               const active = path === l.href;
               return (
                 <Link key={l.href} href={l.href}
@@ -144,7 +149,7 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
               </div>
 
               {/* Nav links */}
-              {isOwner && OWNER_LINKS.map(l => {
+              {isOwner && visibleLinks.map(l => {
                 const active = path === l.href;
                 return (
                   <Link key={l.href} href={l.href}

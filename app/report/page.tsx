@@ -36,7 +36,10 @@ export interface PortfolioData {
 export default async function ReportPage() {
   const session = await auth();
   if (!session) redirect("/login");
-  const role = (session.user as any).role;
+  const role  = (session.user as any).role;
+  const email = session.user?.email ?? "";
+  // Report page is restricted to Rafael only
+  if (email !== "rap@totallywiredelectric.com") redirect("/");
   if (role !== "owner" && role !== "admin") redirect("/dashboard");
 
   const raw = db.prepare(
