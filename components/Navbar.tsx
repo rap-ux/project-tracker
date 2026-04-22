@@ -81,7 +81,7 @@ export default function Navbar({ userName, role }: NavbarProps) {
 
         {/* Desktop sign out */}
         <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
+          onClick={() => signOut({ callbackUrl: "/signed-out" })}
           className="hidden sm:block text-xs px-3 py-1.5 rounded-md transition-colors border border-white/10 hover:border-white/25"
           style={{ color: "rgba(235,241,245,0.7)" }}>
           Sign out
@@ -129,7 +129,7 @@ export default function Navbar({ userName, role }: NavbarProps) {
                   <p className="text-xs capitalize" style={{ color: "#00BAD6" }}>{role}</p>
                 </div>
                 <button
-                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  onClick={() => signOut({ callbackUrl: "/signed-out" })}
                   className="text-xs px-3 py-1.5 rounded-md border border-white/20"
                   style={{ color: "rgba(235,241,245,0.85)" }}>
                   Sign out
