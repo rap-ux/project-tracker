@@ -226,8 +226,7 @@ export default function ForemanProjectCard({ project: initial }: { project: Proj
         </div>
 
         {/* Footer */}
-        <div className="flex justify-between text-xs text-gray-400 pt-1 border-t border-gray-100">
-          <span>Invoiced: {fmt$(p.total_invoiced)}</span>
+        <div className="flex justify-end text-xs text-gray-400 pt-1 border-t border-gray-100">
           <span>Stage: {fmtPct(p.stage_completion)} done</span>
         </div>
       </div>

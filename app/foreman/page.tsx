@@ -58,7 +58,6 @@ export default async function ForemanPage() {
   })));
 
   const totalContractValue = projects.reduce((s, p) => s + (p.contract_value  || 0), 0);
-  const totalInvoiced      = projects.reduce((s, p) => s + (p.total_invoiced   || 0), 0);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -141,13 +140,11 @@ export default async function ForemanPage() {
         </div>
 
         {/* ── Summary stats ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[
-            { label: "Projects",       value: String(projects.length)                    },
-            { label: "Contract Value", value: fmt$(totalContractValue), note: "combined" },
-            { label: "Invoiced",       value: fmt$(totalInvoiced),
-              note: fmtPct(totalContractValue > 0 ? totalInvoiced / totalContractValue : 0) },
-            { label: "Active",         value: String(projects.filter(p => p.project_completion < 1).length) },
+            { label: "Projects",       value: String(projects.length)                                         },
+            { label: "Contract Value", value: fmt$(totalContractValue), note: "combined"                      },
+            { label: "Active",         value: String(projects.filter(p => p.project_completion < 1).length)   },
           ].map(s => (
             <div key={s.label} className="bg-white rounded-xl border p-4 shadow-sm">
               <p className="text-xs text-gray-500 uppercase tracking-wide">{s.label}</p>
