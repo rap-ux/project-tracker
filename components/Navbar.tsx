@@ -83,8 +83,8 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
             className="h-8 sm:h-9 w-auto"
           />
           <div className="hidden md:flex items-center gap-2 border-l border-white/15 pl-3">
-            <img src="/switchboard-icon.svg" alt="" className="h-7 w-7" />
-            <span className="text-sm font-bold tracking-tight" style={{ color: "#EBF1F5", letterSpacing: "-0.01em" }}>
+            <img src="/switchboard-icon.svg" alt="Switchboard" className="h-7 w-7" />
+            <span className="hidden 2xl:inline text-sm font-bold tracking-tight" style={{ color: "#EBF1F5", letterSpacing: "-0.01em" }}>
               Switchboard
             </span>
           </div>
@@ -97,7 +97,8 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
               const active = path === l.href;
               return (
                 <Link key={l.href} href={l.href}
-                  className={`group relative flex items-center gap-1.5 text-sm px-3 xl:px-4 py-4 transition-all duration-200 whitespace-nowrap ${
+                  title={l.label}  // tooltip on lg-only icon mode
+                  className={`group relative flex items-center gap-1.5 text-sm px-2.5 xl:px-3 2xl:px-4 py-4 transition-all duration-200 whitespace-nowrap ${
                     active
                       ? "text-[#00BAD6]"
                       : "text-white/55 hover:text-white/95 hover:bg-white/[0.06]"
@@ -105,7 +106,7 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
                   <span className="transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-110">
                     <NavIcon name={l.icon} />
                   </span>
-                  <span className="transition-transform duration-200 ease-out group-hover:-translate-y-0.5">
+                  <span className="hidden 2xl:inline transition-transform duration-200 ease-out group-hover:-translate-y-0.5">
                     {l.label}
                   </span>
                   {/* Active-page underline (solid cyan) */}

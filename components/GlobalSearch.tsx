@@ -128,7 +128,7 @@ export default function GlobalSearch() {
       <button
         onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 10); }}
         title="Search (⌘K)"
-        className="flex items-center gap-2 px-2 md:px-3 py-1.5 rounded-md border border-white/15 hover:border-white/30 transition-colors md:w-56 xl:w-64"
+        className="flex items-center gap-2 px-2 md:px-3 py-1.5 rounded-md border border-white/15 hover:border-white/30 transition-colors md:w-44 xl:w-52 2xl:w-64"
         style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(235,241,245,0.55)" }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
