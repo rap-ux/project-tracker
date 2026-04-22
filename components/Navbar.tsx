@@ -12,6 +12,7 @@ import UserMenu              from "./UserMenu";
 interface NavbarProps { userName: string; role: string; userEmail?: string; }
 
 const OWNER_LINKS = [
+  { href: "/",          label: "Home"      },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/inputs",    label: "Inputs"    },
   { href: "/forecast",  label: "Forecast"  },
@@ -34,7 +35,7 @@ export default function Navbar({ userName, role, userEmail }: NavbarProps) {
 
       {/* ── Left: Logo + brand ── */}
       <div className="flex items-center gap-3 sm:gap-6 min-w-0">
-        <Link href={isOwner ? "/dashboard" : "/foreman"} className="flex items-center gap-2 py-3 shrink-0">
+        <Link href={isOwner ? "/" : "/foreman"} className="flex items-center gap-2 py-3 shrink-0">
           <svg width="26" height="26" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect width="500" height="500" rx="250" fill="#00BAD6"/>
             <path d="M305.437 296.859H285.991V250H269.446V296.859H230.552V250H214.008V296.859H194.563C189.993 296.859 186.291 300.537 186.291 305.077V360.151C186.291 392.265 210.496 418.848 241.73 422.893V500.293C241.73 504.832 245.432 508.511 250.002 508.511C254.571 508.511 258.275 504.832 258.275 500.293V422.893C289.506 418.85 313.71 392.265 313.71 360.151V305.077C313.709 300.537 310.006 296.859 305.437 296.859Z" fill="#EBF1F5"/>
