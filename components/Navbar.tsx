@@ -8,6 +8,7 @@ import GlobalActivityButton from "./GlobalActivityButton";
 import AlertsBell            from "./AlertsBell";
 import GlobalSearch          from "./GlobalSearch";
 import UserMenu              from "./UserMenu";
+import PresenceIndicator     from "./PresenceIndicator";
 
 interface NavbarProps { userName: string; role: string; userEmail?: string; userTitle?: string; }
 
@@ -131,6 +132,7 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
       {/* ── Right: Search + Alerts + Activity + user + sign out ── */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0 flex-shrink-0">
         <GlobalSearch />
+        {isSuperAdmin && <PresenceIndicator />}
         <AlertsBell />
         <GlobalActivityButton />
 

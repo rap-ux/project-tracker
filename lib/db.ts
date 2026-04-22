@@ -169,6 +169,13 @@ db.exec(`
     dismissed_at TEXT  DEFAULT (datetime('now')),
     UNIQUE(user_email, alert_key)
   );
+
+  CREATE TABLE IF NOT EXISTS user_presence (
+    user_id    INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    last_seen  TEXT    NOT NULL DEFAULT (datetime('now')),
+    last_page  TEXT,
+    user_agent TEXT
+  );
 `);
 
 // ── Migrations ────────────────────────────────────────────────────────────────
