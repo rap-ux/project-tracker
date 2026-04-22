@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState }    from "react";
 import GlobalActivityButton from "./GlobalActivityButton";
 import AlertsBell            from "./AlertsBell";
+import GlobalSearch          from "./GlobalSearch";
 
 interface NavbarProps { userName: string; role: string; }
 
@@ -66,8 +67,9 @@ export default function Navbar({ userName, role }: NavbarProps) {
         )}
       </div>
 
-      {/* ── Right: Alerts + Activity + user + sign out ── */}
+      {/* ── Right: Search + Alerts + Activity + user + sign out ── */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <GlobalSearch />
         <AlertsBell />
         <GlobalActivityButton />
 
