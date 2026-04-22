@@ -624,7 +624,7 @@ function GanttView({ visible, stagesByProject }: {
                         style={{ width: LABEL_W, minWidth: LABEL_W }}>
                         <div className="flex items-center gap-1">
                           <span className="text-xs font-medium text-gray-700 truncate leading-tight">{p.name}</span>
-                          {p.is_pipeline && (
+                          {p.is_pipeline === 1 && (
                             <span className="text-[9px] px-1 py-0.5 rounded bg-gray-100 text-gray-400 shrink-0">Minor</span>
                           )}
                         </div>
@@ -709,7 +709,7 @@ function ProjectCard({ project: p, stages, stageColor, stageBg, stageBorder }: {
       <div className="px-3 pt-3 pb-2">
         <div className="flex items-start justify-between gap-2">
           <p className="text-sm font-semibold text-gray-900 leading-tight">{p.name}</p>
-          {p.is_pipeline && (
+          {p.is_pipeline === 1 && (
             <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 whitespace-nowrap shrink-0">Minor</span>
           )}
         </div>
