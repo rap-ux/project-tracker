@@ -13,7 +13,9 @@ export default function UserMenu({ userName, role, userEmail }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Track the current user in localStorage so the login page can show recent users
+  // Track the current user in localStorage so the login page can show recent users.
+  // `role` here is the already-resolved display label (title takes precedence over
+  // raw role) — Navbar passes displayRole into the UserMenu `role` prop.
   useEffect(() => {
     if (!userEmail) return;
     try {

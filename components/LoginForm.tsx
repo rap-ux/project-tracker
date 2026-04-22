@@ -50,7 +50,7 @@ export default function LoginForm() {
   const initials = (name: string) => name.split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase();
 
   return (
-    <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-7">
+    <div className="w-full max-w-sm mx-auto bg-white rounded-2xl shadow-2xl p-7">
       {/* Branding */}
       <div className="mb-5 text-center">
         <div className="flex justify-center mb-4 bg-slate-900 rounded-xl px-6 py-4">
