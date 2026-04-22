@@ -174,9 +174,22 @@ db.exec(`
     user_id    INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     last_seen  TEXT    NOT NULL DEFAULT (datetime('now')),
     last_page  TEXT,
-    user_agent TEXT
+    user_agent TEXT,
+    ip_address TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS ip_geo_cache (
+    ip           TEXT PRIMARY KEY,
+    city         TEXT,
+    region       TEXT,
+    country      TEXT,
+    country_code TEXT,
+    looked_up_at TEXT DEFAULT (datetime('now'))
   );
 `);
+
+// Add ip_address column if existing user_presence table is missing it
+try { db.exec(`ALTER TABLE user_presence ADD COLUMN ip_address TEXT`); } catch { /* already exists */ }
 
 // ── Migrations ────────────────────────────────────────────────────────────────
 // projects: manually-tracked off-book fields

@@ -3,14 +3,35 @@
 import { useEffect, useRef, useState } from "react";
 
 interface PresenceUser {
-  id:         number;
-  name:       string;
-  email:      string;
-  role:       string;
-  title:      string | null;
-  last_seen:  string | null;
-  last_page:  string | null;
-  user_agent: string | null;
+  id:           number;
+  name:         string;
+  email:        string;
+  role:         string;
+  title:        string | null;
+  last_seen:    string | null;
+  last_page:    string | null;
+  user_agent:   string | null;
+  ip_address:   string | null;
+  city:         string | null;
+  region:       string | null;
+  country:      string | null;
+  country_code: string | null;
+}
+
+function locationLabel(u: PresenceUser): string {
+  if (!u.city && !u.country) return "";
+  if (u.city && u.country) {
+    // Compact: "Los Angeles, US" rather than full country name
+    const cc = u.country_code ?? u.country;
+    return `${u.city}, ${cc}`;
+  }
+  return u.city || u.country || "";
+}
+
+function flagEmoji(cc: string | null): string {
+  if (!cc || cc.length !== 2) return "🌐";
+  const codePoints = cc.toUpperCase().split("").map(c => 127397 + c.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
 }
 
 type Status = "online" | "away" | "offline";
@@ -190,8 +211,16 @@ export default function PresenceIndicator() {
                               </>
                             )}
                           </p>
-                          {device && status !== "offline" && (
-                            <p className="text-[10px] text-gray-400">{device}</p>
+                          {(device || locationLabel(u)) && status !== "offline" && (
+                            <p className="text-[10px] text-gray-400 flex items-center gap-1.5 flex-wrap">
+                              {device && <span>{device}</span>}
+                              {locationLabel(u) && (
+                                <span className="flex items-center gap-1">
+                                  <span>{flagEmoji(u.country_code)}</span>
+                                  <span>{locationLabel(u)}</span>
+                                </span>
+                              )}
+                            </p>
                           )}
                         </div>
                       </div>
