@@ -16,6 +16,11 @@ export default async function DashboardPage() {
   // Active = has QBO financial data; pipeline = upcoming / pre-contract
   const activeRaw   = db.prepare("SELECT * FROM projects WHERE is_pipeline = 0 ORDER BY foreman, name").all() as any[];
   const pipelineRaw = db.prepare("SELECT * FROM projects WHERE is_pipeline = 1 ORDER BY foreman, name").all() as any[];
+
+  // project_inputs for profitability calc (blended_hourly_wage, gross_margin)
+  const inputsRaw = db.prepare("SELECT * FROM project_inputs").all() as any[];
+  const inputsByProject: Record<number, any> = {};
+  for (const pi of inputsRaw) inputsByProject[pi.project_id] = pi;
   const uploads     = db.prepare("SELECT * FROM uploads ORDER BY uploaded_at DESC LIMIT 5").all() as any[];
 
   // Stage data keyed by project_id
@@ -50,10 +55,12 @@ export default async function DashboardPage() {
   const projectsWithIncentive = activeRaw.map(p => {
     const effectiveMaterials = (p.actual_materials   || 0) + (p.unrecorded_materials || 0);
     const effectiveHours     = (p.actual_total_hours || 0) + (p.unrecorded_hours     || 0);
+    const pi = inputsByProject[p.id];
     return {
       ...p,
       effectiveMaterials,
       effectiveHours,
+      blended_hourly_wage: pi?.blended_hourly_wage ?? 37,
       incentive: calcIncentive(
         p.goal_hours,
         effectiveHours,

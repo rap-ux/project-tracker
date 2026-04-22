@@ -117,6 +117,15 @@ db.exec(`
     old_value    TEXT,
     new_value    TEXT    NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS project_activity (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    user_name  TEXT    NOT NULL,
+    action     TEXT    NOT NULL,
+    details    TEXT,
+    created_at TEXT    DEFAULT (datetime('now'))
+  );
 `);
 
 // ── Migrations ────────────────────────────────────────────────────────────────

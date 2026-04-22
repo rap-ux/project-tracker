@@ -70,6 +70,26 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
   db.prepare(`UPDATE projects SET ${fields}, updated_at = datetime('now') WHERE id = @id`)
     .run({ ...body, id: parseInt(id) });
 
+  // ── Activity log ────────────────────────────────────────────────────────────
+  const TRACKED = ["stage", "stage_completion", "actual_total_hours", "actual_materials",
+                   "contract_value", "total_invoiced", "foreman"];
+  const changes: string[] = [];
+  for (const f of TRACKED) {
+    if (body[f] !== undefined && body[f] !== current[f]) {
+      const oldV = f === "stage_completion" ? `${Math.round((current[f] ?? 0) * 100)}%`
+                  : current[f] ?? "—";
+      const newV = f === "stage_completion" ? `${Math.round((body[f] ?? 0) * 100)}%`
+                  : body[f] ?? "—";
+      changes.push(`${f}: ${oldV} → ${newV}`);
+    }
+  }
+  if (changes.length > 0) {
+    db.prepare(`
+      INSERT INTO project_activity (project_id, user_name, action, details)
+      VALUES (?, ?, ?, ?)
+    `).run(parseInt(id), (session.user as any).name ?? "Unknown", "Edited", changes.join(" · "));
+  }
+
   return Response.json({ ok: true });
 }
 

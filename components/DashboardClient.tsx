@@ -85,6 +85,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
   const [activateProject, setActivateProject] = useState<any>(null);
   const [activating,      setActivating]      = useState(false);
   const [openDropdown,    setOpenDropdown]    = useState<number | null>(null);
+  const [activitiesByProject, setActivitiesByProject] = useState<Record<number, any[]>>({});
   // Live preview of calculated project_completion in the edit modal
   const [draftStage,      setDraftStage]      = useState<string>("");
   const [draftStagePct,   setDraftStagePct]   = useState<number>(0);
@@ -108,6 +109,13 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
+    // Lazy-load activity log on first expand
+    if (!activitiesByProject[id]) {
+      fetch(`/api/projects/${id}/activity`)
+        .then(r => r.json())
+        .then(data => setActivitiesByProject(prev => ({ ...prev, [id]: data.activities ?? [] })))
+        .catch(() => {});
+    }
   }
 
   async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -769,6 +777,71 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                               )}
                             </div>
                           </div>
+
+                          {/* ── Profitability ── */}
+                          {!isForeman && (() => {
+                            const wage      = p.blended_hourly_wage ?? 37;
+                            const estCost   = (p.est_materials_budget ?? 0) + (p.est_total_hours ?? 0) * wage;
+                            const actCost   = (p.effectiveMaterials ?? 0) + (p.effectiveHours ?? 0) * wage;
+                            const estProfit = (p.contract_value ?? 0) - estCost;
+                            const estMargin = p.contract_value > 0 ? estProfit / p.contract_value : 0;
+                            const burnPct   = estCost > 0 ? actCost / estCost : 0;
+                            const overBudget = burnPct > 1;
+                            return (
+                              <div className="border-t border-gray-100 pt-3">
+                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">💰 Profitability</p>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                  {[
+                                    { label: "Est. Total Cost",  value: fmt$(estCost),   sub: `Mat + ${wage}/hr × est hrs` },
+                                    { label: "Est. Profit",      value: fmt$(estProfit), sub: `${fmtPct(estMargin)} margin`,
+                                      hi: estMargin > 0.35 ? "text-green-700" : estMargin > 0.15 ? "text-yellow-700" : "text-red-700" },
+                                    { label: "Actual Cost So Far", value: fmt$(actCost), sub: `${fmtPct(burnPct)} of budget`,
+                                      hi: overBudget ? "text-red-700" : burnPct > 0.85 ? "text-yellow-700" : "text-gray-800" },
+                                    { label: "Labor Cost (actual)", value: fmt$((p.effectiveHours ?? 0) * wage),
+                                      sub: `${(p.effectiveHours ?? 0).toLocaleString()} hrs × $${wage}` },
+                                  ].map(c => (
+                                    <div key={c.label} className="rounded-lg border border-gray-100 bg-white px-3 py-2">
+                                      <p className="text-[10px] text-gray-400 uppercase tracking-wide">{c.label}</p>
+                                      <p className={`text-sm font-bold mt-0.5 ${c.hi ?? "text-gray-800"}`}>{c.value}</p>
+                                      {c.sub && <p className="text-[10px] text-gray-400">{c.sub}</p>}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })()}
+
+                          {/* ── Activity Log ── */}
+                          {(() => {
+                            const acts = activitiesByProject[p.id];
+                            if (!acts) return (
+                              <div className="border-t border-gray-100 pt-3">
+                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">📋 Activity Log</p>
+                                <p className="text-xs text-gray-400 mt-1">Loading…</p>
+                              </div>
+                            );
+                            return (
+                              <div className="border-t border-gray-100 pt-3">
+                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">📋 Activity Log</p>
+                                {acts.length === 0 ? (
+                                  <p className="text-xs text-gray-400">No activity yet.</p>
+                                ) : (
+                                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                                    {acts.map((a: any) => (
+                                      <div key={a.id} className="flex items-start gap-2 text-xs">
+                                        <span className="shrink-0 font-medium text-gray-600 min-w-[80px]">{a.user_name}</span>
+                                        <span className="shrink-0 text-gray-400 px-1.5 py-0.5 rounded bg-gray-100">{a.action}</span>
+                                        <span className="text-gray-500 flex-1">{a.details ?? ""}</span>
+                                        <span className="shrink-0 text-gray-300 tabular-nums">
+                                          {new Date(a.created_at.replace(" ", "T") + "Z").toLocaleDateString()}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </div>
                       </td>
                     </tr>

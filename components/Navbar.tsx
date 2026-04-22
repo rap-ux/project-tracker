@@ -11,6 +11,7 @@ const OWNER_LINKS = [
   { href: "/inputs",    label: "Inputs"    },
   { href: "/forecast",  label: "Forecast"  },
   { href: "/timeline",  label: "Timeline"  },
+  { href: "/clients",   label: "Clients"   },
   { href: "/uploads",   label: "Uploads"   },
   { href: "/report",    label: "Report"    },
 ];
