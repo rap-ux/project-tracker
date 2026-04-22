@@ -3,7 +3,7 @@ import { redirect }   from "next/navigation";
 import { auth }        from "@/auth";
 import db              from "@/lib/db";
 import Navbar          from "@/components/Navbar";
-import Link            from "next/link";
+import PrintButton     from "@/components/PrintButton";
 
 export default async function ClientsPage() {
   const session = await auth();
@@ -45,11 +45,7 @@ export default async function ClientsPage() {
             <h1 className="text-2xl font-bold text-gray-900">Client &amp; Project Directory</h1>
             <p className="text-sm text-gray-500 mt-1">{projects.length} projects across {regions.length} regions</p>
           </div>
-          <button
-            onClick={() => window.print()}
-            className="text-sm px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-lg font-medium transition-colors">
-            🖨 Print / PDF
-          </button>
+          <PrintButton />
         </div>
 
         {/* Print header */}
