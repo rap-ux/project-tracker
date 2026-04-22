@@ -10,13 +10,28 @@ if (!fs.existsSync(DB_DIR)) {
 }
 
 
-const db = new Database(DB_PATH);
-db.pragma("journal_mode = WAL");
-db.pragma("busy_timeout = 30000");
-db.pragma("foreign_keys = ON");
+// During Next.js production build's "Collecting page data" phase, dozens of parallel
+// workers each import db.ts simultaneously. If we open SQLite here, they race on the
+// WAL pragma and fail with SQLITE_BUSY. All our routes are `force-dynamic`, so no
+// route actually touches the DB during build — we just need a stub that throws if
+// accidentally used, while the real DB is opened lazily at runtime.
+const isBuild = process.env.NEXT_PHASE === "phase-production-build";
 
-// Skip all init during build — avoids SQLITE_BUSY_SNAPSHOT across 26 parallel workers
-if (process.env.NEXT_PHASE !== "phase-production-build") {
+let db: Database.Database;
+
+if (isBuild) {
+  db = new Proxy({} as any, {
+    get(_t, prop) {
+      return () => {
+        throw new Error(`SQLite access blocked during build: tried db.${String(prop)}`);
+      };
+    },
+  }) as any;
+} else {
+  db = new Database(DB_PATH);
+  db.pragma("journal_mode = WAL");
+  db.pragma("busy_timeout = 30000");
+  db.pragma("foreign_keys = ON");
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 db.exec(`
