@@ -35,6 +35,22 @@ function formatDateShort(d: string): string {
   return `${months[parseInt(m[2]) - 1]} ${parseInt(m[3])}`;
 }
 
+// Render a comment body with @mentions highlighted; highlight stronger if it's the current user
+function renderBodyWithMentions(body: string, currentFirstName: string): React.ReactNode {
+  const parts = body.split(/(@[A-Za-z0-9_.-]+)/g);
+  return parts.map((part, i) => {
+    if (!part.startsWith("@")) return <span key={i}>{part}</span>;
+    const name  = part.slice(1);
+    const isYou = !!currentFirstName && name.toLowerCase() === currentFirstName.toLowerCase();
+    return (
+      <span key={i} className={`font-semibold ${isYou ? "text-amber-700" : ""}`}
+        style={!isYou ? { color: "#00BAD6" } : {}}>
+        {part}
+      </span>
+    );
+  });
+}
+
 interface HomeData {
   userName: string;
   totals: {
@@ -53,6 +69,8 @@ interface HomeData {
   upcomingMilestones: Array<{ name: string; milestone: string; receiveDate: string; amount: number }>;
   recentActivity: Array<{ id: number; user_name: string; action: string; details: string | null; created_at: string; project_name: string }>;
   mentions: Array<{ id: number; body: string; user_name: string; created_at: string; project_name: string }>;
+  allMentions: Array<{ id: number; body: string; user_name: string; mentions: string; created_at: string; project_id: number; project_name: string; foreman: string }>;
+  currentUserFirstName: string;
 }
 
 export default function HomeClient({ data }: { data: HomeData }) {
@@ -263,6 +281,84 @@ export default function HomeClient({ data }: { data: HomeData }) {
           </div>
         </section>
       </div>
+
+      {/* ── Recent Mentions log ── */}
+      <section className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="px-5 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h2 className="text-sm font-bold text-gray-800">💬 Recent Mentions</h2>
+            <p className="text-[11px] text-gray-400">Team @mentions across all projects</p>
+          </div>
+          <div className="flex items-center gap-2 text-[11px]">
+            <span className="px-2 py-0.5 rounded-full font-semibold"
+              style={{ backgroundColor: "#f0fdfe", color: "#00BAD6" }}>
+              {data.allMentions.length} recent
+            </span>
+            {data.mentions.length > 0 && (
+              <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">
+                {data.mentions.length} for you
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="p-2">
+          {data.allMentions.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-2xl mb-2">💭</p>
+              <p className="text-xs text-gray-400">No mentions yet.</p>
+              <p className="text-[10px] text-gray-400 mt-1">Use <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">@name</span> in any project comment to tag a teammate.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-100 max-h-[360px] overflow-y-auto">
+              {data.allMentions.map(m => {
+                const mentionedList = m.mentions.split(",").map(s => s.trim()).filter(Boolean);
+                const youMentioned  = !!data.currentUserFirstName && mentionedList.some(
+                  n => n.toLowerCase() === data.currentUserFirstName.toLowerCase()
+                );
+                const initials = m.user_name.split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase();
+
+                return (
+                  <div key={m.id}
+                    className={`flex items-start gap-3 px-3 py-2.5 transition-colors ${
+                      youMentioned ? "bg-cyan-50/40 hover:bg-cyan-50/60" : "hover:bg-gray-50"
+                    }`}>
+                    {/* Avatar */}
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+                      style={{ backgroundColor: "#00BAD6" }}>
+                      {initials}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-1.5 flex-wrap">
+                        <span className="text-xs font-semibold text-gray-800">{m.user_name}</span>
+                        <span className="text-[11px] text-gray-400">mentioned</span>
+                        {mentionedList.map((name, i) => {
+                          const isYou = !!data.currentUserFirstName &&
+                                        name.toLowerCase() === data.currentUserFirstName.toLowerCase();
+                          return (
+                            <span key={i} className={`text-[11px] font-semibold px-1.5 py-0.5 rounded ${
+                              isYou ? "bg-amber-100 text-amber-700" : "bg-cyan-50"
+                            }`}
+                              style={!isYou ? { color: "#00BAD6" } : {}}>
+                              @{name}{isYou && " (you)"}
+                            </span>
+                          );
+                        })}
+                        <span className="text-[11px] text-gray-400">on</span>
+                        <span className="text-[11px] font-medium text-gray-700">{m.project_name}</span>
+                        <span className="text-[10px] text-gray-400 ml-auto">{relTime(m.created_at)}</span>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                        {renderBodyWithMentions(m.body, data.currentUserFirstName)}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* ── Quick actions ── */}
       <section>

@@ -140,6 +140,20 @@ export default async function Home() {
       `).all(`%,${firstName},%`, `%,${userName},%`)
     : []) as Array<{ id: number; body: string; user_name: string; created_at: string; project_name: string }>;
 
+  // All recent @mentions across the team (for the Mentions tile)
+  const allMentions = db.prepare(`
+    SELECT c.id, c.body, c.user_name, c.mentions, c.created_at,
+           p.id AS project_id, p.name AS project_name, p.foreman
+    FROM project_comments c
+    JOIN projects p ON p.id = c.project_id
+    WHERE c.mentions IS NOT NULL AND c.mentions != ''
+    ORDER BY c.created_at DESC
+    LIMIT 12
+  `).all() as Array<{
+    id: number; body: string; user_name: string; mentions: string;
+    created_at: string; project_id: number; project_name: string; foreman: string;
+  }>;
+
   // ── QBO staleness ──────────────────────────────────────────────────────────
   const latestUpload = db.prepare(
     "SELECT uploaded_at FROM uploads ORDER BY uploaded_at DESC LIMIT 1"
@@ -175,6 +189,8 @@ export default async function Home() {
     })),
     recentActivity,
     mentions,
+    allMentions,
+    currentUserFirstName: firstName,
   };
 
   return (
