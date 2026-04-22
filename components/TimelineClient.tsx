@@ -416,19 +416,29 @@ export default function TimelineClient({ projects, stagesByProject }: Props) {
 }
 
 // ── Gantt chart ───────────────────────────────────────────────────────────────
+const STAGE_ABBR: Record<string, string> = {
+  "Contracting Phase": "CP",
+  "Underground":       "UG",
+  "Rough":             "R",
+  "Finish":            "F",
+  "Extras":            "X",
+};
+
 function GanttView({ visible, stagesByProject }: {
   visible:         any[];
   stagesByProject: Record<number, any[]>;
 }) {
-  const PX_PER_DAY = 3.2;
-  const ROW_H      = 34;
-  const LABEL_W    = 210;
-  const HEADER_H   = 52; // quarter row height
+  const PX_PER_DAY = 3.5;
+  const ROW_H      = 48;  // one row per project, taller for clarity
+  const LABEL_W    = 240;
+  const YEAR_H     = 28;
+  const MONTH_H    = 26;
+  const HEADER_H   = YEAR_H + MONTH_H;
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Collect all dated stage bars
-  const allBars = useMemo(() => {
+  // Collect all dated stages
+  const allDatedStages = useMemo(() => {
     const out: Array<{ project: any; stage: any }> = [];
     for (const p of visible) {
       for (const s of stagesByProject[p.id] ?? []) {
@@ -438,7 +448,7 @@ function GanttView({ visible, stagesByProject }: {
     return out;
   }, [visible, stagesByProject]);
 
-  if (allBars.length === 0) {
+  if (allDatedStages.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm py-20 text-center text-gray-400 text-sm">
         No stage dates to display. Add start/end dates to project stages first.
@@ -447,14 +457,13 @@ function GanttView({ visible, stagesByProject }: {
   }
 
   // Date range
-  const allDates = allBars.flatMap(({ stage: s }) => [parseDate(s.start_date)!, parseDate(s.end_date)!]);
+  const allDates = allDatedStages.flatMap(({ stage: s }) => [parseDate(s.start_date)!, parseDate(s.end_date)!]);
   const rawMin   = new Date(Math.min(...allDates.map(d => d.getTime())));
   const rawMax   = new Date(Math.max(...allDates.map(d => d.getTime())));
 
-  // Snap to quarter boundaries
-  const minDate = new Date(rawMin.getFullYear(), Math.floor(rawMin.getMonth() / 3) * 3, 1);
-  const maxDate = new Date(rawMax.getFullYear(), Math.ceil((rawMax.getMonth() + 1) / 3) * 3, 1);
-  maxDate.setDate(maxDate.getDate() - 1); // last day of final quarter
+  // Pad range a little and snap to month boundaries
+  const minDate = new Date(rawMin.getFullYear(), rawMin.getMonth(), 1);
+  const maxDate = new Date(rawMax.getFullYear(), rawMax.getMonth() + 1, 0); // last day of that month
 
   const totalDays = daysBetween(minDate, maxDate) + 1;
   const chartW    = Math.round(totalDays * PX_PER_DAY);
@@ -471,24 +480,32 @@ function GanttView({ visible, stagesByProject }: {
     cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
   }
 
-  // Build quarter cells (group months)
-  const quarterCells: Array<{ label: string; left: number; width: number }> = [];
-  let qi = 0;
-  while (qi < monthCells.length) {
-    const mc      = monthCells[qi];
-    const qNum    = Math.floor(new Date(mc.year, MONTH_NAMES.indexOf(mc.label), 1).getMonth() / 3) + 1;
-    const qLabel  = `${mc.year} Q${qNum}`;
-    let width = mc.width;
-    let nextQI = qi + 1;
-    while (nextQI < monthCells.length) {
-      const nm = monthCells[nextQI];
-      const nq = Math.floor(new Date(nm.year, MONTH_NAMES.indexOf(nm.label), 1).getMonth() / 3) + 1;
-      if (nq !== qNum || nm.year !== mc.year) break;
-      width += nm.width;
-      nextQI++;
+  // Build year cells (group months)
+  const yearCells: Array<{ label: number; left: number; width: number }> = [];
+  let yi = 0;
+  while (yi < monthCells.length) {
+    const yr  = monthCells[yi].year;
+    let width = monthCells[yi].width;
+    const left = monthCells[yi].left;
+    let next = yi + 1;
+    while (next < monthCells.length && monthCells[next].year === yr) {
+      width += monthCells[next].width;
+      next++;
     }
-    quarterCells.push({ label: qLabel, left: mc.left, width });
-    qi = nextQI;
+    yearCells.push({ label: yr, left, width });
+    yi = next;
+  }
+
+  // Quarter shading (alternate bg every 3 months for rhythm)
+  const quarterShades: Array<{ left: number; width: number }> = [];
+  for (let i = 0; i < monthCells.length; i += 3) {
+    const start = monthCells[i];
+    const last  = monthCells[Math.min(i + 2, monthCells.length - 1)];
+    const width = last.left + last.width - start.left;
+    // Only shade every other quarter
+    if ((Math.floor(start.year * 4 + MONTH_NAMES.indexOf(start.label) / 3)) % 2 === 0) {
+      quarterShades.push({ left: start.left, width });
+    }
   }
 
   // Today marker
@@ -496,10 +513,12 @@ function GanttView({ visible, stagesByProject }: {
   const todayLeft  = daysBetween(minDate, today) * PX_PER_DAY;
   const showToday  = today >= minDate && today <= maxDate;
 
-  // Group by foreman → projects
+  // Group projects by foreman
   const foremanOrder: string[] = [];
   const byForeman: Record<string, any[]> = {};
   for (const p of visible) {
+    const hasDatedStages = (stagesByProject[p.id] ?? []).some((s: any) => s.start_date && s.end_date);
+    if (!hasDatedStages) continue;
     if (!byForeman[p.foreman]) {
       foremanOrder.push(p.foreman);
       byForeman[p.foreman] = [];
@@ -510,51 +529,68 @@ function GanttView({ visible, stagesByProject }: {
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-3 px-4 py-2 border-b border-gray-100 bg-gray-50">
+      <div className="flex flex-wrap items-center gap-4 px-4 py-2.5 border-b border-gray-100 bg-gray-50">
         {Object.entries(STAGE_BAR_COLOR).map(([stage, c]) => (
           <div key={stage} className="flex items-center gap-1.5 text-xs">
-            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: c.solid }} />
-            <span className="text-gray-600">{stage}</span>
+            <div className="w-3.5 h-3.5 rounded" style={{ backgroundColor: c.solid }} />
+            <span className="text-gray-600 font-medium">{stage}</span>
           </div>
         ))}
-        <div className="flex items-center gap-1.5 text-xs ml-4">
-          <div className="w-0.5 h-3 bg-red-400" />
-          <span className="text-gray-500">Today</span>
+        <div className="h-4 w-px bg-gray-300 mx-1" />
+        <div className="flex items-center gap-3 text-xs text-gray-500">
+          <span className="flex items-center gap-1.5">
+            <div className="w-3.5 h-3.5 rounded border-2 border-gray-400 bg-white" />
+            Pending
+          </span>
+          <span className="flex items-center gap-1.5">
+            <div className="w-3.5 h-3.5 rounded bg-gray-400" style={{ backgroundImage: "linear-gradient(135deg, rgba(0,0,0,0.15) 25%, transparent 25%, transparent 50%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.15) 75%, transparent 75%)", backgroundSize: "6px 6px" }} />
+            Complete
+          </span>
         </div>
-        <div className="flex items-center gap-3 text-xs ml-2 text-gray-400">
-          <span>■ Solid = In Progress/Complete</span>
-          <span>□ Outline = Pending</span>
+        <div className="h-4 w-px bg-gray-300 mx-1" />
+        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+          <div className="w-0.5 h-4 bg-red-500" />
+          <span>Today</span>
         </div>
       </div>
 
       <div className="overflow-x-auto" ref={scrollRef}>
         <div style={{ minWidth: LABEL_W + chartW + 1, position: "relative" }}>
 
-          {/* ── Quarter header ── */}
-          <div className="flex sticky top-0 z-20" style={{ height: HEADER_H }}>
-            <div className="shrink-0 flex items-center px-4 border-r border-b border-slate-700 bg-slate-800 z-20"
+          {/* ── Year header ── */}
+          <div className="flex sticky top-0 z-20" style={{ height: YEAR_H }}>
+            <div className="shrink-0 flex items-center px-4 border-r border-b border-slate-700 bg-slate-800"
               style={{ width: LABEL_W, minWidth: LABEL_W }}>
-              <span className="text-white text-xs font-semibold uppercase tracking-wide">Foreman / Project</span>
+              <span className="text-white text-[11px] font-bold uppercase tracking-wider">Project</span>
             </div>
             <div className="relative border-b border-slate-700 bg-slate-800" style={{ width: chartW }}>
-              {quarterCells.map((q, i) => (
-                <div key={i} className="absolute top-0 bottom-0 flex items-center justify-center border-r border-slate-600"
-                  style={{ left: q.left, width: q.width }}>
-                  <span className="text-white text-xs font-semibold truncate px-1">{q.label}</span>
+              {yearCells.map((y, i) => (
+                <div key={i} className="absolute top-0 bottom-0 flex items-center justify-center"
+                  style={{ left: y.left, width: y.width, borderRight: i < yearCells.length - 1 ? "1px solid #475569" : "none" }}>
+                  <span className="text-white text-xs font-bold tracking-wide">{y.label}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* ── Month sub-header ── */}
-          <div className="flex sticky z-10 border-b border-gray-200" style={{ top: HEADER_H }}>
-            <div className="shrink-0 border-r border-gray-200 bg-slate-100"
-              style={{ width: LABEL_W, minWidth: LABEL_W, height: 24 }} />
-            <div className="relative bg-slate-100" style={{ width: chartW, height: 24 }}>
+          <div className="flex sticky z-10 border-b border-gray-300" style={{ top: YEAR_H, height: MONTH_H }}>
+            <div className="shrink-0 border-r border-gray-300 bg-slate-100"
+              style={{ width: LABEL_W, minWidth: LABEL_W }} />
+            <div className="relative bg-slate-50" style={{ width: chartW }}>
+              {/* Quarter shading strip */}
+              {quarterShades.map((q, i) => (
+                <div key={i} className="absolute top-0 bottom-0" style={{ left: q.left, width: q.width, backgroundColor: "#f1f5f9" }} />
+              ))}
               {monthCells.map((m, i) => (
-                <div key={i} className="absolute top-0 bottom-0 flex items-center border-r border-gray-200"
-                  style={{ left: m.left, width: m.width }}>
-                  <span className="text-gray-500 text-[10px] font-medium px-1 truncate">{m.label}</span>
+                <div key={i} className="absolute top-0 bottom-0 flex items-center justify-center"
+                  style={{
+                    left: m.left, width: m.width,
+                    borderRight: i < monthCells.length - 1 && monthCells[i + 1].year !== m.year
+                      ? "1px solid #94a3b8"
+                      : "1px solid #e2e8f0",
+                  }}>
+                  <span className="text-gray-600 text-[10px] font-semibold tracking-wide">{m.label}</span>
                 </div>
               ))}
             </div>
@@ -563,108 +599,147 @@ function GanttView({ visible, stagesByProject }: {
           {/* ── Foreman groups + rows ── */}
           {foremanOrder.map(foreman => {
             const fProjects = byForeman[foreman];
-
-            // Build all bar rows for this foreman's projects
-            const barRows: Array<{ project: any; stage: any; barLeft: number; barWidth: number }> = [];
-            for (const p of fProjects) {
-              const stages = (stagesByProject[p.id] ?? []).filter((s: any) => s.start_date && s.end_date);
-              for (const s of stages) {
-                const start    = parseDate(s.start_date)!;
-                const end      = parseDate(s.end_date)!;
-                const barLeft  = Math.max(0, Math.round(daysBetween(minDate, start) * PX_PER_DAY));
-                const barWidth = Math.max(6, Math.round(daysBetween(start, end) * PX_PER_DAY));
-                barRows.push({ project: p, stage: s, barLeft, barWidth });
-              }
-            }
-
-            if (barRows.length === 0) return null;
-
             return (
               <div key={foreman}>
                 {/* Foreman group header */}
-                <div className="flex items-center border-b border-gray-200" style={{ backgroundColor: "#f1f5f9" }}>
-                  <div className="shrink-0 px-4 py-1.5 font-bold text-xs text-slate-700 uppercase tracking-wide border-r border-gray-200"
-                    style={{ width: LABEL_W, minWidth: LABEL_W }}>
+                <div className="flex items-stretch border-b border-gray-200 sticky z-[5]" style={{ backgroundColor: "#e0f2fe" }}>
+                  <div className="shrink-0 px-4 py-1.5 font-bold text-xs uppercase tracking-wider border-r border-blue-200 flex items-center gap-2"
+                    style={{ width: LABEL_W, minWidth: LABEL_W, color: "#0369a1" }}>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "#0369a1" }} />
                     {foreman}
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-white text-blue-600 ml-auto">
+                      {fProjects.length}
+                    </span>
                   </div>
-                  <div style={{ width: chartW, height: 28, position: "relative" }}>
-                    {/* subtle grid lines */}
+                  <div style={{ width: chartW, position: "relative" }}>
+                    {/* month grid lines continue through header */}
                     {monthCells.map((m, i) => (
-                      <div key={i} className="absolute top-0 bottom-0 border-r border-gray-200"
-                        style={{ left: m.left }} />
+                      <div key={i} className="absolute top-0 bottom-0"
+                        style={{
+                          left: m.left,
+                          borderRight: i < monthCells.length - 1 && monthCells[i + 1].year !== m.year
+                            ? "1px solid #60a5fa"
+                            : "1px dashed rgba(255,255,255,0.6)",
+                        }} />
                     ))}
                     {showToday && (
-                      <div className="absolute top-0 bottom-0 w-px bg-red-400/40 z-10"
-                        style={{ left: todayLeft }} />
+                      <div className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10" style={{ left: todayLeft }} />
                     )}
                   </div>
                 </div>
 
-                {/* Stage bar rows */}
-                {barRows.map((row, ri) => {
-                  const { project: p, stage: s } = row;
-                  const c           = STAGE_BAR_COLOR[s.stage] ?? STAGE_BAR_COLOR["Rough"];
-                  const isComplete  = s.status === "Complete";
-                  const isProgress  = s.status === "In Progress";
-                  const isPending   = s.status === "Pending";
-
-                  // Bar style
-                  const barBg     = isPending   ? c.light  : c.solid;
-                  const barColor  = isPending   ? c.text   : "#ffffff";
-                  const barBorder = isPending   ? `1.5px solid ${c.solid}` : "none";
-                  const barOpacity = isComplete ? 0.7 : 1;
+                {/* One row per project — all stages inline */}
+                {fProjects.map((p, pi) => {
+                  const stages = (stagesByProject[p.id] ?? []).filter((s: any) => s.start_date && s.end_date);
+                  const isCurrentStage = (stg: string) => p.stage === stg;
+                  const rowBg = pi % 2 === 0 ? "#ffffff" : "#fafafa";
 
                   return (
-                    <div key={ri}
-                      className="flex items-center border-b border-gray-100 hover:bg-blue-50/30 group transition-colors"
-                      style={{ height: ROW_H }}>
+                    <div key={p.id}
+                      className="flex items-stretch border-b border-gray-100 hover:bg-blue-50/20 transition-colors group"
+                      style={{ height: ROW_H, backgroundColor: rowBg }}>
 
                       {/* Label */}
-                      <div className="shrink-0 px-3 border-r border-gray-100 overflow-hidden"
+                      <div className="shrink-0 px-3 py-1.5 border-r border-gray-100 overflow-hidden flex flex-col justify-center"
                         style={{ width: LABEL_W, minWidth: LABEL_W }}>
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs font-medium text-gray-700 truncate leading-tight">{p.name}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-semibold text-gray-800 truncate leading-tight">{p.name}</span>
                           {p.is_pipeline === 1 && (
-                            <span className="text-[9px] px-1 py-0.5 rounded bg-gray-100 text-gray-400 shrink-0">Minor</span>
+                            <span className="text-[9px] px-1 py-0.5 rounded bg-gray-100 text-gray-500 shrink-0 font-medium">Minor</span>
                           )}
                         </div>
-                        <span className="text-[10px] text-gray-400">{s.stage}</span>
+                        <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-gray-400">
+                          <span className="px-1 py-0.5 rounded font-medium text-white"
+                            style={{ backgroundColor: STAGE_BAR_COLOR[p.stage]?.solid ?? "#94a3b8", fontSize: "9px" }}>
+                            {p.stage}
+                          </span>
+                          {!p.is_pipeline && p.project_completion != null && (
+                            <span className="font-mono">{fmtPct(p.project_completion)}</span>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Bar area */}
-                      <div className="relative overflow-hidden" style={{ width: chartW, height: ROW_H }}>
+                      {/* Chart area */}
+                      <div className="relative overflow-hidden" style={{ width: chartW }}>
+                        {/* Quarter shading */}
+                        {quarterShades.map((q, i) => (
+                          <div key={i} className="absolute top-0 bottom-0" style={{ left: q.left, width: q.width, backgroundColor: "rgba(241,245,249,0.5)" }} />
+                        ))}
+
                         {/* Month grid lines */}
                         {monthCells.map((m, mi) => (
-                          <div key={mi} className="absolute top-0 bottom-0 border-r border-gray-100"
-                            style={{ left: m.left }} />
+                          <div key={mi} className="absolute top-0 bottom-0"
+                            style={{
+                              left: m.left,
+                              borderRight: mi < monthCells.length - 1 && monthCells[mi + 1].year !== m.year
+                                ? "1px solid #cbd5e1"
+                                : "1px solid #f1f5f9",
+                            }} />
                         ))}
 
                         {/* Today line */}
                         {showToday && (
-                          <div className="absolute top-0 bottom-0 w-0.5 z-10"
-                            style={{ left: todayLeft, backgroundColor: "#ef4444" }} />
+                          <div className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10 pointer-events-none"
+                            style={{ left: todayLeft, boxShadow: "0 0 4px rgba(239,68,68,0.4)" }} />
                         )}
 
-                        {/* Stage bar */}
-                        <div
-                          className="absolute top-1.5 rounded flex items-center overflow-hidden cursor-default"
-                          style={{
-                            left:        row.barLeft,
-                            width:       row.barWidth,
-                            height:      ROW_H - 12,
-                            backgroundColor: barBg,
-                            color:       barColor,
-                            border:      barBorder,
-                            opacity:     barOpacity,
-                          }}
-                          title={`${p.name} · ${s.stage} · ${s.status}\n${fmtDate(s.start_date)} → ${fmtDate(s.end_date)}`}>
-                          {/* Bar label (only if bar is wide enough) */}
-                          {row.barWidth > 80 && (
-                            <span className="px-2 text-[10px] font-semibold truncate leading-tight whitespace-nowrap">
-                              {p.name} · {fmtDateShort(s.start_date)} – {fmtDateShort(s.end_date)}
-                            </span>
-                          )}
-                        </div>
+                        {/* Stage bars — all on the same row */}
+                        {stages.map((s: any, si: number) => {
+                          const c         = STAGE_BAR_COLOR[s.stage] ?? STAGE_BAR_COLOR["Rough"];
+                          const start     = parseDate(s.start_date)!;
+                          const end       = parseDate(s.end_date)!;
+                          const barLeft   = Math.max(0, Math.round(daysBetween(minDate, start) * PX_PER_DAY));
+                          const barWidth  = Math.max(8, Math.round(daysBetween(start, end) * PX_PER_DAY));
+                          const isPending = s.status === "Pending";
+                          const isComplete = s.status === "Complete";
+                          const isCurrent  = isCurrentStage(s.stage);
+                          const progress   = isCurrent ? (p.stage_completion ?? 0) : isComplete ? 1 : 0;
+                          const barH       = ROW_H - 16;
+                          const abbr       = STAGE_ABBR[s.stage] ?? s.stage.charAt(0);
+
+                          return (
+                            <div key={si}
+                              className="absolute rounded-md flex items-center cursor-default overflow-hidden"
+                              style={{
+                                left:   barLeft,
+                                top:    8,
+                                width:  barWidth,
+                                height: barH,
+                                backgroundColor: isPending ? "#ffffff" : c.solid,
+                                border:          isPending ? `2px dashed ${c.solid}` : `1px solid ${c.solid}`,
+                                boxShadow:       isPending ? "none" : "0 1px 2px rgba(0,0,0,0.08)",
+                                backgroundImage: isComplete
+                                  ? "linear-gradient(135deg, rgba(255,255,255,0.25) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.25) 75%, transparent 75%)"
+                                  : "none",
+                                backgroundSize: isComplete ? "8px 8px" : "auto",
+                              }}
+                              title={`${p.name} · ${s.stage} · ${s.status}\n${fmtDate(s.start_date)} → ${fmtDate(s.end_date)}${s.notes ? `\nNotes: ${s.notes}` : ""}`}>
+
+                              {/* Progress fill (only for in-progress current stage) */}
+                              {isCurrent && progress > 0 && progress < 1 && !isPending && (
+                                <div className="absolute top-0 bottom-0 left-0 bg-white/30"
+                                  style={{ width: `${progress * 100}%` }} />
+                              )}
+
+                              {/* Bar label */}
+                              <span
+                                className="relative z-10 px-1.5 text-[10px] font-bold truncate leading-none whitespace-nowrap"
+                                style={{ color: isPending ? c.text : "#ffffff" }}>
+                                {barWidth > 90 ? s.stage : barWidth > 28 ? abbr : ""}
+                                {barWidth > 140 && (
+                                  <span className="font-normal opacity-90 ml-1.5">
+                                    {fmtDateShort(s.start_date)} – {fmtDateShort(s.end_date)}
+                                  </span>
+                                )}
+                              </span>
+
+                              {/* Current-stage indicator dot */}
+                              {isCurrent && !isPending && (
+                                <span className="absolute right-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-white animate-pulse z-10" />
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   );
@@ -674,7 +749,7 @@ function GanttView({ visible, stagesByProject }: {
           })}
 
           {/* Bottom spacer */}
-          <div style={{ height: 16 }} />
+          <div style={{ height: 12 }} />
         </div>
       </div>
     </div>
