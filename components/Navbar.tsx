@@ -18,6 +18,7 @@ const OWNER_LINKS = [
   { href: "/forecast",  label: "Forecast"  },
   { href: "/timeline",  label: "Timeline"  },
   { href: "/analytics", label: "Analytics" },
+  { href: "/bonuses",   label: "Bonuses"   },
   { href: "/clients",   label: "Clients"   },
   { href: "/uploads",   label: "Uploads"   },
   { href: "/report",    label: "Report"    },

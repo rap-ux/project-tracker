@@ -718,29 +718,23 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                   </div>
                 </div>
 
-                {/* Bonuses */}
-                {(inc.rough.status !== "no-data" || inc.finish.status !== "no-data") && (
-                  <div className="flex flex-wrap gap-1">
-                    {[
-                      { key: "R", sb: inc.rough  },
-                      { key: "F", sb: inc.finish },
-                    ].map(({ key, sb }) => {
-                      if (sb.status === "no-data") return null;
-                      const pill =
-                        sb.status === "beat"    ? "bg-green-100 text-green-700" :
-                        sb.status === "meet"    ? "bg-blue-100 text-blue-700"   :
-                        sb.status === "miss"    ? "bg-red-100 text-red-700"     :
-                                                  "bg-gray-100 text-gray-500";
-                      return (
-                        <span key={key} className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${pill}`}>
-                          {key} · {sb.label}
-                        </span>
-                      );
-                    })}
-                    {!isForeman && inc.totalEarned > 0 && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-100 text-green-700 font-bold">
-                        {fmt$(inc.totalEarned)}
-                      </span>
+                {/* Links (basecamp + drive) */}
+                {(p.basecamp_link || p.drive_folder) && (
+                  <div className="flex items-center gap-2">
+                    {p.basecamp_link && (
+                      <a href={p.basecamp_link} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-gray-700">
+                        <img src="/icons/basecamp.svg" alt="" className="w-4 h-4" />
+                        Basecamp
+                      </a>
+                    )}
+                    {p.drive_folder && (
+                      <a href={p.drive_folder.startsWith("http") ? p.drive_folder : `https://drive.google.com/drive/search?q=${encodeURIComponent(p.drive_folder)}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-gray-700">
+                        <img src="/icons/google-drive.svg" alt="" className="w-4 h-4" />
+                        Drive
+                      </a>
                     )}
                   </div>
                 )}
@@ -796,7 +790,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                 <th className="px-4 py-3 text-center">Materials</th>
                 <th className="px-4 py-3 text-center">Hours</th>
                 <th className="px-4 py-3 text-center">Status</th>
-                <th className="px-4 py-3 text-center">Bonus</th>
+                <th className="px-4 py-3 text-center">Links</th>
                 <th className="px-4 py-3 text-center">Last Updated</th>
                 <th className="px-4 py-3 text-center w-10"></th>
               </tr>
@@ -887,37 +881,28 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                         {inc.projectStatus.emoji} {inc.projectStatus.label}
                       </span>
                     </td>
-                    {/* Bonus */}
+                    {/* Links */}
                     <td className="px-4 py-3 text-center">
-                      <div className="flex gap-1 flex-wrap justify-center">
-                        {[
-                          { key: "R", sb: inc.rough  },
-                          { key: "F", sb: inc.finish },
-                        ].map(({ key, sb }) => {
-                          if (sb.status === "no-data") return null;
-                          if (sb.status === "too-early") return (
-                            <span key={key} className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-400 font-medium">
-                              {key} —
-                            </span>
-                          );
-                          const pill =
-                            sb.status === "beat" ? "bg-green-100 text-green-700" :
-                            sb.status === "meet" ? "bg-blue-100  text-blue-700"  :
-                            sb.status === "miss" ? "bg-red-100   text-red-700"   :
-                                                   "bg-gray-100  text-gray-400";
-                          const icon =
-                            sb.status === "beat" || sb.status === "meet" ? "✓" :
-                            sb.status === "miss" ? "✗" : "🔒";
-                          return (
-                            <span key={key} className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${pill}`}>
-                              {key} {icon}
-                            </span>
-                          );
-                        })}
-                        {!isForeman && inc.totalEarned > 0 && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-100 text-green-700 font-bold">
-                            {fmt$(inc.totalEarned)}
-                          </span>
+                      <div className="flex items-center gap-1.5 justify-center">
+                        {p.basecamp_link && (
+                          <a href={p.basecamp_link} target="_blank" rel="noopener noreferrer"
+                            title="Open in Basecamp"
+                            onClick={e => e.stopPropagation()}
+                            className="flex items-center justify-center w-7 h-7 rounded transition-opacity hover:opacity-70">
+                            <img src="/icons/basecamp.svg" alt="Basecamp" className="w-5 h-5" />
+                          </a>
+                        )}
+                        {p.drive_folder && (
+                          <a href={p.drive_folder.startsWith("http") ? p.drive_folder : `https://drive.google.com/drive/search?q=${encodeURIComponent(p.drive_folder)}`}
+                            target="_blank" rel="noopener noreferrer"
+                            title="Open in Google Drive"
+                            onClick={e => e.stopPropagation()}
+                            className="flex items-center justify-center w-7 h-7 rounded transition-opacity hover:opacity-70">
+                            <img src="/icons/google-drive.svg" alt="Drive" className="w-5 h-5" />
+                          </a>
+                        )}
+                        {!p.basecamp_link && !p.drive_folder && (
+                          <span className="text-gray-300 text-xs">—</span>
                         )}
                       </div>
                     </td>
