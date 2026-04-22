@@ -82,11 +82,8 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
             alt="Totally Wired Electric"
             className="h-8 sm:h-9 w-auto"
           />
-          <div className="hidden md:flex items-center gap-2 border-l border-white/15 pl-3">
-            <img src="/switchboard-icon.svg" alt="Switchboard" className="h-7 w-7" />
-            <span className="hidden 2xl:inline text-sm font-bold tracking-tight" style={{ color: "#EBF1F5", letterSpacing: "-0.01em" }}>
-              Switchboard
-            </span>
+          <div className="hidden md:flex items-center border-l border-white/15 pl-3">
+            <img src="/switchboard-icon.svg" alt="Switchboard" className="h-7 w-7" title="Switchboard" />
           </div>
         </Link>
 
@@ -106,7 +103,7 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
                   <span className="transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-110">
                     <NavIcon name={l.icon} />
                   </span>
-                  <span className="hidden 2xl:inline transition-transform duration-200 ease-out group-hover:-translate-y-0.5">
+                  <span className="hidden min-[1800px]:inline transition-transform duration-200 ease-out group-hover:-translate-y-0.5">
                     {l.label}
                   </span>
                   {/* Active-page underline (solid cyan) */}
@@ -126,7 +123,7 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
       </div>
 
       {/* ── Right: Search + Alerts + Activity + user + sign out ── */}
-      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0 flex-shrink-0">
         <GlobalSearch />
         <AlertsBell />
         <GlobalActivityButton />
