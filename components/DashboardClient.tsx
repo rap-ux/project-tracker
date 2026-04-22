@@ -376,25 +376,6 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
         <KpiCard label="Flagged"          value={String(flagged.length)} sub={flagged.length > 0 ? "need attention" : "all clear ✅"} />
       </div>
 
-      {/* ── Alerts ── */}
-      {flagged.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 space-y-2">
-          <p className="font-semibold text-red-800">🚨 {flagged.length} project(s) need immediate attention</p>
-          <div className="flex flex-wrap gap-2">
-            {flagged.map((p: any) => {
-              const s = p.incentive.projectStatus;
-              return (
-                <span key={p.id} className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                  s.key === "critical" ? "bg-red-200 text-red-900" : "bg-orange-100 text-orange-900"
-                }`}>
-                  {s.emoji} {p.name} — {s.label}
-                </span>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       {/* ── Toolbar ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
@@ -453,30 +434,6 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
         </div>
       </div>
 
-      {/* Stale QBO warning */}
-      {(() => {
-        if (uploads.length === 0) return null;
-        const latest = uploads[0];
-        const dt = new Date((latest.uploaded_at ?? "").replace(" ", "T") + "Z");
-        const days = Math.floor((Date.now() - dt.getTime()) / 86400000);
-        if (days < 7) return null;
-        return (
-          <div className={`rounded-xl border-l-4 px-4 py-2.5 text-xs flex items-center gap-2 ${
-            days >= 14 ? "bg-red-50 border-red-500"
-            : "bg-amber-50 border-amber-500"
-          }`}>
-            <span className="text-base">{days >= 14 ? "🚨" : "⚠️"}</span>
-            <span className="text-gray-700">
-              <strong>QBO data is {days} days old</strong> — last upload {dt.toLocaleDateString()}.
-              Materials / hours / invoiced totals may be out of date.
-            </span>
-            <Link href="/uploads"
-              className="ml-auto text-xs px-3 py-1 bg-white border border-gray-300 hover:bg-gray-50 rounded font-medium">
-              Upload now →
-            </Link>
-          </div>
-        );
-      })()}
 
       {/* Bulk action bar (shows when rows selected) */}
       {isAdmin && selectedIds.size > 0 && (
