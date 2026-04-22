@@ -345,10 +345,6 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
             </Link>
             {/* Hidden input for per-project import — triggered from dropdown */}
             <input ref={importRef} type="file" accept=".xlsx,.csv" className="hidden" onChange={handleImportFile} />
-            <button onClick={handleReport}
-              className="text-sm px-4 py-1.5 bg-slate-700 hover:bg-slate-800 text-white rounded-lg font-medium transition-colors">
-              📧 Send Report
-            </button>
           </div>
         )}
       </div>
