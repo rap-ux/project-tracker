@@ -6,8 +6,23 @@ const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
 
 export const metadata: Metadata = {
   title: "Switchboard",
-  description: "Construction project tracking dashboard",
-  icons: { icon: "/switchboard-icon.svg" },
+  description: "Project coordination for Totally Wired Electric",
+  icons: {
+    icon:   "/switchboard-icon.svg",
+    apple:  "/switchboard-icon.svg",
+    shortcut: "/switchboard-icon.svg",
+  },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Switchboard",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport = {
+  themeColor: "#101010",
+  colorScheme: "dark light" as const,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
