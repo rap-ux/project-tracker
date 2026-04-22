@@ -5,29 +5,80 @@
       <stop offset="1" stop-color="#0a0f1a"/>
     </linearGradient>
     <filter id="sbGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feGaussianBlur stdDeviation="1.2" result="blur"/>
       <feMerge>
         <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
   </defs>
+
+  <!-- Rounded-square background -->
   <rect width="100" height="100" rx="22" fill="#0f1623"/>
   <rect width="100" height="100" rx="22" fill="url(#sbBg)" opacity="0.5"/>
+
+  <!-- Panel backing -->
   <rect x="16" y="20" width="68" height="60" rx="5" fill="#182033" stroke="#2a3348" stroke-width="1"/>
-  <!-- Top row -->
+
+  <!-- ── Base dim breakers (always visible) ── -->
   <rect x="22" y="28" width="14" height="22" rx="2.5" fill="#2a3348" stroke="#3a4358" stroke-width="0.5"/>
-  <rect x="25" y="31" width="8" height="8" rx="1" fill="rgba(255,255,255,0.12)"/>
   <rect x="44" y="28" width="14" height="22" rx="2.5" fill="#2a3348" stroke="#3a4358" stroke-width="0.5"/>
-  <rect x="47" y="31" width="8" height="8" rx="1" fill="rgba(255,255,255,0.12)"/>
   <rect x="66" y="28" width="14" height="22" rx="2.5" fill="#2a3348" stroke="#3a4358" stroke-width="0.5"/>
-  <rect x="69" y="39" width="8" height="8" rx="1" fill="rgba(255,255,255,0.12)"/>
-  <!-- Bottom row -->
   <rect x="22" y="52" width="14" height="22" rx="2.5" fill="#2a3348" stroke="#3a4358" stroke-width="0.5"/>
-  <rect x="25" y="55" width="8" height="8" rx="1" fill="rgba(255,255,255,0.12)"/>
-  <!-- The glowing ON switch -->
-  <rect x="44" y="52" width="14" height="22" rx="2.5" fill="#00BAD6" stroke="#00BAD6" stroke-width="0.5" filter="url(#sbGlow)"/>
-  <rect x="47" y="55" width="8" height="8" rx="1" fill="rgba(255,255,255,0.6)"/>
+  <rect x="44" y="52" width="14" height="22" rx="2.5" fill="#2a3348" stroke="#3a4358" stroke-width="0.5"/>
   <rect x="66" y="52" width="14" height="22" rx="2.5" fill="#2a3348" stroke="#3a4358" stroke-width="0.5"/>
+
+  <!-- Dim inner indicators -->
+  <rect x="25" y="31" width="8" height="8" rx="1" fill="rgba(255,255,255,0.12)"/>
+  <rect x="47" y="31" width="8" height="8" rx="1" fill="rgba(255,255,255,0.12)"/>
+  <rect x="69" y="39" width="8" height="8" rx="1" fill="rgba(255,255,255,0.12)"/>
+  <rect x="25" y="55" width="8" height="8" rx="1" fill="rgba(255,255,255,0.12)"/>
+  <rect x="47" y="55" width="8" height="8" rx="1" fill="rgba(255,255,255,0.12)"/>
   <rect x="69" y="55" width="8" height="8" rx="1" fill="rgba(255,255,255,0.12)"/>
+
+  <!-- ── Animated cyan overlays — each switch flashes on/off in sequence.
+       Cycle: 6s.  Each switch is lit for ~0.9s, with a staggered begin offset.
+       Order deliberately pseudo-random (not sequential) so the panel feels alive. ── -->
+
+  <!-- TOP-LEFT: begin 0s -->
+  <g opacity="0">
+    <rect x="22" y="28" width="14" height="22" rx="2.5" fill="#00BAD6" filter="url(#sbGlow)"/>
+    <rect x="25" y="31" width="8" height="8" rx="1" fill="rgba(255,255,255,0.6)"/>
+    <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.03;0.08;0.18;0.22;1" dur="6s" begin="0s" repeatCount="indefinite"/>
+  </g>
+
+  <!-- BOTTOM-MIDDLE: begin 1s -->
+  <g opacity="0">
+    <rect x="44" y="52" width="14" height="22" rx="2.5" fill="#00BAD6" filter="url(#sbGlow)"/>
+    <rect x="47" y="55" width="8" height="8" rx="1" fill="rgba(255,255,255,0.6)"/>
+    <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.03;0.08;0.18;0.22;1" dur="6s" begin="1s" repeatCount="indefinite"/>
+  </g>
+
+  <!-- TOP-RIGHT: begin 2s -->
+  <g opacity="0">
+    <rect x="66" y="28" width="14" height="22" rx="2.5" fill="#00BAD6" filter="url(#sbGlow)"/>
+    <rect x="69" y="39" width="8" height="8" rx="1" fill="rgba(255,255,255,0.6)"/>
+    <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.03;0.08;0.18;0.22;1" dur="6s" begin="2s" repeatCount="indefinite"/>
+  </g>
+
+  <!-- BOTTOM-LEFT: begin 3s -->
+  <g opacity="0">
+    <rect x="22" y="52" width="14" height="22" rx="2.5" fill="#00BAD6" filter="url(#sbGlow)"/>
+    <rect x="25" y="55" width="8" height="8" rx="1" fill="rgba(255,255,255,0.6)"/>
+    <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.03;0.08;0.18;0.22;1" dur="6s" begin="3s" repeatCount="indefinite"/>
+  </g>
+
+  <!-- TOP-MIDDLE: begin 4s -->
+  <g opacity="0">
+    <rect x="44" y="28" width="14" height="22" rx="2.5" fill="#00BAD6" filter="url(#sbGlow)"/>
+    <rect x="47" y="31" width="8" height="8" rx="1" fill="rgba(255,255,255,0.6)"/>
+    <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.03;0.08;0.18;0.22;1" dur="6s" begin="4s" repeatCount="indefinite"/>
+  </g>
+
+  <!-- BOTTOM-RIGHT: begin 5s -->
+  <g opacity="0">
+    <rect x="66" y="52" width="14" height="22" rx="2.5" fill="#00BAD6" filter="url(#sbGlow)"/>
+    <rect x="69" y="55" width="8" height="8" rx="1" fill="rgba(255,255,255,0.6)"/>
+    <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.03;0.08;0.18;0.22;1" dur="6s" begin="5s" repeatCount="indefinite"/>
+  </g>
 </svg>
