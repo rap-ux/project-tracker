@@ -89,21 +89,20 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
 
         {/* ── Desktop Nav links ── */}
         {isOwner && (
-          <div className="hidden lg:flex items-center">
+          <div className="hidden min-[1400px]:flex items-center">
             {visibleLinks.map(l => {
               const active = path === l.href;
               return (
                 <Link key={l.href} href={l.href}
-                  title={l.label}  // tooltip on lg-only icon mode
-                  className={`group relative flex items-center gap-1.5 text-sm px-2.5 xl:px-3 2xl:px-4 py-4 transition-all duration-200 whitespace-nowrap ${
+                  className={`group relative flex flex-col items-center gap-0.5 px-2.5 xl:px-3 pt-2 pb-2 transition-all duration-200 whitespace-nowrap ${
                     active
                       ? "text-[#00BAD6]"
                       : "text-white/55 hover:text-white/95 hover:bg-white/[0.06]"
                   }`}>
                   <span className="transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-110">
-                    <NavIcon name={l.icon} />
+                    <NavIcon name={l.icon} size={18} />
                   </span>
-                  <span className="hidden min-[1800px]:inline transition-transform duration-200 ease-out group-hover:-translate-y-0.5">
+                  <span className="text-[10px] font-medium tracking-wide uppercase transition-transform duration-200 ease-out group-hover:-translate-y-0.5">
                     {l.label}
                   </span>
                   {/* Active-page underline (solid cyan) */}
@@ -136,7 +135,7 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
         {/* Mobile hamburger */}
         <button
           onClick={() => setMobileOpen(v => !v)}
-          className="lg:hidden p-2 rounded-md hover:bg-white/10 transition-colors"
+          className="min-[1400px]:hidden p-2 rounded-md hover:bg-white/10 transition-colors"
           aria-label="Open menu">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#EBF1F5" }}>
             {mobileOpen ? (
@@ -160,12 +159,12 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+            className="fixed inset-0 bg-black/60 z-40 min-[1400px]:hidden"
             style={{ top: "52px" }}
             onClick={() => setMobileOpen(false)} />
           {/* Drawer */}
           <div
-            className="fixed left-0 right-0 z-50 lg:hidden shadow-xl border-t border-white/10"
+            className="fixed left-0 right-0 z-50 min-[1400px]:hidden shadow-xl border-t border-white/10"
             style={{ top: "52px", backgroundColor: "#101010" }}>
             <div className="flex flex-col px-4 py-3 gap-0.5">
               {/* User info row on mobile */}
