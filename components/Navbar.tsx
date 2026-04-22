@@ -58,15 +58,22 @@ const OWNER_LINKS: Array<{ href: string; label: string; icon: IconKey; superOnly
   { href: "/report",    label: "Report",    icon: "report",    superOnly: true },
 ];
 
-// Super-admin emails — links flagged superOnly only appear for these users
+// Super-admin emails — links flagged superOnly only appear for these users,
+// and these emails always display 'Super Admin' as their title regardless of
+// whatever the cached session has (handles stale JWTs that pre-date the
+// `title` column in the users table).
 const SUPER_ADMIN_EMAILS = ["rap@totallywiredelectric.com"];
+const EMAIL_TITLE_OVERRIDES: Record<string, string> = {
+  "rap@totallywiredelectric.com": "Super Admin",
+};
 
 export default function Navbar({ userName, role, userEmail, userTitle }: NavbarProps) {
   const path    = usePathname();
   const isOwner = role === "owner" || role === "admin";
   const [mobileOpen, setMobileOpen] = useState(false);
-  const displayRole = userTitle && userTitle.trim() ? userTitle : role;
-  const isSuperAdmin = !!userEmail && SUPER_ADMIN_EMAILS.includes(userEmail);
+  const emailOverride = userEmail && EMAIL_TITLE_OVERRIDES[userEmail];
+  const displayRole   = emailOverride || (userTitle && userTitle.trim()) || role;
+  const isSuperAdmin  = !!userEmail && SUPER_ADMIN_EMAILS.includes(userEmail);
   const visibleLinks = OWNER_LINKS.filter(l => !l.superOnly || isSuperAdmin);
 
   return (

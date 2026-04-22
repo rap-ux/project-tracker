@@ -124,20 +124,16 @@ export default function GlobalSearch() {
 
   return (
     <div className="relative" ref={panelRef}>
-      {/* Compact trigger — icon on mobile, expanded pill on larger screens */}
+      {/* Icon-only trigger; full Cmd+K modal opens on click */}
       <button
         onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 10); }}
-        title="Search (⌘K)"
-        className="flex items-center gap-2 px-2 md:px-3 py-1.5 rounded-md border border-white/15 hover:border-white/30 transition-colors md:w-44 xl:w-52 2xl:w-64"
-        style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(235,241,245,0.55)" }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        title="Search (⌘K / Ctrl+K)"
+        className="flex items-center justify-center p-2 rounded-md border border-white/10 hover:border-white/30 hover:bg-white/10 transition-colors"
+        style={{ color: "rgba(235,241,245,0.85)" }}
+        aria-label="Search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <span className="hidden md:inline text-xs flex-1 text-left">Search…</span>
-        <kbd className="hidden md:inline text-[10px] font-mono px-1.5 py-0.5 rounded border border-white/15"
-          style={{ color: "rgba(235,241,245,0.6)" }}>
-          ⌘K
-        </kbd>
       </button>
 
       {/* Full search panel */}
