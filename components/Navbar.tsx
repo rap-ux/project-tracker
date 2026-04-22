@@ -49,7 +49,7 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
             className="h-8 sm:h-9 w-auto"
           />
           <span className="hidden md:inline text-[10px] sm:text-xs font-normal whitespace-nowrap border-l border-white/15 pl-3" style={{ color: "#00BAD6" }}>
-            Project Tracker
+            Switchboard
           </span>
         </Link>
 

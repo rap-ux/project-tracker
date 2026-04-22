@@ -24,7 +24,7 @@ export default function SignedOutPage() {
 
         <h1 className="text-2xl font-bold text-gray-900">You've been signed out</h1>
         <p className="text-sm text-gray-500 mt-2">
-          Your session has ended. Thanks for using the Project Tracker.
+          Your session has ended. Thanks for using the Switchboard.
         </p>
 
         <div className="mt-6 space-y-2">
@@ -41,7 +41,7 @@ export default function SignedOutPage() {
 
         <div className="mt-8 pt-5 border-t border-gray-100 text-[11px] text-gray-400">
           <p className="font-semibold" style={{ color: "#00BAD6" }}>Totally Wired Electric</p>
-          <p>Project Tracker</p>
+          <p>Switchboard</p>
         </div>
       </div>
     </div>
