@@ -6,6 +6,15 @@ import { useRouter, useSearchParams }          from "next/navigation";
 
 interface RecentUser { email: string; name: string; role: string; last: number; }
 
+// Per-email display title overrides. Keep in sync with Navbar's SUPER_ADMIN_EMAILS list.
+const EMAIL_TITLE_OVERRIDES: Record<string, string> = {
+  "rap@totallywiredelectric.com": "Super Admin",
+};
+
+function displayRoleFor(user: RecentUser): string {
+  return EMAIL_TITLE_OVERRIDES[user.email] ?? user.role;
+}
+
 export default function LoginForm() {
   const router     = useRouter();
   const params     = useSearchParams();
@@ -88,7 +97,7 @@ export default function LoginForm() {
                 </div>
                 <span className="text-[10px] px-1.5 py-0.5 rounded capitalize font-medium shrink-0"
                   style={{ backgroundColor: "#f0fdfe", color: "#00BAD6" }}>
-                  {r.role}
+                  {displayRoleFor(r)}
                 </span>
                 <button
                   type="button"
