@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   session: { strategy: "jwt" },
   pages:   { signIn: "/login" },
   providers: [
@@ -21,6 +22,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           .get(credentials.email) as {
             id: number; name: string; email: string;
             password_hash: string; role: string; foreman_name: string | null;
+            title: string | null;
           } | undefined;
 
         if (!user) return null;
@@ -37,6 +39,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email:       user.email,
           role:        user.role,
           foremanName: user.foreman_name ?? undefined,
+          title:       user.title ?? undefined,
         };
       },
     }),
@@ -48,6 +51,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.role        = user.role;
         // @ts-expect-error custom fields
         token.foremanName = user.foremanName;
+        // @ts-expect-error custom fields
+        token.title       = user.title;
       }
       return token;
     },
@@ -57,6 +62,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.role        = token.role;
         // @ts-expect-error custom fields
         session.user.foremanName = token.foremanName;
+        // @ts-expect-error custom fields
+        session.user.title       = token.title;
       }
       return session;
     },

@@ -44,7 +44,7 @@ export default async function TimelinePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar userName={session.user?.name ?? "Admin"} role={role} userEmail={session.user?.email ?? undefined} />
+      <Navbar userName={session.user?.name ?? "Admin"} role={role} userEmail={session.user?.email ?? undefined} userTitle={(session.user as any)?.title ?? undefined} />
       <TimelineClient projects={projects} stagesByProject={stagesByProject} />
     </div>
   );

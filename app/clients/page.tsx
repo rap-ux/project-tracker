@@ -24,7 +24,7 @@ export default async function ClientsPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar userName={session.user?.name ?? "Admin"} role={role} userEmail={session.user?.email ?? undefined} />
+      <Navbar userName={session.user?.name ?? "Admin"} role={role} userEmail={session.user?.email ?? undefined} userTitle={(session.user as any)?.title ?? undefined} />
 
       <main className="flex-1 max-w-screen-2xl mx-auto w-full px-4 py-6 space-y-5">
 

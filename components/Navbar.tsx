@@ -9,7 +9,7 @@ import AlertsBell            from "./AlertsBell";
 import GlobalSearch          from "./GlobalSearch";
 import UserMenu              from "./UserMenu";
 
-interface NavbarProps { userName: string; role: string; userEmail?: string; }
+interface NavbarProps { userName: string; role: string; userEmail?: string; userTitle?: string; }
 
 const OWNER_LINKS = [
   { href: "/",          label: "Home"      },
@@ -24,10 +24,11 @@ const OWNER_LINKS = [
   { href: "/report",    label: "Report"    },
 ];
 
-export default function Navbar({ userName, role, userEmail }: NavbarProps) {
+export default function Navbar({ userName, role, userEmail, userTitle }: NavbarProps) {
   const path    = usePathname();
   const isOwner = role === "owner" || role === "admin";
   const [mobileOpen, setMobileOpen] = useState(false);
+  const displayRole = userTitle && userTitle.trim() ? userTitle : role;
 
   return (
     <nav
@@ -75,7 +76,7 @@ export default function Navbar({ userName, role, userEmail }: NavbarProps) {
 
         {/* Desktop user menu (avatar + dropdown) */}
         <div className="hidden sm:block">
-          <UserMenu userName={userName} role={role} userEmail={userEmail} />
+          <UserMenu userName={userName} role={displayRole} userEmail={userEmail} />
         </div>
 
         {/* Mobile hamburger */}
@@ -123,7 +124,7 @@ export default function Navbar({ userName, role, userEmail }: NavbarProps) {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate" style={{ color: "#EBF1F5" }}>{userName}</p>
                     {userEmail && <p className="text-[11px] truncate" style={{ color: "rgba(235,241,245,0.5)" }}>{userEmail}</p>}
-                    <p className="text-[10px] capitalize" style={{ color: "#00BAD6" }}>{role}</p>
+                    <p className="text-[10px] capitalize" style={{ color: "#00BAD6" }}>{displayRole}</p>
                   </div>
                 </div>
                 <div className="flex gap-2">

@@ -86,7 +86,7 @@ export default async function ReportPage() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-100 print:bg-white">
       <div className="print:hidden">
-        <Navbar userName={session.user?.name ?? "Admin"} role={role} userEmail={session.user?.email ?? undefined} />
+        <Navbar userName={session.user?.name ?? "Admin"} role={role} userEmail={session.user?.email ?? undefined} userTitle={(session.user as any)?.title ?? undefined} />
       </div>
       <InsightsReport
         projects={projects}

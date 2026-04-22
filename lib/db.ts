@@ -606,6 +606,17 @@ if (stageCount === 0) {
   }
 }
 
+// ── Migration: add optional `title` column to users ─────────────────────────
+try { db.exec(`ALTER TABLE users ADD COLUMN title TEXT`); } catch { /* already exists */ }
+
+// ── Migration: set Rap's title to Super Admin ───────────────────────────────
+try {
+  db.prepare(`
+    UPDATE users SET title = 'Super Admin'
+    WHERE email = 'rap@totallywiredelectric.com' AND (title IS NULL OR title = '')
+  `).run();
+} catch {}
+
 // ── Migration: rename Dean → Damon (data mismatch fix) ──────────────────────
 // "Dean" was a typo in original user seed — actual project data uses "Damon"
 try {
