@@ -51,12 +51,15 @@ export default function LoginForm() {
 
   return (
     <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-7">
-      {/* TWE logo */}
+      {/* Branding */}
       <div className="mb-5 text-center">
         <div className="flex justify-center mb-4 bg-slate-900 rounded-xl px-6 py-4">
           <img src="/twe-logo.png" alt="Totally Wired Electric" className="h-10 w-auto" />
         </div>
-        <h1 className="text-xl font-bold text-gray-900">Switchboard</h1>
+        <div className="flex items-center justify-center gap-2">
+          <img src="/switchboard-icon.svg" alt="" className="h-7 w-7" />
+          <h1 className="text-xl font-bold text-gray-900">Switchboard</h1>
+        </div>
         <p className="text-xs text-gray-500 mt-1">
           {isSwitch ? "Pick an account to sign in with" : "Sign in to your account"}
         </p>

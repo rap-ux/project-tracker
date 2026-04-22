@@ -41,7 +41,10 @@ export default function SignedOutPage() {
 
         <div className="mt-8 pt-5 border-t border-gray-100 text-[11px] text-gray-400">
           <p className="font-semibold" style={{ color: "#00BAD6" }}>Totally Wired Electric</p>
-          <p>Switchboard</p>
+          <div className="flex items-center justify-center gap-1.5 mt-1">
+            <img src="/switchboard-icon.svg" alt="" className="h-4 w-4" />
+            <p>Switchboard</p>
+          </div>
         </div>
       </div>
     </div>

@@ -7,6 +7,7 @@ const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
 export const metadata: Metadata = {
   title: "Switchboard",
   description: "Construction project tracking dashboard",
+  icons: { icon: "/switchboard-icon.svg" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

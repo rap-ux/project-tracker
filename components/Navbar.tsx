@@ -48,9 +48,12 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
             alt="Totally Wired Electric"
             className="h-8 sm:h-9 w-auto"
           />
-          <span className="hidden md:inline text-[10px] sm:text-xs font-normal whitespace-nowrap border-l border-white/15 pl-3" style={{ color: "#00BAD6" }}>
-            Switchboard
-          </span>
+          <div className="hidden md:flex items-center gap-2 border-l border-white/15 pl-3">
+            <img src="/switchboard-icon.svg" alt="" className="h-7 w-7" />
+            <span className="text-sm font-bold tracking-tight" style={{ color: "#EBF1F5", letterSpacing: "-0.01em" }}>
+              Switchboard
+            </span>
+          </div>
         </Link>
 
         {/* ── Desktop Nav links ── */}
