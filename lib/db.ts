@@ -606,6 +606,29 @@ if (stageCount === 0) {
   }
 }
 
+// ── Migration: rename Dean → Damon (data mismatch fix) ──────────────────────
+// "Dean" was a typo in original user seed — actual project data uses "Damon"
+try {
+  const deanUser = db.prepare("SELECT id FROM users WHERE email = ? OR foreman_name = ?")
+    .get("dean@twe.com", "Dean") as { id: number } | undefined;
+  if (deanUser) {
+    // Only rename if there isn't already a Damon user
+    const damonExists = db.prepare("SELECT id FROM users WHERE foreman_name = ?")
+      .get("Damon") as { id: number } | undefined;
+    if (!damonExists) {
+      const bcryptMig = require("bcryptjs");
+      db.prepare(`
+        UPDATE users
+        SET name = 'Damon',
+            email = 'damon@twe.com',
+            foreman_name = 'Damon',
+            password_hash = ?
+        WHERE id = ?
+      `).run(bcryptMig.hashSync("TWE2026", 10), deanUser.id);
+    }
+  }
+} catch { /* column may not exist yet on very old DBs */ }
+
 // ── Seed default users ───────────────────────────────────────────────────────
 const userCount = (db.prepare("SELECT COUNT(*) as c FROM users").get() as { c: number }).c;
 if (userCount === 0) {
@@ -618,7 +641,7 @@ if (userCount === 0) {
     { name: "Rafael John Rivera", email: "rap@totallywiredelectric.com",    password: "Admin123", role: "owner",   foreman_name: null },
     { name: "Cole Dixon",          email: "cole@totallywiredelectric.com",   password: "Admin123", role: "owner",   foreman_name: null },
     { name: "Nicole Dixon",        email: "nicole@totallywiredelectric.com", password: "Admin123", role: "owner",   foreman_name: null },
-    { name: "Dean",                email: "dean@twe.com",                    password: "TWE2026",  role: "foreman", foreman_name: "Dean" },
+    { name: "Damon",               email: "damon@twe.com",                   password: "TWE2026",  role: "foreman", foreman_name: "Damon" },
     { name: "Taimez",              email: "taimez@twe.com",                  password: "TWE2026",  role: "foreman", foreman_name: "Taimez" },
   ];
   db.transaction((users: typeof defaultUsers) => {
