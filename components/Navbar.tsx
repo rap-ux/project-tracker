@@ -137,13 +137,21 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => { setMobileOpen(false); signOut({ callbackUrl: (typeof window !== 'undefined' ? window.location.origin : '') + '/login?switch=1' }); }}
+                    onClick={async () => {
+                      setMobileOpen(false);
+                      await signOut({ redirect: false });
+                      window.location.href = "/login?switch=1";
+                    }}
                     className="flex-1 text-xs px-3 py-1.5 rounded-md border border-white/20 transition-colors hover:bg-white/5"
                     style={{ color: "rgba(235,241,245,0.85)" }}>
                     ↔ Switch account
                   </button>
                   <button
-                    onClick={() => { setMobileOpen(false); signOut({ callbackUrl: (typeof window !== 'undefined' ? window.location.origin : '') + '/signed-out' }); }}
+                    onClick={async () => {
+                      setMobileOpen(false);
+                      await signOut({ redirect: false });
+                      window.location.href = "/signed-out";
+                    }}
                     className="flex-1 text-xs px-3 py-1.5 rounded-md border border-red-400/40 transition-colors hover:bg-red-500/10"
                     style={{ color: "#fca5a5" }}>
                     Sign out

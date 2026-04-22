@@ -37,10 +37,16 @@ export default function UserMenu({ userName, role, userEmail }: Props) {
     return () => document.removeEventListener("mousedown", onClick);
   }, [open]);
 
-  function switchAccount() {
-    // Remember the email we want to switch TO isn't known, so go to login page
-    // The login page will show recent accounts from localStorage
-    signOut({ callbackUrl: (typeof window !== 'undefined' ? window.location.origin : '') + '/login?switch=1' });
+  async function switchAccount() {
+    // Clear session without server redirect, then route client-side so we
+    // always stay on the current origin (server env AUTH_URL may be stale).
+    await signOut({ redirect: false });
+    window.location.href = "/login?switch=1";
+  }
+
+  async function doSignOut() {
+    await signOut({ redirect: false });
+    window.location.href = "/signed-out";
   }
 
   const initials = userName.split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase();
@@ -104,7 +110,7 @@ export default function UserMenu({ userName, role, userEmail }: Props) {
             </button>
 
             <button
-              onClick={() => signOut({ callbackUrl: (typeof window !== 'undefined' ? window.location.origin : '') + '/signed-out' })}
+              onClick={doSignOut}
               className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
