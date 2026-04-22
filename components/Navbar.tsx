@@ -97,12 +97,25 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
               const active = path === l.href;
               return (
                 <Link key={l.href} href={l.href}
-                  className="relative flex items-center gap-1.5 text-sm px-3 xl:px-4 py-4 transition-colors whitespace-nowrap"
-                  style={{ color: active ? "#00BAD6" : "rgba(235,241,245,0.55)" }}>
-                  <NavIcon name={l.icon} />
-                  <span>{l.label}</span>
+                  className={`group relative flex items-center gap-1.5 text-sm px-3 xl:px-4 py-4 transition-all duration-200 whitespace-nowrap ${
+                    active
+                      ? "text-[#00BAD6]"
+                      : "text-white/55 hover:text-white/95 hover:bg-white/[0.06]"
+                  }`}>
+                  <span className="transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-110">
+                    <NavIcon name={l.icon} />
+                  </span>
+                  <span className="transition-transform duration-200 ease-out group-hover:-translate-y-0.5">
+                    {l.label}
+                  </span>
+                  {/* Active-page underline (solid cyan) */}
                   {active && (
                     <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full" style={{ backgroundColor: "#00BAD6" }} />
+                  )}
+                  {/* Hover preview underline — grows from center on inactive links */}
+                  {!active && (
+                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-0 rounded-t-full transition-all duration-200 ease-out group-hover:w-4/5"
+                      style={{ backgroundColor: "rgba(0, 186, 214, 0.55)" }} />
                   )}
                 </Link>
               );
@@ -200,13 +213,16 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
                 return (
                   <Link key={l.href} href={l.href}
                     onClick={() => setMobileOpen(false)}
-                    className="flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium transition-colors"
-                    style={{
-                      backgroundColor: active ? "rgba(0,186,214,0.15)" : "transparent",
-                      color: active ? "#00BAD6" : "rgba(235,241,245,0.85)",
-                    }}>
-                    <span className="flex items-center gap-3">
-                      <NavIcon name={l.icon} size={18} />
+                    className={`group flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium transition-all duration-200 ease-out active:scale-[0.98] ${
+                      active
+                        ? "text-[#00BAD6]"
+                        : "text-white/85 hover:bg-white/10"
+                    }`}
+                    style={active ? { backgroundColor: "rgba(0,186,214,0.15)" } : undefined}>
+                    <span className="flex items-center gap-3 transition-transform duration-200 ease-out group-hover:translate-x-1">
+                      <span className="transition-transform duration-200 ease-out group-hover:scale-110">
+                        <NavIcon name={l.icon} size={18} />
+                      </span>
                       {l.label}
                     </span>
                     {active && <span className="text-xs">●</span>}
