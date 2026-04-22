@@ -84,8 +84,55 @@ export default function TimelineClient({ projects, stagesByProject }: Props) {
   const [showPipeline,  setShowPipeline]  = useState(false);
   const [view,          setView]          = useState<ViewType>("kanban");
 
-  // Local copy of stages so saves update instantly without a full page reload
-  const [localStages, setLocalStages] = useState<Record<number, any[]>>(stagesByProject);
+  // Local copy of projects + stages so drags / saves update instantly without a full page reload
+  const [localProjects, setLocalProjects] = useState<any[]>(projects);
+  const [localStages,   setLocalStages]   = useState<Record<number, any[]>>(stagesByProject);
+
+  // Drag-and-drop state
+  const [draggingId,   setDraggingId]   = useState<number | null>(null);
+  const [dragOverStage, setDragOverStage] = useState<string | null>(null);
+  const [dragSaving,    setDragSaving]    = useState(false);
+  const [dragMsg,       setDragMsg]       = useState("");
+
+  function calcProjectCompletion(stage: string, sc: number): number {
+    const s = Math.min(1, Math.max(0, sc ?? 0));
+    if (stage === "Rough" || stage === "Underground") return s * 0.70;
+    if (stage === "Finish")  return 0.70 + s * 0.30;
+    if (stage === "Extras")  return 1.0;
+    return 0;
+  }
+
+  async function handleDrop(projectId: number, newStage: string) {
+    const current = localProjects.find(p => p.id === projectId);
+    if (!current || current.stage === newStage) return;
+
+    const previousStage = current.stage;
+
+    // Optimistic update
+    setLocalProjects(ps => ps.map(p => p.id === projectId ? {
+      ...p,
+      stage: newStage,
+      project_completion: calcProjectCompletion(newStage, p.stage_completion ?? 0),
+    } : p));
+    setDragSaving(true);
+
+    try {
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method:  "PUT",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ stage: newStage }),
+      });
+      if (!res.ok) throw new Error("save failed");
+      setDragMsg(`✅ Moved to ${newStage}`);
+      setTimeout(() => setDragMsg(""), 1800);
+    } catch {
+      // Revert
+      setLocalProjects(ps => ps.map(p => p.id === projectId ? { ...p, stage: previousStage } : p));
+      setDragMsg(`❌ Failed to move ${current.name}`);
+      setTimeout(() => setDragMsg(""), 3000);
+    }
+    setDragSaving(false);
+  }
   // Inline edit state  (key = `${project_id}_${stage}`)
   const [editingRow, setEditingRow] = useState<string | null>(null);
   const [editDraft,  setEditDraft]  = useState<any>(null);
@@ -138,9 +185,9 @@ export default function TimelineClient({ projects, stagesByProject }: Props) {
     }
   }
 
-  const foremen = ["all", ...Array.from(new Set(projects.map((p: any) => p.foreman))).sort()];
+  const foremen = ["all", ...Array.from(new Set(localProjects.map((p: any) => p.foreman))).sort()];
 
-  const visible = projects.filter((p: any) => {
+  const visible = localProjects.filter((p: any) => {
     if (!showPipeline && p.is_pipeline) return false;
     if (filterForeman !== "all" && p.foreman !== filterForeman) return false;
     return true;
@@ -176,8 +223,8 @@ export default function TimelineClient({ projects, stagesByProject }: Props) {
     return rows;
   }, [visible, localStages]);
 
-  const totalActive   = projects.filter(p => !p.is_pipeline).length;
-  const totalPipeline = projects.filter(p =>  p.is_pipeline).length;
+  const totalActive   = localProjects.filter(p => !p.is_pipeline).length;
+  const totalPipeline = localProjects.filter(p =>  p.is_pipeline).length;
 
   return (
     <main className="flex-1 w-full px-4 py-6 space-y-5">
@@ -225,40 +272,80 @@ export default function TimelineClient({ projects, stagesByProject }: Props) {
 
       {/* ── Kanban view ── */}
       {view === "kanban" && (
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          {STAGES.map(stage => {
-            const cards = grouped[stage.key] ?? [];
-            return (
-              <div key={stage.key} className="flex-shrink-0 w-72 flex flex-col gap-2">
-                <div className="flex items-center justify-between px-3 py-2 rounded-lg"
-                  style={{ backgroundColor: stage.bg, border: `1px solid ${stage.border}` }}>
-                  <span className="text-sm font-semibold" style={{ color: stage.color }}>{stage.label}</span>
-                  <span className="text-xs font-medium px-1.5 py-0.5 rounded-full"
-                    style={{ backgroundColor: stage.border, color: stage.color }}>
-                    {cards.length}
-                  </span>
+        <>
+          {dragMsg && (
+            <div className="sticky top-[52px] z-20 flex justify-center">
+              <span className={`text-xs px-3 py-1 rounded-full shadow-md ${
+                dragMsg.startsWith("✅") ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+              }`}>
+                {dragMsg}
+              </span>
+            </div>
+          )}
+          <p className="text-xs text-gray-400 italic">💡 Drag cards between columns to change their stage</p>
+          <div className="flex gap-4 overflow-x-auto pb-4">
+            {STAGES.map(stage => {
+              const cards = grouped[stage.key] ?? [];
+              const isTarget = dragOverStage === stage.key;
+              return (
+                <div
+                  key={stage.key}
+                  className="flex-shrink-0 w-72 flex flex-col gap-2"
+                  onDragOver={e => { e.preventDefault(); setDragOverStage(stage.key); }}
+                  onDragLeave={() => { if (dragOverStage === stage.key) setDragOverStage(null); }}
+                  onDrop={e => {
+                    e.preventDefault();
+                    const id = Number(e.dataTransfer.getData("text/plain"));
+                    if (id) handleDrop(id, stage.key);
+                    setDragOverStage(null);
+                    setDraggingId(null);
+                  }}>
+                  <div className="flex items-center justify-between px-3 py-2 rounded-lg transition-all"
+                    style={{
+                      backgroundColor: stage.bg,
+                      border: `${isTarget ? 2 : 1}px ${isTarget ? "dashed" : "solid"} ${isTarget ? stage.color : stage.border}`,
+                      boxShadow: isTarget ? `0 0 0 4px ${stage.border}` : "none",
+                    }}>
+                    <span className="text-sm font-semibold" style={{ color: stage.color }}>{stage.label}</span>
+                    <span className="text-xs font-medium px-1.5 py-0.5 rounded-full"
+                      style={{ backgroundColor: stage.border, color: stage.color }}>
+                      {cards.length}
+                    </span>
+                  </div>
+                  <div
+                    className={`flex flex-col gap-2 min-h-[60px] rounded-xl transition-colors ${isTarget ? "bg-blue-50/40" : ""}`}
+                    style={isTarget ? { outline: `2px dashed ${stage.color}`, outlineOffset: "-4px" } : {}}>
+                    {cards.length === 0 && (
+                      <div className="text-center text-xs text-gray-300 py-6 border border-dashed border-gray-200 rounded-xl">
+                        {isTarget ? `Drop to move here →` : "No projects"}
+                      </div>
+                    )}
+                    {cards.map((p: any) => (
+                      <div
+                        key={p.id}
+                        draggable={!dragSaving}
+                        onDragStart={e => {
+                          e.dataTransfer.setData("text/plain", String(p.id));
+                          e.dataTransfer.effectAllowed = "move";
+                          setDraggingId(p.id);
+                        }}
+                        onDragEnd={() => { setDraggingId(null); setDragOverStage(null); }}
+                        style={{ opacity: draggingId === p.id ? 0.4 : 1, cursor: dragSaving ? "wait" : "grab" }}>
+                        <ProjectCard
+                          project={p}
+                          stages={localStages[p.id] ?? []}
+                          stageColor={stage.color}
+                          stageBg={stage.bg}
+                          stageBorder={stage.border}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex flex-col gap-2">
-                  {cards.length === 0 && (
-                    <div className="text-center text-xs text-gray-300 py-6 border border-dashed border-gray-200 rounded-xl">
-                      No projects
-                    </div>
-                  )}
-                  {cards.map((p: any) => (
-                    <ProjectCard
-                      key={p.id}
-                      project={p}
-                      stages={localStages[p.id] ?? []}
-                      stageColor={stage.color}
-                      stageBg={stage.bg}
-                      stageBorder={stage.border}
-                    />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {/* ── Schedule view ── */}
