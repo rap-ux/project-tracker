@@ -1,0 +1,268 @@
+"use client";
+
+import { useState, useMemo } from "react";
+
+const fmt$ = (n: number) => "$" + (n ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
+
+interface Project {
+  id: number;
+  name: string;
+  foreman: string;
+  stage: string;
+  is_pipeline: number;
+  region: string | null;
+  builder: string | null;
+  contacts: string | null;
+  phone: string | null;
+  project_notes: string | null;
+  basecamp_link: string | null;
+  drive_folder: string | null;
+  contract_value: number;
+}
+
+const EDITABLE_FIELDS: Array<{ key: keyof Project; label: string; type: "text" | "textarea" }> = [
+  { key: "name",         label: "Project Name",  type: "text" },
+  { key: "region",       label: "Region",        type: "text" },
+  { key: "builder",      label: "Builder / GC",  type: "text" },
+  { key: "contacts",     label: "Contact Name",  type: "text" },
+  { key: "phone",        label: "Phone",         type: "text" },
+  { key: "project_notes",label: "Notes",         type: "textarea" },
+  { key: "basecamp_link",label: "Basecamp Link", type: "text" },
+  { key: "drive_folder", label: "Drive Folder (URL or name)", type: "text" },
+];
+
+export default function ClientsClient({ projects: initial, role }: { projects: Project[]; role: string }) {
+  const [projects, setProjects]   = useState(initial);
+  const [search,   setSearch]     = useState("");
+  const [region,   setRegion]     = useState("all");
+  const [foreman,  setForeman]    = useState("all");
+  const [showMinor, setShowMinor] = useState(true);
+  const [sortKey,  setSortKey]    = useState<"name" | "region" | "builder" | "foreman">("region");
+  const [editing,  setEditing]    = useState<Project | null>(null);
+  const [saving,   setSaving]     = useState(false);
+
+  const isAdmin = role === "owner" || role === "admin";
+
+  const regions  = useMemo(() => ["all", ...Array.from(new Set(projects.map(p => p.region).filter(Boolean) as string[])).sort()], [projects]);
+  const foremen  = useMemo(() => ["all", ...Array.from(new Set(projects.map(p => p.foreman))).sort()], [projects]);
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return projects
+      .filter(p => {
+        if (!showMinor && p.is_pipeline === 1) return false;
+        if (region  !== "all" && p.region  !== region)  return false;
+        if (foreman !== "all" && p.foreman !== foreman) return false;
+        if (!q) return true;
+        return (
+          p.name.toLowerCase().includes(q) ||
+          (p.builder  ?? "").toLowerCase().includes(q) ||
+          (p.contacts ?? "").toLowerCase().includes(q) ||
+          (p.phone    ?? "").toLowerCase().includes(q) ||
+          (p.region   ?? "").toLowerCase().includes(q)
+        );
+      })
+      .sort((a, b) => {
+        if (sortKey === "name")    return a.name.localeCompare(b.name);
+        if (sortKey === "foreman") return a.foreman.localeCompare(b.foreman);
+        if (sortKey === "builder") return (a.builder ?? "").localeCompare(b.builder ?? "");
+        // region
+        const rA = a.region ?? "ZZZ";
+        const rB = b.region ?? "ZZZ";
+        if (rA !== rB) return rA.localeCompare(rB);
+        return a.name.localeCompare(b.name);
+      });
+  }, [projects, search, region, foreman, showMinor, sortKey]);
+
+  async function handleSave(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!editing) return;
+    setSaving(true);
+    const fd = new FormData(e.currentTarget);
+    const body: Record<string, any> = {};
+    for (const f of EDITABLE_FIELDS) {
+      body[f.key] = (fd.get(f.key) as string) || null;
+    }
+    const res = await fetch(`/api/projects/${editing.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) {
+      setProjects(prev => prev.map(p => p.id === editing.id ? { ...p, ...body } : p));
+      setEditing(null);
+    }
+    setSaving(false);
+  }
+
+  return (
+    <>
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-2 print:hidden">
+        <input
+          value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="Search name, builder, contact, phone…"
+          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 w-72"
+          style={{ "--tw-ring-color": "#00BAD6" } as React.CSSProperties}
+        />
+        <select value={region} onChange={e => setRegion(e.target.value)}
+          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none">
+          {regions.map(r => <option key={r} value={r}>{r === "all" ? "All Regions" : r}</option>)}
+        </select>
+        <select value={foreman} onChange={e => setForeman(e.target.value)}
+          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none">
+          {foremen.map(f => <option key={f} value={f}>{f === "all" ? "All Foremen" : f}</option>)}
+        </select>
+        <select value={sortKey} onChange={e => setSortKey(e.target.value as any)}
+          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none">
+          <option value="region">Sort: Region</option>
+          <option value="name">Sort: Name</option>
+          <option value="foreman">Sort: Foreman</option>
+          <option value="builder">Sort: Builder</option>
+        </select>
+        <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+          <input type="checkbox" checked={showMinor} onChange={e => setShowMinor(e.target.checked)}
+            className="w-4 h-4 rounded accent-cyan-500" />
+          Include minor projects
+        </label>
+        <span className="text-xs text-gray-400 ml-auto">{filtered.length} of {projects.length} projects</span>
+      </div>
+
+      {/* Unified table */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden print:shadow-none">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-white text-xs uppercase tracking-wide" style={{ backgroundColor: "#101010" }}>
+                <th className="px-4 py-2.5 text-left">Project</th>
+                <th className="px-4 py-2.5 text-left">Region</th>
+                <th className="px-4 py-2.5 text-left">Foreman</th>
+                <th className="px-4 py-2.5 text-left">Stage</th>
+                <th className="px-4 py-2.5 text-left">Builder / GC</th>
+                <th className="px-4 py-2.5 text-left">Contact</th>
+                <th className="px-4 py-2.5 text-left">Phone</th>
+                <th className="px-4 py-2.5 text-left">Notes</th>
+                <th className="px-4 py-2.5 text-center print:hidden">Links</th>
+                {isAdmin && <th className="px-4 py-2.5 text-center w-16 print:hidden"></th>}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filtered.length === 0 && (
+                <tr><td colSpan={isAdmin ? 10 : 9} className="px-4 py-10 text-center text-sm text-gray-400">No projects match your filters.</td></tr>
+              )}
+              {filtered.map(p => (
+                <tr key={p.id} className={`hover:bg-gray-50 transition-colors ${p.is_pipeline === 1 ? "opacity-75" : ""}`}>
+                  <td className="px-4 py-2.5 font-medium text-gray-900">
+                    <div className="flex items-center gap-1.5">
+                      <span>{p.name}</span>
+                      {p.is_pipeline === 1 && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-medium">Minor</span>
+                      )}
+                    </div>
+                    {p.contract_value > 0 && (
+                      <div className="text-xs text-gray-400 font-normal">{fmt$(p.contract_value)}</div>
+                    )}
+                  </td>
+                  <td className="px-4 py-2.5 text-xs text-gray-600">{p.region || "—"}</td>
+                  <td className="px-4 py-2.5 text-xs text-gray-600">{p.foreman}</td>
+                  <td className="px-4 py-2.5">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                      p.stage === "Finish"            ? "bg-purple-100 text-purple-700" :
+                      p.stage === "Extras"            ? "bg-amber-100   text-amber-700"  :
+                      p.stage === "Contracting Phase" ? "bg-gray-100    text-gray-600"   :
+                      p.stage === "Underground"       ? "bg-orange-100  text-orange-700" :
+                                                        "bg-blue-100    text-blue-700"
+                    }`}>{p.stage}</span>
+                  </td>
+                  <td className="px-4 py-2.5 text-xs text-gray-700">{p.builder || "—"}</td>
+                  <td className="px-4 py-2.5 text-xs text-gray-600">{p.contacts || "—"}</td>
+                  <td className="px-4 py-2.5 text-xs text-gray-500 whitespace-nowrap">{p.phone || "—"}</td>
+                  <td className="px-4 py-2.5 text-xs text-gray-400 italic max-w-[200px] truncate" title={p.project_notes ?? ""}>
+                    {p.project_notes || "—"}
+                  </td>
+                  <td className="px-4 py-2.5 text-center print:hidden">
+                    <div className="flex items-center gap-1.5 justify-center">
+                      {p.basecamp_link && (
+                        <a href={p.basecamp_link} target="_blank" rel="noopener noreferrer"
+                          title="Open in Basecamp"
+                          className="flex items-center justify-center w-6 h-6 rounded hover:opacity-75 transition-opacity">
+                          <img src="/icons/basecamp.svg" alt="Basecamp" className="w-5 h-5" />
+                        </a>
+                      )}
+                      {p.drive_folder && (
+                        <a href={p.drive_folder.startsWith("http") ? p.drive_folder : `https://drive.google.com/drive/search?q=${encodeURIComponent(p.drive_folder)}`}
+                          target="_blank" rel="noopener noreferrer"
+                          title="Open in Google Drive"
+                          className="flex items-center justify-center w-6 h-6 rounded hover:opacity-75 transition-opacity">
+                          <img src="/icons/google-drive.svg" alt="Drive" className="w-5 h-5" />
+                        </a>
+                      )}
+                      {!p.basecamp_link && !p.drive_folder && <span className="text-gray-300 text-xs">—</span>}
+                    </div>
+                  </td>
+                  {isAdmin && (
+                    <td className="px-4 py-2.5 text-center print:hidden">
+                      <button
+                        onClick={() => setEditing(p)}
+                        title="Edit client details"
+                        className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+                        ✏️ Edit
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Edit modal */}
+      {editing && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 print:hidden">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white px-6 py-4 border-b flex justify-between items-center">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Edit Client Details</h2>
+                <p className="text-xs text-gray-400">{editing.name}</p>
+              </div>
+              <button onClick={() => setEditing(null)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+            </div>
+            <form onSubmit={handleSave} className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                {EDITABLE_FIELDS.map(f => (
+                  <div key={f.key as string} className={f.type === "textarea" || f.key === "basecamp_link" || f.key === "drive_folder" ? "col-span-2" : ""}>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">{f.label}</label>
+                    {f.type === "textarea" ? (
+                      <textarea name={f.key as string}
+                        defaultValue={(editing[f.key] as string) ?? ""}
+                        rows={2}
+                        className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 resize-none"
+                        style={{ "--tw-ring-color": "#00BAD6" } as React.CSSProperties} />
+                    ) : (
+                      <input name={f.key as string} type="text"
+                        defaultValue={(editing[f.key] as string) ?? ""}
+                        className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                        style={{ "--tw-ring-color": "#00BAD6" } as React.CSSProperties} />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button type="submit" disabled={saving}
+                  className="flex-1 py-2 rounded-lg text-sm font-semibold text-white transition-opacity disabled:opacity-60"
+                  style={{ backgroundColor: "#00BAD6" }}>
+                  {saving ? "Saving…" : "Save Changes"}
+                </button>
+                <button type="button" onClick={() => setEditing(null)}
+                  className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-colors">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
