@@ -34,9 +34,15 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const stmt = db.prepare(`
     INSERT INTO projects
-      (name, foreman, stage, contract_value, region, builder, contacts, phone, is_pipeline)
+      (name, foreman, stage, contract_value,
+       region, builder, contacts, phone,
+       project_notes, basecamp_link, drive_folder,
+       is_pipeline)
     VALUES
-      (@name, @foreman, @stage, @contract_value, @region, @builder, @contacts, @phone, @is_pipeline)
+      (@name, @foreman, @stage, @contract_value,
+       @region, @builder, @contacts, @phone,
+       @project_notes, @basecamp_link, @drive_folder,
+       @is_pipeline)
   `);
   const result = stmt.run({
     name:           body.name           ?? "",
@@ -47,7 +53,24 @@ export async function POST(req: NextRequest) {
     builder:        body.builder        ?? null,
     contacts:       body.contacts       ?? null,
     phone:          body.phone          ?? null,
+    project_notes:  body.project_notes  ?? null,
+    basecamp_link:  body.basecamp_link  ?? null,
+    drive_folder:   body.drive_folder   ?? null,
     is_pipeline:    body.is_pipeline    ?? 0,
   });
+
+  // Log creation
+  try {
+    db.prepare(`
+      INSERT INTO project_activity (project_id, user_name, action, details)
+      VALUES (?, ?, ?, ?)
+    `).run(
+      result.lastInsertRowid,
+      session.user?.name ?? "Unknown",
+      "Created",
+      `New ${body.is_pipeline ? "minor" : "active"} project: ${body.name}${body.builder ? ` · ${body.builder}` : ""}`
+    );
+  } catch { /* non-fatal */ }
+
   return Response.json({ id: result.lastInsertRowid }, { status: 201 });
 }

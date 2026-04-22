@@ -39,6 +39,7 @@ export default function ClientsClient({ projects: initial, role }: { projects: P
   const [showMinor, setShowMinor] = useState(true);
   const [sortKey,  setSortKey]    = useState<"name" | "region" | "builder" | "foreman">("region");
   const [editing,  setEditing]    = useState<Project | null>(null);
+  const [adding,   setAdding]     = useState(false);
   const [saving,   setSaving]     = useState(false);
 
   const isAdmin = role === "owner" || role === "admin";
@@ -95,6 +96,53 @@ export default function ClientsClient({ projects: initial, role }: { projects: P
     setSaving(false);
   }
 
+  async function handleAdd(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSaving(true);
+    const fd = new FormData(e.currentTarget);
+    const body = {
+      name:           (fd.get("name") as string)?.trim(),
+      foreman:        (fd.get("foreman") as string)?.trim() || "Unassigned",
+      stage:          (fd.get("stage") as string) || "Contracting Phase",
+      region:         (fd.get("region") as string) || null,
+      builder:        (fd.get("builder") as string) || null,
+      contacts:       (fd.get("contacts") as string) || null,
+      phone:          (fd.get("phone") as string) || null,
+      project_notes:  (fd.get("project_notes") as string) || null,
+      basecamp_link:  (fd.get("basecamp_link") as string) || null,
+      drive_folder:   (fd.get("drive_folder") as string) || null,
+      contract_value: Number(fd.get("contract_value")) || 0,
+      is_pipeline:    (fd.get("is_pipeline") as string) === "active" ? 0 : 1,
+    };
+    const res  = await fetch("/api/projects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      // Server may return { id, ... } — merge into list
+      const newProject: Project = {
+        id:             data.id ?? Math.max(0, ...projects.map(p => p.id)) + 1,
+        name:           body.name,
+        foreman:        body.foreman,
+        stage:          body.stage,
+        is_pipeline:    body.is_pipeline,
+        region:         body.region,
+        builder:        body.builder,
+        contacts:       body.contacts,
+        phone:          body.phone,
+        project_notes:  body.project_notes,
+        basecamp_link:  body.basecamp_link,
+        drive_folder:   body.drive_folder,
+        contract_value: body.contract_value,
+      };
+      setProjects(prev => [...prev, newProject]);
+      setAdding(false);
+    }
+    setSaving(false);
+  }
+
   return (
     <>
       {/* Toolbar */}
@@ -126,6 +174,14 @@ export default function ClientsClient({ projects: initial, role }: { projects: P
           Include minor projects
         </label>
         <span className="text-xs text-gray-400 ml-auto">{filtered.length} of {projects.length} projects</span>
+        {isAdmin && (
+          <button
+            onClick={() => setAdding(true)}
+            className="text-sm px-4 py-1.5 rounded-lg font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ backgroundColor: "#00BAD6" }}>
+            + Add Client
+          </button>
+        )}
       </div>
 
       {/* Unified table */}
@@ -256,6 +312,146 @@ export default function ClientsClient({ projects: initial, role }: { projects: P
                 </button>
                 <button type="button" onClick={() => setEditing(null)}
                   className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-colors">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add modal */}
+      {adding && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 print:hidden">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white px-6 py-4 border-b flex justify-between items-center">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Add New Client / Project</h2>
+                <p className="text-xs text-gray-400">Creates a new project with client details</p>
+              </div>
+              <button onClick={() => setAdding(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+            </div>
+            <form onSubmit={handleAdd} className="p-6 space-y-4">
+              {/* Required fields */}
+              <div>
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Required</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Project Name *</label>
+                    <input name="name" type="text" required autoFocus
+                      className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                      style={{ "--tw-ring-color": "#00BAD6" } as React.CSSProperties} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Foreman</label>
+                    <input name="foreman" type="text" list="foreman-options" defaultValue=""
+                      placeholder="e.g. Taimez"
+                      className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                      style={{ "--tw-ring-color": "#00BAD6" } as React.CSSProperties} />
+                    <datalist id="foreman-options">
+                      {foremen.filter(f => f !== "all").map(f => <option key={f} value={f} />)}
+                    </datalist>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Starting Stage</label>
+                    <select name="stage" defaultValue="Contracting Phase"
+                      className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                      style={{ "--tw-ring-color": "#00BAD6" } as React.CSSProperties}>
+                      <option value="Contracting Phase">Contracting Phase</option>
+                      <option value="Underground">Underground</option>
+                      <option value="Rough">Rough</option>
+                      <option value="Finish">Finish</option>
+                      <option value="Extras">Extras</option>
+                    </select>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Project Type</label>
+                    <div className="flex gap-2">
+                      <label className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 cursor-pointer hover:border-gray-400 has-[:checked]:bg-cyan-50 has-[:checked]:border-cyan-400">
+                        <input type="radio" name="is_pipeline" value="minor" defaultChecked className="accent-cyan-500" />
+                        <span className="text-sm">
+                          <span className="font-semibold">Minor / Pipeline</span>
+                          <span className="block text-xs text-gray-400">Pre-contract or small job</span>
+                        </span>
+                      </label>
+                      <label className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 cursor-pointer hover:border-gray-400 has-[:checked]:bg-cyan-50 has-[:checked]:border-cyan-400">
+                        <input type="radio" name="is_pipeline" value="active" className="accent-cyan-500" />
+                        <span className="text-sm">
+                          <span className="font-semibold">Active</span>
+                          <span className="block text-xs text-gray-400">Signed contract</span>
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Contract Value ($)</label>
+                    <input name="contract_value" type="number" step="0.01" min="0" defaultValue="0"
+                      className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 font-mono"
+                      style={{ "--tw-ring-color": "#00BAD6" } as React.CSSProperties} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Client details */}
+              <div>
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Client Info</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Region</label>
+                    <input name="region" type="text" list="region-options"
+                      className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                      style={{ "--tw-ring-color": "#00BAD6" } as React.CSSProperties} />
+                    <datalist id="region-options">
+                      {regions.filter(r => r !== "all").map(r => <option key={r} value={r} />)}
+                    </datalist>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Builder / GC</label>
+                    <input name="builder" type="text"
+                      className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                      style={{ "--tw-ring-color": "#00BAD6" } as React.CSSProperties} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Contact Name</label>
+                    <input name="contacts" type="text"
+                      className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                      style={{ "--tw-ring-color": "#00BAD6" } as React.CSSProperties} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Phone</label>
+                    <input name="phone" type="text"
+                      className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                      style={{ "--tw-ring-color": "#00BAD6" } as React.CSSProperties} />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
+                    <textarea name="project_notes" rows={2}
+                      className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 resize-none"
+                      style={{ "--tw-ring-color": "#00BAD6" } as React.CSSProperties} />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Basecamp Link</label>
+                    <input name="basecamp_link" type="text" placeholder="https://3.basecamp.com/…"
+                      className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                      style={{ "--tw-ring-color": "#00BAD6" } as React.CSSProperties} />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Drive Folder (URL or name)</label>
+                    <input name="drive_folder" type="text" placeholder="https://drive.google.com/…"
+                      className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                      style={{ "--tw-ring-color": "#00BAD6" } as React.CSSProperties} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button type="submit" disabled={saving}
+                  className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity disabled:opacity-60"
+                  style={{ backgroundColor: "#00BAD6" }}>
+                  {saving ? "Creating…" : "+ Create Client"}
+                </button>
+                <button type="button" onClick={() => setAdding(false)}
+                  className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-colors">
                   Cancel
                 </button>
               </div>
