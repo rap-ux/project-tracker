@@ -80,19 +80,19 @@ export default function GlobalActivityButton() {
       <button
         onClick={() => setOpen(v => !v)}
         title="Activity log"
-        className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors border border-white/10 hover:border-white/25 text-xs"
+        className="relative flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md transition-colors border border-white/10 hover:border-white/25 text-xs"
         style={{ color: "rgba(235,241,245,0.85)" }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M6 2h12l4 8-10 12L2 10z" />
           <path d="M2 10h20" />
           <path d="M12 2v8" />
         </svg>
-        Activity
+        <span className="hidden sm:inline">Activity</span>
       </button>
 
       {open && (
         <div
-          className="absolute right-0 top-full mt-2 w-[420px] max-h-[540px] bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50 flex flex-col">
+          className="fixed sm:absolute right-2 sm:right-0 top-[52px] sm:top-full sm:mt-2 left-2 sm:left-auto sm:w-[420px] max-h-[calc(100vh-80px)] sm:max-h-[540px] bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50 flex flex-col">
           <div className="px-4 py-3 border-b flex items-center justify-between bg-gray-50">
             <div>
               <p className="text-sm font-bold text-gray-800">Activity Log</p>

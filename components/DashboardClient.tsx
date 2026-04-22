@@ -324,7 +324,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
           <input
             value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search name, foreman, builder…"
-            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 w-52"
+            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 w-full sm:w-52"
             style={{ "--tw-ring-color": "#00BAD6" } as React.CSSProperties}
           />
           <select value={filterForeman} onChange={e => setFilterForeman(e.target.value)}
@@ -359,9 +359,49 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
 
       {reportMsg && <p className="text-sm text-gray-700 bg-white border rounded-lg px-4 py-2 shadow-sm">{reportMsg}</p>}
 
-      {/* ── Pipeline Table ── */}
+      {/* ── Pipeline: Mobile Card View ── */}
       {view === "pipeline" && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="md:hidden space-y-3">
+          {filtered.length === 0 && (
+            <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-sm text-gray-400">
+              No minor projects match your filters.
+            </div>
+          )}
+          {filtered.map((p: any) => (
+            <div key={p.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-sm font-bold text-gray-900">{p.name}</p>
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700">
+                  {p.stage}
+                </span>
+              </div>
+              <div className="text-xs text-gray-500 space-y-0.5">
+                <p><span className="text-gray-400">Foreman:</span> {p.foreman}</p>
+                {p.region  && <p><span className="text-gray-400">📍</span> {p.region}</p>}
+                {p.builder && <p><span className="text-gray-400">🏗️</span> {p.builder}</p>}
+                {p.contacts && <p><span className="text-gray-400">👤</span> {p.contacts}{p.phone ? ` · ${p.phone}` : ""}</p>}
+                {p.project_notes && <p className="italic text-gray-400">{p.project_notes}</p>}
+              </div>
+              {isAdmin && (
+                <div className="flex gap-1.5 pt-2 border-t border-gray-100">
+                  <button
+                    onClick={() => setActivateProject(p)}
+                    className="flex-1 text-xs px-3 py-1.5 rounded-lg font-semibold text-white"
+                    style={{ backgroundColor: "#00BAD6" }}>
+                    ✓ Activate
+                  </button>
+                  <button onClick={() => { setEditProject(p); setDraftStage(p.stage ?? "Rough"); setDraftStagePct(Math.round((p.stage_completion ?? 0) * 100)); }}
+                    className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg">Edit</button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Pipeline Table (desktop) ── */}
+      {view === "pipeline" && (
+        <div className="hidden md:block bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -446,8 +486,140 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
         </div>
       )}
 
-      {/* ── Active Projects Table ── */}
-      {view === "active" && <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      {/* ── Active Projects: Mobile Card View ── */}
+      {view === "active" && (
+        <div className="md:hidden space-y-3">
+          {filtered.length === 0 && (
+            <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-sm text-gray-400">
+              No projects match your filters.
+            </div>
+          )}
+          {filtered.map((p: any) => {
+            const inc      = p.incentive;
+            const matPct   = p.est_materials_budget > 0 ? p.effectiveMaterials / p.est_materials_budget : 0;
+            const overMat  = matPct > 1;
+            const overHrs  = inc.projectStatus.key === "critical" || inc.projectStatus.key === "at-risk";
+            const statusBg =
+              inc.projectStatus.key === "critical" ? "bg-red-50 border-red-200" :
+              inc.projectStatus.key === "at-risk"  ? "bg-orange-50 border-orange-200" :
+              inc.projectStatus.key === "watch"    ? "bg-yellow-50 border-yellow-200" :
+                                                      "bg-white border-gray-200";
+            return (
+              <div key={p.id} className={`rounded-xl border shadow-sm p-4 space-y-3 ${statusBg}`}>
+                {/* Header */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-gray-900 truncate">{p.name}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{p.foreman} · {p.stage}</p>
+                  </div>
+                  <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap ${
+                    inc.projectStatus.color === "red"    ? "bg-red-100 text-red-700"    :
+                    inc.projectStatus.color === "orange" ? "bg-orange-100 text-orange-700" :
+                    inc.projectStatus.color === "yellow" ? "bg-yellow-100 text-yellow-700" :
+                    inc.projectStatus.color === "blue"   ? "bg-blue-100 text-blue-700"   :
+                    inc.projectStatus.color === "green"  ? "bg-green-100 text-green-700" :
+                                                          "bg-gray-100 text-gray-600"
+                  }`}>
+                    {inc.projectStatus.emoji} {inc.projectStatus.label}
+                  </span>
+                </div>
+
+                {/* Contract / Invoiced */}
+                {!isForeman && (
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <p className="text-gray-400 uppercase text-[10px]">Contract</p>
+                      <p className="font-mono font-semibold text-gray-800">{fmt$(p.contract_value)}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 uppercase text-[10px]">Invoiced</p>
+                      <p className="font-mono font-semibold text-gray-800">{fmt$(p.total_invoiced)}</p>
+                      <p className="text-[10px] text-gray-400">{fmtPct(p.contract_value > 0 ? p.total_invoiced / p.contract_value : 0)}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Progress bars */}
+                <div className="space-y-2">
+                  <div>
+                    <div className="flex justify-between text-[10px] mb-0.5">
+                      <span className="text-gray-500 font-medium">Stage {fmtPct(p.stage_completion)}</span>
+                      <span className="text-gray-500 font-medium">Project {fmtPct(p.project_completion)}</span>
+                    </div>
+                    <ProgressBar value={p.project_completion} max={1} color="blue" />
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-[10px] mb-0.5">
+                      <span className="text-gray-500">Materials</span>
+                      <span className={`font-semibold ${overMat ? "text-red-600" : "text-gray-700"}`}>{fmtPct(matPct)}</span>
+                    </div>
+                    <ProgressBar value={p.effectiveMaterials} max={p.est_materials_budget} color={overMat ? "red" : matPct > 0.8 ? "yellow" : "green"} />
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-[10px] mb-0.5">
+                      <span className="text-gray-500">Hours</span>
+                      <span className={`font-semibold ${overHrs ? "text-red-600" : "text-gray-700"}`}>{p.effectiveHours.toLocaleString()} / {p.goal_hours.toLocaleString()}</span>
+                    </div>
+                    <ProgressBar value={p.effectiveHours} max={p.goal_hours} color={overHrs ? "red" : "green"} />
+                  </div>
+                </div>
+
+                {/* Bonuses */}
+                {(inc.rough.status !== "no-data" || inc.finish.status !== "no-data") && (
+                  <div className="flex flex-wrap gap-1">
+                    {[
+                      { key: "R", sb: inc.rough  },
+                      { key: "F", sb: inc.finish },
+                    ].map(({ key, sb }) => {
+                      if (sb.status === "no-data") return null;
+                      const pill =
+                        sb.status === "beat"    ? "bg-green-100 text-green-700" :
+                        sb.status === "meet"    ? "bg-blue-100 text-blue-700"   :
+                        sb.status === "miss"    ? "bg-red-100 text-red-700"     :
+                                                  "bg-gray-100 text-gray-500";
+                      return (
+                        <span key={key} className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${pill}`}>
+                          {key} · {sb.label}
+                        </span>
+                      );
+                    })}
+                    {!isForeman && inc.totalEarned > 0 && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-100 text-green-700 font-bold">
+                        {fmt$(inc.totalEarned)}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                  <span className="text-[10px] text-gray-400">
+                    {(() => { const rt = relativeTime(p.updated_at); return rt.label; })()}
+                  </span>
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={() => toggleRow(p.id)}
+                      className="text-xs px-2.5 py-1 bg-white border border-gray-200 hover:bg-gray-50 rounded transition-colors">
+                      {expandedRows.has(p.id) ? "▲ Hide" : "▼ Insights"}
+                    </button>
+                    {isAdmin && (
+                      <button
+                        onClick={() => { setEditProject(p); setDraftStage(p.stage ?? "Rough"); setDraftStagePct(Math.round((p.stage_completion ?? 0) * 100)); }}
+                        className="text-xs px-2.5 py-1 bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 rounded transition-colors">
+                        ✏️ Edit
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          <p className="text-xs text-gray-400 text-center pt-1">Showing {filtered.length} of {projects.length} projects</p>
+        </div>
+      )}
+
+      {/* ── Active Projects Table (desktop) ── */}
+      {view === "active" && <div className="hidden md:block bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -874,7 +1046,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
 
       {/* ── Edit modal ── */}
       {editProject && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white px-6 py-4 border-b flex justify-between items-center">
               <h2 className="text-lg font-bold text-gray-900">Edit: {editProject.name}</h2>
@@ -1046,7 +1218,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
 
       {/* ── Add project modal ── */}
       {showAddForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
             <div className="px-6 py-4 border-b flex justify-between items-center">
               <h2 className="text-lg font-bold text-gray-900">Add New Project</h2>
@@ -1087,7 +1259,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
 
       {/* ── Activate modal ── */}
       {activateProject && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
             {/* Header */}
             <div className="px-6 py-4 border-b flex justify-between items-start">

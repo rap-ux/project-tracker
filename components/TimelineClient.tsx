@@ -408,7 +408,12 @@ export default function TimelineClient({ projects, stagesByProject }: Props) {
 
       {/* ── Gantt view ── */}
       {view === "gantt" && (
-        <GanttView visible={visible} stagesByProject={localStages} />
+        <>
+          <div className="md:hidden bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800">
+            📱 The Gantt chart is designed for wider screens. For the best view, open this page on a laptop/desktop — or rotate your phone to landscape.
+          </div>
+          <GanttView visible={visible} stagesByProject={localStages} />
+        </>
       )}
 
     </main>

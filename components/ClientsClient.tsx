@@ -150,7 +150,7 @@ export default function ClientsClient({ projects: initial, role }: { projects: P
         <input
           value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Search name, builder, contact, phone…"
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 w-72"
+          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 w-full sm:w-72"
           style={{ "--tw-ring-color": "#00BAD6" } as React.CSSProperties}
         />
         <select value={region} onChange={e => setRegion(e.target.value)}
@@ -184,8 +184,78 @@ export default function ClientsClient({ projects: initial, role }: { projects: P
         )}
       </div>
 
-      {/* Unified table */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden print:shadow-none">
+      {/* Mobile card view */}
+      <div className="md:hidden space-y-2.5 print:hidden">
+        {filtered.length === 0 && (
+          <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-sm text-gray-400">
+            No projects match your filters.
+          </div>
+        )}
+        {filtered.map(p => (
+          <div key={p.id} className={`bg-white rounded-xl border border-gray-200 shadow-sm p-4 space-y-2 ${p.is_pipeline === 1 ? "opacity-80" : ""}`}>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-gray-900">{p.name}</p>
+                {p.contract_value > 0 && (
+                  <p className="text-xs text-gray-400 font-mono">{fmt$(p.contract_value)}</p>
+                )}
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                  p.stage === "Finish"            ? "bg-purple-100 text-purple-700" :
+                  p.stage === "Extras"            ? "bg-amber-100   text-amber-700"  :
+                  p.stage === "Contracting Phase" ? "bg-gray-100    text-gray-600"   :
+                  p.stage === "Underground"       ? "bg-orange-100  text-orange-700" :
+                                                    "bg-blue-100    text-blue-700"
+                }`}>{p.stage}</span>
+                {p.is_pipeline === 1 && (
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-gray-100 text-gray-500 font-medium">Minor</span>
+                )}
+              </div>
+            </div>
+            <div className="text-xs text-gray-600 space-y-1">
+              <div className="grid grid-cols-2 gap-2">
+                <p><span className="text-gray-400">Foreman:</span> {p.foreman}</p>
+                <p><span className="text-gray-400">Region:</span> {p.region || "—"}</p>
+              </div>
+              {p.builder  && <p><span className="text-gray-400">🏗️ Builder:</span> {p.builder}</p>}
+              {p.contacts && <p><span className="text-gray-400">👤 Contact:</span> {p.contacts}</p>}
+              {p.phone    && (
+                <p>
+                  <span className="text-gray-400">📞 Phone:</span>{" "}
+                  <a href={`tel:${p.phone}`} className="text-blue-600 underline">{p.phone}</a>
+                </p>
+              )}
+              {p.project_notes && <p className="italic text-gray-400">📝 {p.project_notes}</p>}
+            </div>
+            <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
+              {p.basecamp_link && (
+                <a href={p.basecamp_link} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center justify-center w-8 h-8 rounded bg-gray-50 border border-gray-200">
+                  <img src="/icons/basecamp.svg" alt="Basecamp" className="w-5 h-5" />
+                </a>
+              )}
+              {p.drive_folder && (
+                <a href={p.drive_folder.startsWith("http") ? p.drive_folder : `https://drive.google.com/drive/search?q=${encodeURIComponent(p.drive_folder)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex items-center justify-center w-8 h-8 rounded bg-gray-50 border border-gray-200">
+                  <img src="/icons/google-drive.svg" alt="Drive" className="w-5 h-5" />
+                </a>
+              )}
+              {isAdmin && (
+                <button
+                  onClick={() => setEditing(p)}
+                  className="ml-auto text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium">
+                  ✏️ Edit
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden print:shadow-none print:block">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -275,7 +345,7 @@ export default function ClientsClient({ projects: initial, role }: { projects: P
 
       {/* Edit modal */}
       {editing && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 print:hidden">
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 print:hidden">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white px-6 py-4 border-b flex justify-between items-center">
               <div>
@@ -322,7 +392,7 @@ export default function ClientsClient({ projects: initial, role }: { projects: P
 
       {/* Add modal */}
       {adding && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 print:hidden">
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 print:hidden">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white px-6 py-4 border-b flex justify-between items-center">
               <div>
