@@ -44,7 +44,7 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
   projects: Project[]; finishDateByProject: Record<number, string>;
 }) {
   const [view, setView] = useState<"margin" | "foreman" | "builder">("margin");
-  const [marginChartView, setMarginChartView] = useState<"scatter" | "bar" | "pie">("bar");
+  const [marginChartView, setMarginChartView] = useState<"bar" | "pie">("bar");
 
   // ── Margin per project ────────────────────────────────────────────────────
   const marginRows = useMemo(() => {
@@ -115,28 +115,6 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
     })).sort((a, b) => b.contract - a.contract);
   }, [marginRows]);
 
-  // ── Chart geometry ────────────────────────────────────────────────────────
-  const W = Math.max(600, trendRows.length * 90);
-  const H = 280;
-  const PAD_L = 50;
-  const PAD_R = 20;
-  const PAD_T = 20;
-  const PAD_B = 50;
-  const chartW = W - PAD_L - PAD_R;
-  const chartH = H - PAD_T - PAD_B;
-
-  const allMargins = trendRows.flatMap(r => [r.m.estPct, r.m.actualPct]);
-  const yMin = Math.min(-0.2, ...allMargins) - 0.05;
-  const yMax = Math.max(0.8, ...allMargins) + 0.05;
-  const yRange = yMax - yMin;
-
-  const xPos = (i: number) => PAD_L + (trendRows.length > 1 ? (i / (trendRows.length - 1)) * chartW : chartW / 2);
-  const yPos = (v: number) => PAD_T + chartH - ((v - yMin) / yRange) * chartH;
-
-  // Y axis tick lines (every 10%)
-  const yTicks: number[] = [];
-  for (let v = Math.floor(yMin * 10) / 10; v <= yMax; v += 0.1) yTicks.push(Math.round(v * 100) / 100);
-
   return (
     <main className="flex-1 max-w-screen-xl mx-auto w-full px-4 py-6 space-y-6">
       {/* Header */}
@@ -179,20 +157,12 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-sm font-semibold text-gray-800">
-                {marginChartView === "scatter" && "Margin vs. Contract Size"}
-                {marginChartView === "bar"  && "Margin by Project"}
-                {marginChartView === "pie"  && "Portfolio Cost Structure"}
+                {marginChartView === "bar" && "Margin by Project"}
+                {marginChartView === "pie" && "Portfolio Cost Structure"}
               </h2>
               <div className="flex items-center gap-3">
                 {/* Legend changes per view */}
                 <div className="flex items-center gap-4 text-xs">
-                  {marginChartView === "scatter" && <>
-                    <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-500"     />Loss</span>
-                    <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-amber-500"   />Thin</span>
-                    <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-green-500"   />Healthy</span>
-                    <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-emerald-600" />Great+</span>
-                    <span className="text-gray-400">· dot size = hours</span>
-                  </>}
                   {marginChartView === "bar" && <>
                     <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-red-500"   />Loss</span>
                     <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-amber-500" />Thin</span>
@@ -203,9 +173,8 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
                 {/* View switcher */}
                 <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-xs bg-gray-50">
                   {([
-                    { key: "bar",     label: "Bar",     icon: "📊" },
-                    { key: "scatter", label: "Scatter", icon: "🎯" },
-                    { key: "pie",     label: "Pie",     icon: "🥧" },
+                    { key: "bar", label: "Bar", icon: "📊" },
+                    { key: "pie", label: "Pie", icon: "🥧" },
                   ] as const).map(v => (
                     <button key={v.key} onClick={() => setMarginChartView(v.key)}
                       className={`px-2.5 py-1 font-medium transition-colors ${
@@ -227,181 +196,6 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
               </p>
             ) : (
               <>
-              {/* ═══ SCATTER view — Margin % vs Contract Size ═══ */}
-              {marginChartView === "scatter" && (() => {
-                const pts = trendRows.filter(r => (r.contract_value ?? 0) > 0);
-                if (pts.length === 0) {
-                  return <p className="text-xs text-gray-400 py-10 text-center">No projects with contract values yet.</p>;
-                }
-
-                const SW    = 820;
-                const SH    = 380;
-                const SPL   = 62;
-                const SPR   = 24;
-                const SPT   = 24;
-                const SPB   = 52;
-                const plotW = SW - SPL - SPR;
-                const plotH = SH - SPT - SPB;
-
-                const maxContract = Math.max(...pts.map(r => r.contract_value ?? 0));
-                const minPct      = Math.min(-0.1, ...pts.map(r => r.m.actualPct)) - 0.05;
-                const maxPct      = Math.max( 0.6, ...pts.map(r => r.m.actualPct)) + 0.05;
-                const pctRange    = maxPct - minPct;
-
-                const xS = (v: number) => SPL + plotW * (maxContract > 0 ? v / maxContract : 0);
-                const yS = (v: number) => SPT + plotH * (1 - (v - minPct) / pctRange);
-
-                // Median contract for quadrant divider
-                const sortedC = [...pts.map(r => r.contract_value ?? 0)].sort((a, b) => a - b);
-                const medianContract = sortedC[Math.floor(sortedC.length / 2)];
-
-                const hoursOf = (r: any) => (r.actual_total_hours ?? 0) + (r.unrecorded_hours ?? 0) + (r.est_total_hours ?? 0);
-                const maxHours = Math.max(...pts.map(hoursOf), 1);
-                const dotR = (r: any) => 5 + Math.sqrt(hoursOf(r) / maxHours) * 14;
-
-                const colorFor = (p: number) =>
-                  p < 0     ? "#ef4444" :
-                  p < 0.15  ? "#f59e0b" :
-                  p < 0.30  ? "#10b981" :
-                              "#059669";
-
-                // X-axis ticks in $K/$M
-                const contractTicks = [0, 0.25, 0.5, 0.75, 1].map(f => f * maxContract);
-                const fmtAxis = (n: number) =>
-                  n >= 1_000_000 ? `$${(n/1_000_000).toFixed(1)}M`
-                  : n >= 1000    ? `$${Math.round(n/1000)}k`
-                  : `$${n}`;
-                const yTicks: number[] = [];
-                for (let v = Math.floor(minPct * 10) / 10; v <= maxPct; v += 0.1) yTicks.push(Math.round(v * 100) / 100);
-
-                // Simple label placement: show label next to every dot, but only the ~6 outliers get bold non-faded style
-                const scored = [...pts].map(r => ({
-                  r, score: Math.abs(r.m.actualPct - avgActualMargin) * Math.sqrt((r.contract_value ?? 0) / (maxContract || 1))
-                })).sort((a, b) => b.score - a.score).slice(0, 6).map(x => x.r.id);
-
-                return (
-                  <div className="overflow-x-auto
-                                  [&::-webkit-scrollbar]:h-3
-                                  [&::-webkit-scrollbar-track]:bg-gray-100
-                                  [&::-webkit-scrollbar-track]:rounded-full
-                                  [&::-webkit-scrollbar-thumb]:bg-gray-400
-                                  [&::-webkit-scrollbar-thumb]:rounded-full">
-                    <svg width={SW} height={SH} className="min-w-full">
-                      {/* Quadrant backgrounds — subtle */}
-                      <rect x={SPL}          y={SPT}                      width={plotW / 2} height={plotH / 2}
-                        fill="#ecfdf5" opacity="0.45" />
-                      <rect x={SPL + plotW/2} y={SPT}                     width={plotW / 2} height={plotH / 2}
-                        fill="#d1fae5" opacity="0.55" />
-                      <rect x={SPL}          y={SPT + plotH/2}            width={plotW / 2} height={plotH / 2}
-                        fill="#fff7ed" opacity="0.45" />
-                      <rect x={SPL + plotW/2} y={SPT + plotH/2}           width={plotW / 2} height={plotH / 2}
-                        fill="#fef2f2" opacity="0.55" />
-
-                      {/* Y gridlines + labels */}
-                      {yTicks.map((v, i) => (
-                        <g key={`y${i}`}>
-                          <line x1={SPL} x2={SW - SPR}
-                            y1={yS(v)} y2={yS(v)}
-                            stroke={v === 0 ? "#374151" : "#e5e7eb"}
-                            strokeWidth={v === 0 ? 1.5 : 1}
-                            strokeDasharray={v === 0 ? "0" : "3 4"} />
-                          <text x={SPL - 8} y={yS(v) + 3}
-                            fontSize="10" fill="#6b7280" textAnchor="end">
-                            {(v * 100).toFixed(0)}%
-                          </text>
-                        </g>
-                      ))}
-
-                      {/* X gridlines + labels */}
-                      {contractTicks.map((v, i) => (
-                        <g key={`x${i}`}>
-                          <line x1={xS(v)} x2={xS(v)}
-                            y1={SPT} y2={SPT + plotH}
-                            stroke="#e5e7eb" strokeDasharray="3 4" />
-                          <text x={xS(v)} y={SPT + plotH + 16}
-                            fontSize="10" fill="#6b7280" textAnchor="middle">
-                            {fmtAxis(v)}
-                          </text>
-                        </g>
-                      ))}
-
-                      {/* Median contract divider */}
-                      <line x1={xS(medianContract)} x2={xS(medianContract)}
-                        y1={SPT} y2={SPT + plotH}
-                        stroke="#6b7280" strokeDasharray="2 4" strokeWidth="1" opacity="0.5" />
-
-                      {/* Avg margin divider */}
-                      <line x1={SPL} x2={SW - SPR}
-                        y1={yS(avgActualMargin)} y2={yS(avgActualMargin)}
-                        stroke="#00BAD6" strokeDasharray="3 4" strokeWidth="1.5" opacity="0.6" />
-                      <text x={SW - SPR - 3} y={yS(avgActualMargin) - 4}
-                        fontSize="9" fill="#0e7490" textAnchor="end" fontWeight="700">
-                        portfolio avg {fmtPct(avgActualMargin)}
-                      </text>
-
-                      {/* Quadrant labels */}
-                      <text x={SPL + 10} y={SPT + 14}
-                        fontSize="9" fill="#047857" opacity="0.7" fontWeight="600" letterSpacing="0.5">
-                        SMALL & HEALTHY
-                      </text>
-                      <text x={SW - SPR - 10} y={SPT + 14}
-                        fontSize="9" fill="#047857" opacity="0.7" fontWeight="700" textAnchor="end" letterSpacing="0.5">
-                        BIG & HEALTHY ★
-                      </text>
-                      <text x={SPL + 10} y={SPT + plotH - 6}
-                        fontSize="9" fill="#b45309" opacity="0.7" fontWeight="600" letterSpacing="0.5">
-                        SMALL &amp; THIN
-                      </text>
-                      <text x={SW - SPR - 10} y={SPT + plotH - 6}
-                        fontSize="9" fill="#b91c1c" opacity="0.7" fontWeight="700" textAnchor="end" letterSpacing="0.5">
-                        BIG &amp; AT RISK ⚠
-                      </text>
-
-                      {/* Dots */}
-                      {pts.map(r => {
-                        const cx = xS(r.contract_value ?? 0);
-                        const cy = yS(r.m.actualPct);
-                        const dr = dotR(r);
-                        const fill = colorFor(r.m.actualPct);
-                        const isHighlighted = scored.includes(r.id);
-                        return (
-                          <g key={r.id} className="hover:brightness-110">
-                            <circle cx={cx} cy={cy} r={dr}
-                              fill={fill} fillOpacity={r.isCompleted ? 0.75 : 0.45}
-                              stroke={fill} strokeWidth={r.isCompleted ? 0 : 2}
-                              strokeDasharray={r.isCompleted ? "0" : "3 2"} />
-                            <title>
-                              {r.name}
-                              {"\n"}Contract: {fmt$(r.contract_value ?? 0)}
-                              {"\n"}Margin: {fmtPct(r.m.actualPct)} ({fmt$(r.m.actual)})
-                              {"\n"}Est: {fmtPct(r.m.estPct)}
-                              {"\n"}{r.isCompleted ? "Completed" : "In progress"}
-                            </title>
-                            {isHighlighted && (
-                              <text x={cx + dr + 4} y={cy + 3}
-                                fontSize="10" fontWeight="600" fill="#374151">
-                                {r.name.length > 16 ? r.name.slice(0, 14) + "…" : r.name}
-                              </text>
-                            )}
-                          </g>
-                        );
-                      })}
-
-                      {/* Axis titles */}
-                      <text x={SPL + plotW / 2} y={SH - 8} textAnchor="middle"
-                        fontSize="10" fill="#9ca3af" fontWeight="600" letterSpacing="0.5">
-                        CONTRACT VALUE  →
-                      </text>
-                      <text x={10} y={SPT + plotH / 2}
-                        fontSize="10" fill="#9ca3af" fontWeight="600" letterSpacing="0.5"
-                        textAnchor="middle" transform={`rotate(-90, 10, ${SPT + plotH / 2})`}>
-                        ACTUAL MARGIN %  →
-                      </text>
-                    </svg>
-                  </div>
-                );
-              })()}
-
               {/* ═══ BAR view ═══ */}
               {marginChartView === "bar" && (() => {
                 const bars = [...trendRows].sort((a, b) => b.m.actualPct - a.m.actualPct);
@@ -624,7 +418,6 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
               </>
             )}
             <p className="text-[10px] text-gray-400">
-              {marginChartView === "scatter" && "Each dot = a project · X = contract size · Y = actual margin % · Dot size = total hours · Top-right quadrant is where you want to live"}
               {marginChartView === "bar"  && "Bar color = margin band · Dashed line across each bar = estimate · Faded/outlined bars = in-progress"}
               {marginChartView === "pie"  && "Portfolio-wide: every dollar of contract value broken into Materials, Labor, and retained Margin"}
             </p>
