@@ -241,6 +241,17 @@ for (const col of [
   "rough_completion  TEXT",
   "finish_completion TEXT",
   "remaining_value   REAL DEFAULT 0",
+  // Per-milestone % and $ overrides. NULL = use default MILESTONES[].pct.
+  "underground_start_pct     REAL",
+  "underground_start_amount  REAL",
+  "rough_start_pct           REAL",
+  "rough_start_amount        REAL",
+  "rough_completion_pct      REAL",
+  "rough_completion_amount   REAL",
+  "finish_start_pct          REAL",
+  "finish_start_amount       REAL",
+  "finish_completion_pct     REAL",
+  "finish_completion_amount  REAL",
 ]) {
   try { db.exec(`ALTER TABLE forecast_projects ADD COLUMN ${col}`); } catch { /* already exists */ }
 }

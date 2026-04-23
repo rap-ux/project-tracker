@@ -45,6 +45,25 @@ interface Payment {
   past:        boolean;
 }
 
+// Resolve the dollar amount for a milestone, honoring overrides.
+// Priority: $ amount override → % override × contract → default % × contract.
+function resolveMilestoneAmount(
+  row: any,
+  mKey: string,
+  defaultPct: number,
+): { amount: number; source: "amount" | "pct" | "default" } {
+  const cv      = row.contract_value ?? 0;
+  const amtOv   = row[`${mKey}_amount`];
+  const pctOv   = row[`${mKey}_pct`];
+  if (amtOv !== null && amtOv !== undefined && amtOv !== "") {
+    return { amount: Number(amtOv) || 0, source: "amount" };
+  }
+  if (pctOv !== null && pctOv !== undefined && pctOv !== "") {
+    return { amount: cv * (Number(pctOv) / 100), source: "pct" };
+  }
+  return { amount: cv * defaultPct, source: "default" };
+}
+
 function computePayments(row: any): Payment[] {
   const cv = row.contract_value ?? 0;
   if (!cv) return [];
@@ -53,13 +72,14 @@ function computePayments(row: any): Payment[] {
       const dateStr = row[m.key];
       if (!dateStr) return null;
       const receiveDate = addDays(dateStr, RECEIPT_DELAY_DAYS);
+      const { amount } = resolveMilestoneAmount(row, m.key, m.pct);
       return {
         projectId:   row.id,
         projectName: row.name,
         foreman:     row.foreman,
         milestone:   m.shortLabel,
         receiveDate,
-        amount:      cv * m.pct,
+        amount,
         monthKey:    toYYYYMM(receiveDate),
         past:        isPast(receiveDate),
       } satisfies Payment;
@@ -876,22 +896,44 @@ export default function ForecastClient({ rows, role }: Props) {
 
                     {MILESTONES.map(m => {
                       const dateVal  = d[m.key] ?? "";
-                      const payAmt   = (row.contract_value ?? 0) * m.pct;
+                      const { amount: payAmt, source: amtSource } = resolveMilestoneAmount(d, m.key, m.pct);
                       const source   = row.sources?.[m.key];
                       const isDatePast = dateVal ? isPast(addDays(dateVal, RECEIPT_DELAY_DAYS)) : false;
+                      const pctVal  = d[`${m.key}_pct`] ?? "";
+                      const amtVal  = d[`${m.key}_amount`] ?? "";
                       return (
-                        <td key={m.key} className="px-3 py-3 text-center">
+                        <td key={m.key} className="px-3 py-3 text-center align-top">
                           {isEditing ? (
-                            <div className="flex flex-col items-center gap-0.5">
+                            <div className="flex flex-col items-stretch gap-1 w-[92px] mx-auto">
                               <input
                                 type="date"
                                 value={dateVal}
                                 onChange={e => changeField(m.key, e.target.value)}
                                 className="text-xs px-1.5 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
                               />
-                              {source === "timeline" && (
-                                <span className="text-[9px] text-cyan-600">← Timeline</span>
-                              )}
+                              <div className="flex gap-1">
+                                <input
+                                  type="number" step="0.01" placeholder={`${(m.pct * 100).toFixed(0)}%`}
+                                  value={pctVal}
+                                  onChange={e => {
+                                    changeField(`${m.key}_pct`, e.target.value);
+                                    if (e.target.value !== "") changeField(`${m.key}_amount`, "");
+                                  }}
+                                  title={`Override %. Default ${(m.pct * 100).toFixed(0)}%. Clears the $ override.`}
+                                  className="w-1/2 text-[10px] px-1 py-0.5 border border-amber-200 rounded bg-amber-50/50 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                />
+                                <input
+                                  type="number" step="0.01" placeholder="$"
+                                  value={amtVal}
+                                  onChange={e => {
+                                    changeField(`${m.key}_amount`, e.target.value);
+                                    if (e.target.value !== "") changeField(`${m.key}_pct`, "");
+                                  }}
+                                  title="Override actual $ amount. Clears the % override."
+                                  className="w-1/2 text-[10px] px-1 py-0.5 border border-amber-200 rounded bg-amber-50/50 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                />
+                              </div>
+                              {source === "timeline" && <span className="text-[9px] text-cyan-600">← Timeline</span>}
                             </div>
                           ) : dateVal ? (
                             <div className="flex flex-col items-center">
@@ -907,6 +949,11 @@ export default function ForecastClient({ rows, role }: Props) {
                               <span className={`text-[10px] font-mono ${isDatePast ? "text-green-600" : "text-gray-400"}`}>
                                 {fmt$(payAmt)}{isDatePast ? " ✓" : ""}
                               </span>
+                              {amtSource !== "default" && (
+                                <span className="text-[9px] text-amber-600 font-semibold" title={amtSource === "amount" ? "Custom $ override" : "Custom % override"}>
+                                  {amtSource === "amount" ? "$-override" : `${Number(d[`${m.key}_pct`]).toFixed(1)}%`}
+                                </span>
+                              )}
                             </div>
                           ) : (
                             <span className="text-xs text-gray-300">—</span>
@@ -968,7 +1015,7 @@ export default function ForecastClient({ rows, role }: Props) {
                   <td className="px-4 py-3 text-right font-mono text-gray-900">{fmt$(actualInvoiced)}</td>
                   {MILESTONES.map(m => {
                     const milestoneTotal = activeData.reduce((s, r) => {
-                      return s + (r[m.key] ? (r.contract_value ?? 0) * m.pct : 0);
+                      return s + (r[m.key] ? resolveMilestoneAmount(r, m.key, m.pct).amount : 0);
                     }, 0);
                     return (
                       <td key={m.key} className="px-3 py-3 text-center font-mono text-gray-900">
@@ -1043,7 +1090,7 @@ export default function ForecastClient({ rows, role }: Props) {
       {/* Legend */}
       <div className="text-xs text-gray-400 space-y-1">
         <p>* Milestone split: Underground Start 10% · Rough Start 25% · Rough Completion 25% · Finish Start 30% · Completion 10%</p>
-        <p>* Default dates come from Timeline's stage start/end. Click "Override" to set a custom milestone date for a specific project.</p>
+        <p>* Default dates come from Timeline's stage start/end. Click "Override" to set a custom milestone date, %, or $ amount. Priority: $ override → % override → default %.</p>
         <p>* Minor projects are excluded from milestone math — their remaining bill is simply contract − invoiced.</p>
       </div>
 
