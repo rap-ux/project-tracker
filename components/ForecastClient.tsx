@@ -283,35 +283,71 @@ export default function ForecastClient({ rows, role }: Props) {
 
       {/* ── Monthly Cash-Flow Summary ── */}
       {monthKeys.length > 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4">
-          <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="bg-white rounded-2xl border border-gray-200/70 shadow-sm p-6 space-y-5">
+          <div className="flex items-start justify-between flex-wrap gap-3">
             <div>
-              <h2 className="text-sm font-semibold text-gray-800">Projected Monthly Cash Flow</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Past bars = milestones already reached · Future bars = upcoming</p>
+              <h2 className="text-base font-semibold text-gray-900 tracking-tight">Projected Monthly Cash Flow</h2>
+              <p className="text-xs text-gray-500 mt-1">Past bars = milestones already reached · Future bars = upcoming</p>
             </div>
-            <div className="flex items-center gap-4 text-xs">
-              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-gray-300" />Past</div>
-              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "#00BAD6" }} />Upcoming</div>
+            <div className="flex items-center gap-4 text-xs text-gray-600">
+              <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-gray-300" />Past</div>
+              <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#00BAD6" }} />Upcoming</div>
             </div>
           </div>
 
           {/* Bar chart */}
-          <div className="flex items-end gap-1 h-36 overflow-x-auto">
-            {monthKeys.map(mk => {
-              const total = totalByMonth[mk];
-              const heightPct = (total / maxMonth) * 100;
-              const isMonthPast = mk < toYYYYMM(TODAY);
-              const isThisMonth = mk === toYYYYMM(TODAY);
-              const barColor = isMonthPast ? "#cbd5e1" : isThisMonth ? "#f59e0b" : "#00BAD6";
-              return (
-                <div key={mk} className="flex flex-col items-center gap-1 min-w-[4rem]">
-                  <span className="text-[10px] text-gray-600 font-semibold">{fmt$(total)}</span>
-                  <div className="w-full rounded-t transition-all" style={{ height: `${heightPct}%`, minHeight: "4px", backgroundColor: barColor }} />
-                  <span className="text-[10px] text-gray-400 whitespace-nowrap font-medium">{monthLabel(mk)}</span>
-                  {isThisMonth && <span className="text-[9px] text-amber-600 font-bold">NOW</span>}
-                </div>
-              );
-            })}
+          <div className="relative pt-6 pb-2">
+            {/* gridlines */}
+            <div className="absolute inset-x-0 top-6 bottom-10 flex flex-col justify-between pointer-events-none">
+              {[0, 1, 2, 3].map(i => (
+                <div key={i} className="border-t border-dashed border-gray-100" />
+              ))}
+            </div>
+            <div className="relative flex items-end gap-2 h-44 overflow-x-auto pb-3 -mx-1 px-1
+                            [&::-webkit-scrollbar]:h-1.5
+                            [&::-webkit-scrollbar-track]:bg-transparent
+                            [&::-webkit-scrollbar-thumb]:bg-gray-200
+                            [&::-webkit-scrollbar-thumb]:rounded-full
+                            hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
+              {monthKeys.map(mk => {
+                const total = totalByMonth[mk];
+                const heightPct = (total / maxMonth) * 100;
+                const isMonthPast = mk < toYYYYMM(TODAY);
+                const isThisMonth = mk === toYYYYMM(TODAY);
+                return (
+                  <div key={mk} className="group flex flex-col items-center gap-1.5 min-w-[4.25rem]">
+                    <span className={`text-[10px] font-semibold tabular-nums transition-colors ${
+                      isThisMonth ? "text-amber-600" : isMonthPast ? "text-gray-400" : "text-gray-700"
+                    }`}>
+                      {fmt$(total)}
+                    </span>
+                    <div className="w-full rounded-t-md transition-all duration-200 group-hover:brightness-110 group-hover:-translate-y-0.5"
+                      style={{
+                        height: `${heightPct}%`,
+                        minHeight: "6px",
+                        background: isMonthPast
+                          ? "linear-gradient(180deg, #e5e7eb 0%, #cbd5e1 100%)"
+                          : isThisMonth
+                          ? "linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%)"
+                          : "linear-gradient(180deg, #22d3ee 0%, #00BAD6 100%)",
+                        boxShadow: isThisMonth ? "0 4px 12px -2px rgba(245, 158, 11, 0.35)"
+                          : !isMonthPast ? "0 4px 12px -4px rgba(0, 186, 214, 0.35)" : "none",
+                      }}
+                    />
+                    <span className={`text-[10px] whitespace-nowrap font-medium ${
+                      isThisMonth ? "text-amber-700" : "text-gray-500"
+                    }`}>
+                      {monthLabel(mk)}
+                    </span>
+                    {isThisMonth && (
+                      <span className="text-[9px] text-amber-600 font-bold tracking-wider bg-amber-50 px-1.5 py-0.5 rounded-full">
+                        NOW
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Month detail table */}
