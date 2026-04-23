@@ -97,6 +97,7 @@ export default function ForecastClient({ rows, role }: Props) {
   );
   const [hiddenForemen, setHiddenForemen] = useState<Set<string>>(new Set());
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+  const [chartView, setChartView] = useState<"flow" | "heatmap" | "composition">("flow");
 
   function toggleForeman(name: string) {
     setHiddenForemen(prev => {
@@ -333,21 +334,64 @@ export default function ForecastClient({ rows, role }: Props) {
         const hovered = hoverIdx !== null && hoverIdx >= 0 && hoverIdx < monthKeys.length
           ? { mk: monthKeys[hoverIdx], idx: hoverIdx } : null;
 
+        // Heatmap helpers
+        const years = Array.from(new Set(monthKeys.map(mk => mk.split("-")[0]))).sort();
+        const heatmapMax = maxMonth;
+        function heatColor(val: number, isPast: boolean): string {
+          if (val === 0) return "#f9fafb";
+          const t = Math.sqrt(val / heatmapMax); // sqrt for visual balance
+          if (isPast) {
+            // gray→dark-gray scale
+            const lightness = 90 - t * 45;
+            return `hsl(215, 8%, ${lightness}%)`;
+          }
+          // white→cyan scale
+          const lightness = 96 - t * 56;
+          return `hsl(189, 100%, ${lightness}%)`;
+        }
+
+        // Composition helpers
+        const allProjectNames = Array.from(new Set(
+          monthKeys.flatMap(mk => byMonth[mk].map(p => p.projectName))
+        )).sort();
+        const PROJECT_PALETTE = [
+          "#00BAD6", "#8b5cf6", "#f59e0b", "#10b981", "#ef4444",
+          "#3b82f6", "#ec4899", "#14b8a6", "#f97316", "#6366f1",
+          "#84cc16", "#06b6d4", "#d946ef", "#eab308", "#64748b",
+        ];
+        const projectColor = (name: string) => {
+          const idx = allProjectNames.indexOf(name);
+          return PROJECT_PALETTE[idx % PROJECT_PALETTE.length];
+        };
+
         return (
         <div className="bg-white rounded-2xl border border-gray-200/70 shadow-sm p-6 space-y-4">
           <div className="flex items-start justify-between flex-wrap gap-3">
             <div>
               <h2 className="text-base font-semibold text-gray-900 tracking-tight">Projected Cash Flow</h2>
-              <p className="text-xs text-gray-500 mt-1">Monthly inflow (area) with running total banked (line)</p>
+              <p className="text-xs text-gray-500 mt-1">
+                {chartView === "flow"        && "Monthly inflow (area) with running total banked (line)"}
+                {chartView === "heatmap"     && "Months as a grid — color intensity = cash amount"}
+                {chartView === "composition" && "Monthly bars broken down by which project contributes"}
+              </p>
             </div>
-            <div className="flex items-center gap-4 text-xs text-gray-600">
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-2 rounded-sm" style={{ background: "linear-gradient(180deg, rgba(0,186,214,0.55), rgba(0,186,214,0.08))" }} />
-                Monthly
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-4 h-[2px] rounded-full bg-amber-500" />Running total
-              </div>
+            {/* View switcher */}
+            <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-xs bg-gray-50">
+              {([
+                { key: "flow",        label: "Flow + Total", icon: "📈" },
+                { key: "heatmap",     label: "Heatmap",      icon: "🔥" },
+                { key: "composition", label: "By Project",   icon: "📊" },
+              ] as const).map(v => (
+                <button key={v.key} onClick={() => { setChartView(v.key); setHoverIdx(null); }}
+                  className={`px-3 py-1.5 font-medium transition-colors ${
+                    chartView === v.key
+                      ? "text-white"
+                      : "text-gray-600 hover:bg-white hover:text-gray-900"
+                  }`}
+                  style={chartView === v.key ? { backgroundColor: "#00BAD6" } : {}}>
+                  <span className="mr-1">{v.icon}</span>{v.label}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -369,7 +413,47 @@ export default function ForecastClient({ rows, role }: Props) {
             )}
           </div>
 
-          {/* Chart */}
+          {/* View-specific legend */}
+          <div className="flex items-center gap-4 text-xs text-gray-600">
+            {chartView === "flow" && (
+              <>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-2 rounded-sm" style={{ background: "linear-gradient(180deg, rgba(0,186,214,0.55), rgba(0,186,214,0.08))" }} />
+                  Monthly
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-4 h-[2px] rounded-full bg-amber-500" />Running total
+                </div>
+              </>
+            )}
+            {chartView === "heatmap" && (
+              <div className="flex items-center gap-2">
+                <span className="text-gray-400">Less</span>
+                <div className="flex h-3 rounded overflow-hidden border border-gray-200">
+                  {[0.1, 0.25, 0.5, 0.75, 1].map(t => (
+                    <div key={t} className="w-5" style={{ backgroundColor: `hsl(189, 100%, ${96 - t * 56}%)` }} />
+                  ))}
+                </div>
+                <span className="text-gray-400">More</span>
+              </div>
+            )}
+            {chartView === "composition" && allProjectNames.length > 0 && (
+              <div className="flex items-center gap-3 flex-wrap">
+                {allProjectNames.slice(0, 8).map(p => (
+                  <div key={p} className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: projectColor(p) }} />
+                    <span className="truncate max-w-[120px]">{p}</span>
+                  </div>
+                ))}
+                {allProjectNames.length > 8 && (
+                  <span className="text-gray-400">+{allProjectNames.length - 8} more</span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ═══ FLOW + TOTAL view ═══ */}
+          {chartView === "flow" && (
           <div className="relative overflow-x-auto
                           [&::-webkit-scrollbar]:h-3
                           [&::-webkit-scrollbar-track]:bg-gray-100
@@ -485,6 +569,191 @@ export default function ForecastClient({ rows, role }: Props) {
               );
             })()}
           </div>
+          )}
+
+          {/* ═══ HEATMAP view ═══ */}
+          {chartView === "heatmap" && (
+          <div className="space-y-2">
+            <div className="overflow-x-auto
+                            [&::-webkit-scrollbar]:h-3
+                            [&::-webkit-scrollbar-track]:bg-gray-100
+                            [&::-webkit-scrollbar-track]:rounded-full
+                            [&::-webkit-scrollbar-thumb]:bg-gray-400
+                            [&::-webkit-scrollbar-thumb]:rounded-full">
+              <table className="border-separate" style={{ borderSpacing: "6px" }}>
+                <thead>
+                  <tr>
+                    <th className="text-[10px] font-medium text-gray-400 text-right pr-2"></th>
+                    {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map(m => (
+                      <th key={m} className="text-[10px] font-medium text-gray-500 w-14">{m}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {years.map(y => (
+                    <tr key={y}>
+                      <td className="text-xs font-semibold text-gray-700 pr-2 text-right">{y}</td>
+                      {Array.from({ length: 12 }, (_, mi) => {
+                        const mk = `${y}-${String(mi + 1).padStart(2, "0")}`;
+                        const val = totalByMonth[mk] ?? 0;
+                        const exists = monthKeys.includes(mk);
+                        const isPast = mk < toYYYYMM(TODAY);
+                        const isNow  = mk === toYYYYMM(TODAY);
+                        const hoverKey = `${y}-${mi}`;
+                        return (
+                          <td key={mi}>
+                            <div
+                              onMouseEnter={() => setHoverIdx(exists ? monthKeys.indexOf(mk) : null)}
+                              onMouseLeave={() => setHoverIdx(null)}
+                              className={`relative h-14 w-14 rounded-lg flex flex-col items-center justify-center transition-all ${
+                                exists ? "cursor-default hover:scale-105 hover:shadow-md hover:z-10" : ""
+                              } ${isNow ? "ring-2 ring-amber-400 ring-offset-1" : ""}`}
+                              style={{
+                                backgroundColor: exists ? heatColor(val, isPast) : "#fafafa",
+                                border: exists ? "1px solid rgba(0,0,0,0.04)" : "1px dashed #e5e7eb",
+                              }}>
+                              {exists ? (
+                                <>
+                                  <span className={`text-[10px] font-semibold tabular-nums ${
+                                    val / heatmapMax > 0.5 ? "text-white" : "text-gray-700"
+                                  }`}>
+                                    {val >= 1000 ? `$${Math.round(val/1000)}k` : fmt$(val)}
+                                  </span>
+                                  {isNow && <span className="text-[8px] text-amber-700 font-bold tracking-wide">NOW</span>}
+                                </>
+                              ) : (
+                                <span className="text-[10px] text-gray-300">—</span>
+                              )}
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-[10px] text-gray-400 text-center">Rows = years · Columns = months · Darker = bigger inflow</p>
+          </div>
+          )}
+
+          {/* ═══ COMPOSITION (stacked by project) view ═══ */}
+          {chartView === "composition" && (() => {
+            const W_PM  = 60;
+            const CH    = 230;
+            const PT    = 20;
+            const PB    = 40;
+            const PX    = 24;
+            const iW    = Math.max(monthKeys.length, 1) * W_PM;
+            const sW    = iW + PX * 2;
+            const plH   = CH - PT - PB;
+            const barW  = W_PM * 0.65;
+            const compMax = maxMonth;
+
+            return (
+              <div className="relative overflow-x-auto
+                              [&::-webkit-scrollbar]:h-3
+                              [&::-webkit-scrollbar-track]:bg-gray-100
+                              [&::-webkit-scrollbar-track]:rounded-full
+                              [&::-webkit-scrollbar-thumb]:bg-gray-400
+                              [&::-webkit-scrollbar-thumb]:rounded-full
+                              [&::-webkit-scrollbar-thumb]:border-2
+                              [&::-webkit-scrollbar-thumb]:border-gray-100
+                              hover:[&::-webkit-scrollbar-thumb]:bg-gray-500">
+                <svg width={sW} height={CH} className="block">
+                  {/* Gridlines */}
+                  {[0, 0.25, 0.5, 0.75, 1].map((f, i) => (
+                    <line key={i}
+                      x1={PX} x2={sW - PX}
+                      y1={PT + plH * f} y2={PT + plH * f}
+                      stroke="#f3f4f6" strokeDasharray={i === 4 ? "0" : "3 4"} />
+                  ))}
+                  {/* Stacked bars */}
+                  {monthKeys.map((mk, i) => {
+                    const cx = PX + i * W_PM + W_PM / 2;
+                    const isNow  = mk === toYYYYMM(TODAY);
+                    const isPast = mk < toYYYYMM(TODAY);
+                    const parts = byMonth[mk];
+                    // Sort segments so consistent stacking order
+                    const sorted = [...parts].sort((a, b) => allProjectNames.indexOf(a.projectName) - allProjectNames.indexOf(b.projectName));
+                    let yCursor = PT + plH;
+                    return (
+                      <g key={mk}
+                        onMouseEnter={() => setHoverIdx(i)}
+                        onMouseLeave={() => setHoverIdx(null)}>
+                        {/* Hit area */}
+                        <rect x={cx - W_PM / 2} y={PT} width={W_PM} height={plH} fill="transparent" />
+                        {sorted.map((seg, si) => {
+                          const segH = (seg.amount / compMax) * plH;
+                          const y = yCursor - segH;
+                          yCursor = y;
+                          const isTop    = si === sorted.length - 1;
+                          const isBottom = si === 0;
+                          return (
+                            <rect key={si}
+                              x={cx - barW / 2} y={y}
+                              width={barW} height={Math.max(segH, 1)}
+                              fill={projectColor(seg.projectName)}
+                              opacity={isPast ? 0.55 : 1}
+                              rx={isTop ? 3 : 0} ry={isTop ? 3 : 0}
+                              className={hoverIdx === i ? "brightness-110" : ""} />
+                          );
+                        })}
+                        {/* Total label */}
+                        <text x={cx} y={PT + plH - (totalByMonth[mk] / compMax) * plH - 4}
+                          textAnchor="middle" fontSize="9" fontWeight="600"
+                          className={isNow ? "fill-amber-700" : isPast ? "fill-gray-400" : "fill-gray-700"}>
+                          {fmt$(totalByMonth[mk])}
+                        </text>
+                        {/* Month label */}
+                        <text x={cx} y={CH - PB + 14} textAnchor="middle"
+                          fontSize="10" className={isNow ? "fill-amber-700 font-semibold" : "fill-gray-500"}>
+                          {monthLabel(mk)}
+                        </text>
+                        {isNow && (
+                          <>
+                            <rect x={cx - 16} y={CH - PB + 18} width="32" height="13" rx="6.5" fill="#fef3c7" />
+                            <text x={cx} y={CH - PB + 27} textAnchor="middle"
+                              fontSize="8" fontWeight="700" className="fill-amber-700" letterSpacing="1">NOW</text>
+                          </>
+                        )}
+                      </g>
+                    );
+                  })}
+                </svg>
+
+                {/* Tooltip */}
+                {hovered && (() => {
+                  const leftPx = PX + hovered.idx * W_PM + W_PM / 2;
+                  const placeRight = leftPx > sW / 2;
+                  const parts = byMonth[hovered.mk];
+                  return (
+                    <div className="pointer-events-none absolute bg-gray-900 text-white rounded-lg shadow-xl px-3 py-2 text-[11px] space-y-1"
+                      style={{
+                        top: PT + 4,
+                        left: placeRight ? undefined : leftPx + 12,
+                        right: placeRight ? sW - leftPx + 12 : undefined,
+                        minWidth: "180px",
+                      }}>
+                      <div className="font-semibold text-white/90 mb-1 flex justify-between gap-3 border-b border-white/10 pb-1">
+                        <span>{monthLabel(hovered.mk)}</span>
+                        <span className="tabular-nums">{fmt$(totalByMonth[hovered.mk])}</span>
+                      </div>
+                      {parts.map((p, i) => (
+                        <div key={i} className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-1.5 truncate">
+                            <div className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: projectColor(p.projectName) }} />
+                            <span className="truncate text-white/80">{p.projectName}</span>
+                          </div>
+                          <span className="font-semibold tabular-nums text-white/90">{fmt$(p.amount)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+            );
+          })()}
 
           {/* Month detail table */}
           <div className="overflow-x-auto">
