@@ -296,26 +296,24 @@ export default function ForecastClient({ rows, role }: Props) {
           </div>
 
           {/* Bar chart */}
-          <div className="relative pt-6 pb-2">
-            {/* gridlines */}
-            <div className="absolute inset-x-0 top-6 bottom-10 flex flex-col justify-between pointer-events-none">
-              {[0, 1, 2, 3].map(i => (
-                <div key={i} className="border-t border-dashed border-gray-100" />
-              ))}
-            </div>
-            <div className="relative flex items-end gap-2 h-44 overflow-x-auto pb-3 -mx-1 px-1
-                            [&::-webkit-scrollbar]:h-1.5
-                            [&::-webkit-scrollbar-track]:bg-transparent
-                            [&::-webkit-scrollbar-thumb]:bg-gray-200
+          <div className="relative">
+            <div className="relative flex items-end gap-2 h-32 overflow-x-auto pb-4 -mx-1 px-1
+                            [&::-webkit-scrollbar]:h-3
+                            [&::-webkit-scrollbar-track]:bg-gray-100
+                            [&::-webkit-scrollbar-track]:rounded-full
+                            [&::-webkit-scrollbar-thumb]:bg-gray-400
                             [&::-webkit-scrollbar-thumb]:rounded-full
-                            hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
+                            [&::-webkit-scrollbar-thumb]:border-2
+                            [&::-webkit-scrollbar-thumb]:border-gray-100
+                            hover:[&::-webkit-scrollbar-thumb]:bg-gray-500">
               {monthKeys.map(mk => {
                 const total = totalByMonth[mk];
-                const heightPct = (total / maxMonth) * 100;
+                // Square-root scale — compresses range so small bars are still visible next to giants
+                const heightPct = Math.sqrt(total / maxMonth) * 100;
                 const isMonthPast = mk < toYYYYMM(TODAY);
                 const isThisMonth = mk === toYYYYMM(TODAY);
                 return (
-                  <div key={mk} className="group flex flex-col items-center gap-1.5 min-w-[4.25rem]">
+                  <div key={mk} className="group flex flex-col items-center gap-1 min-w-[4.25rem]">
                     <span className={`text-[10px] font-semibold tabular-nums transition-colors ${
                       isThisMonth ? "text-amber-600" : isMonthPast ? "text-gray-400" : "text-gray-700"
                     }`}>
@@ -324,7 +322,7 @@ export default function ForecastClient({ rows, role }: Props) {
                     <div className="w-full rounded-t-md transition-all duration-200 group-hover:brightness-110 group-hover:-translate-y-0.5"
                       style={{
                         height: `${heightPct}%`,
-                        minHeight: "6px",
+                        minHeight: "8px",
                         background: isMonthPast
                           ? "linear-gradient(180deg, #e5e7eb 0%, #cbd5e1 100%)"
                           : isThisMonth
