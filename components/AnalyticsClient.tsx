@@ -44,6 +44,7 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
   projects: Project[]; finishDateByProject: Record<number, string>;
 }) {
   const [view, setView] = useState<"margin" | "foreman" | "builder">("margin");
+  const [marginChartView, setMarginChartView] = useState<"line" | "bar" | "pie">("line");
 
   // ── Margin per project ────────────────────────────────────────────────────
   const marginRows = useMemo(() => {
@@ -177,10 +178,43 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
 
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold text-gray-800">Margin Over Time</h2>
-              <div className="flex items-center gap-4 text-xs">
-                <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "#00BAD6" }} />Actual</span>
-                <span className="flex items-center gap-1.5"><div className="w-3 h-0.5" style={{ backgroundColor: "#9ca3af", borderTop: "2px dashed #9ca3af" }} />Estimate</span>
+              <h2 className="text-sm font-semibold text-gray-800">
+                {marginChartView === "line" && "Margin Over Time"}
+                {marginChartView === "bar"  && "Margin by Project"}
+                {marginChartView === "pie"  && "Margin Distribution"}
+              </h2>
+              <div className="flex items-center gap-3">
+                {/* Legend changes per view */}
+                <div className="flex items-center gap-4 text-xs">
+                  {marginChartView === "line" && <>
+                    <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "#00BAD6" }} />Actual</span>
+                    <span className="flex items-center gap-1.5"><div className="w-3 h-0.5" style={{ backgroundColor: "#9ca3af", borderTop: "2px dashed #9ca3af" }} />Estimate</span>
+                  </>}
+                  {marginChartView === "bar" && <>
+                    <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-red-500"   />Loss</span>
+                    <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-amber-500" />Thin</span>
+                    <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-green-500" />Healthy</span>
+                    <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-emerald-600" />Great+</span>
+                  </>}
+                </div>
+                {/* View switcher */}
+                <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-xs bg-gray-50">
+                  {([
+                    { key: "line", label: "Line", icon: "📈" },
+                    { key: "bar",  label: "Bar",  icon: "📊" },
+                    { key: "pie",  label: "Pie",  icon: "🥧" },
+                  ] as const).map(v => (
+                    <button key={v.key} onClick={() => setMarginChartView(v.key)}
+                      className={`px-2.5 py-1 font-medium transition-colors ${
+                        marginChartView === v.key
+                          ? "text-white"
+                          : "text-gray-600 hover:bg-white hover:text-gray-900"
+                      }`}
+                      style={marginChartView === v.key ? { backgroundColor: "#00BAD6" } : {}}>
+                      <span className="mr-1">{v.icon}</span>{v.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -189,66 +223,251 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
                 Not enough data yet. Projects with contract values and dates will appear here.
               </p>
             ) : (
-              <div className="overflow-x-auto">
-                <svg width={W} height={H} className="min-w-full">
-                  {/* Y axis grid + labels */}
-                  {yTicks.map((v, i) => (
-                    <g key={i}>
-                      <line
-                        x1={PAD_L} x2={W - PAD_R}
-                        y1={yPos(v)} y2={yPos(v)}
-                        stroke={v === 0 ? "#374151" : "#f3f4f6"}
-                        strokeWidth={v === 0 ? 1.5 : 1} />
-                      <text x={PAD_L - 8} y={yPos(v) + 3}
-                        fontSize="10" fill="#6b7280" textAnchor="end">
-                        {(v * 100).toFixed(0)}%
+              <>
+              {/* ═══ LINE view ═══ */}
+              {marginChartView === "line" && (
+                <div className="overflow-x-auto">
+                  <svg width={W} height={H} className="min-w-full">
+                    {/* Y axis grid + labels */}
+                    {yTicks.map((v, i) => (
+                      <g key={i}>
+                        <line
+                          x1={PAD_L} x2={W - PAD_R}
+                          y1={yPos(v)} y2={yPos(v)}
+                          stroke={v === 0 ? "#374151" : "#f3f4f6"}
+                          strokeWidth={v === 0 ? 1.5 : 1} />
+                        <text x={PAD_L - 8} y={yPos(v) + 3}
+                          fontSize="10" fill="#6b7280" textAnchor="end">
+                          {(v * 100).toFixed(0)}%
+                        </text>
+                      </g>
+                    ))}
+                    <line
+                      x1={PAD_L} x2={W - PAD_R}
+                      y1={yPos(avgActualMargin)} y2={yPos(avgActualMargin)}
+                      stroke="#00BAD6" strokeWidth={1} strokeDasharray="2 4" opacity={0.4} />
+                    <polyline
+                      fill="none" stroke="#00BAD6" strokeWidth={2.5}
+                      points={trendRows.map((r, i) => `${xPos(i)},${yPos(r.m.actualPct)}`).join(" ")} />
+                    <polyline
+                      fill="none" stroke="#9ca3af" strokeWidth={1.5} strokeDasharray="4 3"
+                      points={trendRows.map((r, i) => `${xPos(i)},${yPos(r.m.estPct)}`).join(" ")} />
+                    {trendRows.map((r, i) => (
+                      <g key={r.id}>
+                        <circle cx={xPos(i)} cy={yPos(r.m.estPct)} r={3} fill="#9ca3af" opacity={0.6} />
+                        <circle cx={xPos(i)} cy={yPos(r.m.actualPct)} r={5}
+                          fill={r.isCompleted ? "#00BAD6" : "#ffffff"}
+                          stroke="#00BAD6" strokeWidth={2} />
+                        <title>{r.name} — Est {fmtPct(r.m.estPct)} / Actual {fmtPct(r.m.actualPct)}</title>
+                      </g>
+                    ))}
+                    {trendRows.map((r, i) => (
+                      <text key={r.id}
+                        x={xPos(i)} y={H - PAD_B + 15}
+                        fontSize="10" fill="#6b7280"
+                        textAnchor="end"
+                        transform={`rotate(-35, ${xPos(i)}, ${H - PAD_B + 15})`}>
+                        {r.name.length > 14 ? r.name.slice(0, 12) + "…" : r.name}
                       </text>
-                    </g>
-                  ))}
+                    ))}
+                  </svg>
+                </div>
+              )}
 
-                  {/* Avg line */}
-                  <line
-                    x1={PAD_L} x2={W - PAD_R}
-                    y1={yPos(avgActualMargin)} y2={yPos(avgActualMargin)}
-                    stroke="#00BAD6" strokeWidth={1} strokeDasharray="2 4" opacity={0.4} />
+              {/* ═══ BAR view ═══ */}
+              {marginChartView === "bar" && (() => {
+                const bars = [...trendRows].sort((a, b) => b.m.actualPct - a.m.actualPct);
+                const BW     = 44;
+                const BGAP   = 14;
+                const BPL    = 52;
+                const BPR    = 20;
+                const BPT    = 24;
+                const BPB    = 80;
+                const innerW = bars.length * (BW + BGAP);
+                const sw     = Math.max(innerW + BPL + BPR, 600);
+                const sh     = 320;
+                const plotH  = sh - BPT - BPB;
+                const maxPct = Math.max(...bars.map(b => b.m.actualPct), 0.3);
+                const minPct = Math.min(...bars.map(b => b.m.actualPct), 0);
+                const range  = Math.max(maxPct - minPct, 0.01);
+                const zeroY  = BPT + plotH * (maxPct / range);
+                const yFor   = (v: number) => BPT + plotH * ((maxPct - v) / range);
+                const colorFor = (p: number) =>
+                  p < 0    ? "#ef4444" :
+                  p < 0.15 ? "#f59e0b" :
+                  p < 0.30 ? "#10b981" :
+                             "#059669";
+                const ticks: number[] = [];
+                for (let v = Math.floor(minPct * 10) / 10; v <= maxPct + 0.05; v += 0.1) ticks.push(Math.round(v * 100) / 100);
+                return (
+                  <div className="overflow-x-auto">
+                    <svg width={sw} height={sh} className="min-w-full">
+                      {/* gridlines + y labels */}
+                      {ticks.map((v, i) => (
+                        <g key={i}>
+                          <line x1={BPL} x2={sw - BPR}
+                            y1={yFor(v)} y2={yFor(v)}
+                            stroke={v === 0 ? "#374151" : "#f3f4f6"}
+                            strokeWidth={v === 0 ? 1.5 : 1} strokeDasharray={v === 0 ? "0" : "3 4"} />
+                          <text x={BPL - 8} y={yFor(v) + 3}
+                            fontSize="10" fill="#6b7280" textAnchor="end">
+                            {(v * 100).toFixed(0)}%
+                          </text>
+                        </g>
+                      ))}
+                      {/* Avg line */}
+                      <line x1={BPL} x2={sw - BPR}
+                        y1={yFor(avgActualMargin)} y2={yFor(avgActualMargin)}
+                        stroke="#00BAD6" strokeWidth={1} strokeDasharray="2 4" opacity={0.5} />
+                      <text x={sw - BPR - 2} y={yFor(avgActualMargin) - 3}
+                        fontSize="9" fill="#00BAD6" textAnchor="end" fontWeight="600">
+                        avg {fmtPct(avgActualMargin)}
+                      </text>
+                      {/* Bars */}
+                      {bars.map((r, i) => {
+                        const cx     = BPL + i * (BW + BGAP) + BW / 2;
+                        const actual = r.m.actualPct;
+                        const estY   = yFor(r.m.estPct);
+                        const topY   = yFor(Math.max(actual, 0));
+                        const botY   = yFor(Math.min(actual, 0));
+                        const barH   = Math.max(botY - topY, 1);
+                        return (
+                          <g key={r.id}>
+                            <rect x={cx - BW / 2} y={topY}
+                              width={BW} height={barH}
+                              rx="3"
+                              fill={colorFor(actual)}
+                              opacity={r.isCompleted ? 1 : 0.55}
+                              stroke={r.isCompleted ? "transparent" : colorFor(actual)}
+                              strokeWidth={r.isCompleted ? 0 : 1.5}
+                              strokeDasharray={r.isCompleted ? "0" : "3 2"} />
+                            {/* Estimate marker */}
+                            <line
+                              x1={cx - BW / 2 - 2} x2={cx + BW / 2 + 2}
+                              y1={estY} y2={estY}
+                              stroke="#374151" strokeWidth="1.5" strokeDasharray="3 2" opacity="0.6" />
+                            {/* Value label */}
+                            <text x={cx} y={actual >= 0 ? topY - 4 : botY + 12}
+                              fontSize="10" fontWeight="600"
+                              fill={colorFor(actual)} textAnchor="middle">
+                              {fmtPct(actual)}
+                            </text>
+                            {/* Project label (rotated) */}
+                            <text x={cx} y={sh - BPB + 14}
+                              fontSize="10" fill="#6b7280" textAnchor="end"
+                              transform={`rotate(-35, ${cx}, ${sh - BPB + 14})`}>
+                              {r.name.length > 14 ? r.name.slice(0, 12) + "…" : r.name}
+                            </text>
+                            <title>{r.name} — Actual {fmtPct(actual)} · Est {fmtPct(r.m.estPct)}</title>
+                          </g>
+                        );
+                      })}
+                    </svg>
+                  </div>
+                );
+              })()}
 
-                  {/* Actual margin line */}
-                  <polyline
-                    fill="none" stroke="#00BAD6" strokeWidth={2.5}
-                    points={trendRows.map((r, i) => `${xPos(i)},${yPos(r.m.actualPct)}`).join(" ")} />
-
-                  {/* Estimated margin line (dashed) */}
-                  <polyline
-                    fill="none" stroke="#9ca3af" strokeWidth={1.5} strokeDasharray="4 3"
-                    points={trendRows.map((r, i) => `${xPos(i)},${yPos(r.m.estPct)}`).join(" ")} />
-
-                  {/* Points */}
-                  {trendRows.map((r, i) => (
-                    <g key={r.id}>
-                      {/* Est marker */}
-                      <circle cx={xPos(i)} cy={yPos(r.m.estPct)} r={3} fill="#9ca3af" opacity={0.6} />
-                      {/* Actual marker */}
-                      <circle cx={xPos(i)} cy={yPos(r.m.actualPct)} r={5}
-                        fill={r.isCompleted ? "#00BAD6" : "#ffffff"}
-                        stroke="#00BAD6" strokeWidth={2} />
-                      <title>{r.name} — Est {fmtPct(r.m.estPct)} / Actual {fmtPct(r.m.actualPct)}</title>
-                    </g>
-                  ))}
-
-                  {/* X axis labels — project names rotated */}
-                  {trendRows.map((r, i) => (
-                    <text key={r.id}
-                      x={xPos(i)} y={H - PAD_B + 15}
-                      fontSize="10" fill="#6b7280"
-                      textAnchor="end"
-                      transform={`rotate(-35, ${xPos(i)}, ${H - PAD_B + 15})`}>
-                      {r.name.length > 14 ? r.name.slice(0, 12) + "…" : r.name}
-                    </text>
-                  ))}
-                </svg>
-              </div>
+              {/* ═══ PIE view ═══ */}
+              {marginChartView === "pie" && (() => {
+                const BUCKETS = [
+                  { key: "loss",    label: "Loss (<0%)",        color: "#ef4444", test: (p: number) => p < 0 },
+                  { key: "thin",    label: "Thin (0–15%)",      color: "#f59e0b", test: (p: number) => p >= 0    && p < 0.15 },
+                  { key: "healthy", label: "Healthy (15–30%)",  color: "#10b981", test: (p: number) => p >= 0.15 && p < 0.30 },
+                  { key: "great",   label: "Great (30–50%)",    color: "#059669", test: (p: number) => p >= 0.30 && p < 0.50 },
+                  { key: "stellar", label: "Stellar (50%+)",    color: "#0891b2", test: (p: number) => p >= 0.50 },
+                ] as const;
+                const groups = BUCKETS.map(b => ({
+                  ...b,
+                  projects: trendRows.filter(r => b.test(r.m.actualPct)),
+                }));
+                const total = trendRows.length;
+                const cx = 150, cy = 150, r = 110, inner = 66;
+                let ang = -Math.PI / 2;
+                const slices = groups.map(g => {
+                  const frac = total > 0 ? g.projects.length / total : 0;
+                  const a0 = ang, a1 = ang + frac * Math.PI * 2;
+                  ang = a1;
+                  const large = a1 - a0 > Math.PI ? 1 : 0;
+                  const x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0);
+                  const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+                  const xi0 = cx + inner * Math.cos(a0), yi0 = cy + inner * Math.sin(a0);
+                  const xi1 = cx + inner * Math.cos(a1), yi1 = cy + inner * Math.sin(a1);
+                  const d = frac > 0 ? (frac >= 1
+                    ? `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx - 0.01} ${cy - r} Z`
+                    : `M ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} L ${xi1} ${yi1} A ${inner} ${inner} 0 ${large} 0 ${xi0} ${yi0} Z`
+                  ) : "";
+                  const midA = (a0 + a1) / 2;
+                  const labelR = (r + inner) / 2;
+                  return {
+                    ...g, frac, d,
+                    labelX: cx + labelR * Math.cos(midA),
+                    labelY: cy + labelR * Math.sin(midA),
+                  };
+                });
+                return (
+                  <div className="flex flex-col md:flex-row items-center gap-6 py-2">
+                    <svg width="300" height="300" className="shrink-0">
+                      {slices.map(s => s.frac > 0 && (
+                        <g key={s.key}>
+                          <path d={s.d} fill={s.color} stroke="white" strokeWidth="2"
+                            className="hover:brightness-110 transition" />
+                          {s.frac > 0.05 && (
+                            <text x={s.labelX} y={s.labelY} textAnchor="middle"
+                              fontSize="12" fontWeight="700" fill="white">
+                              {s.projects.length}
+                            </text>
+                          )}
+                          <title>{s.label} — {s.projects.length} project(s)</title>
+                        </g>
+                      ))}
+                      {/* Center total */}
+                      <text x={cx} y={cy - 4} textAnchor="middle" fontSize="26" fontWeight="800" fill="#1f2937">
+                        {total}
+                      </text>
+                      <text x={cx} y={cy + 16} textAnchor="middle" fontSize="10" fill="#6b7280" letterSpacing="1">
+                        PROJECTS
+                      </text>
+                    </svg>
+                    <div className="flex-1 w-full space-y-2">
+                      {slices.map(s => {
+                        const pct = total > 0 ? (s.projects.length / total * 100) : 0;
+                        return (
+                          <div key={s.key} className="border border-gray-100 rounded-lg p-2.5 bg-gray-50/50">
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: s.color }} />
+                                <span className="text-xs font-semibold text-gray-700">{s.label}</span>
+                              </div>
+                              <span className="text-xs font-bold tabular-nums text-gray-800">
+                                {s.projects.length} <span className="text-gray-400 font-normal">({pct.toFixed(0)}%)</span>
+                              </span>
+                            </div>
+                            {s.projects.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {s.projects.slice(0, 8).map(p => (
+                                  <span key={p.id} className="text-[10px] px-1.5 py-0.5 rounded bg-white border border-gray-200 text-gray-600">
+                                    {p.name.length > 18 ? p.name.slice(0, 16) + "…" : p.name}
+                                  </span>
+                                ))}
+                                {s.projects.length > 8 && (
+                                  <span className="text-[10px] text-gray-400">+{s.projects.length - 8} more</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+              </>
             )}
-            <p className="text-[10px] text-gray-400">Hollow dots = in-progress · Solid dots = completed</p>
+            <p className="text-[10px] text-gray-400">
+              {marginChartView === "line" && "Hollow dots = in-progress · Solid dots = completed"}
+              {marginChartView === "bar"  && "Bar color = margin band · Dashed line across each bar = estimate · Faded/outlined bars = in-progress"}
+              {marginChartView === "pie"  && "Projects grouped by actual margin band"}
+            </p>
           </div>
 
           {/* Project-by-project margin table */}
