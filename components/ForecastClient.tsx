@@ -96,6 +96,7 @@ export default function ForecastClient({ rows, role }: Props) {
     [data]
   );
   const [hiddenForemen, setHiddenForemen] = useState<Set<string>>(new Set());
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   function toggleForeman(name: string) {
     setHiddenForemen(prev => {
@@ -282,70 +283,207 @@ export default function ForecastClient({ rows, role }: Props) {
       )}
 
       {/* ── Monthly Cash-Flow Summary ── */}
-      {monthKeys.length > 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-200/70 shadow-sm p-6 space-y-5">
+      {monthKeys.length > 0 ? (() => {
+        // Compute running cumulative totals
+        const cumByMonth: Record<string, number> = {};
+        let running = 0;
+        monthKeys.forEach(mk => { running += totalByMonth[mk]; cumByMonth[mk] = running; });
+        const maxCum = Math.max(...Object.values(cumByMonth), 1);
+        const totalForecast = running;
+
+        // Chart geometry
+        const W_PER_MONTH = 70;
+        const CHART_H     = 220;
+        const PAD_T       = 20;
+        const PAD_B       = 48;
+        const PAD_X       = 24;
+        const innerW      = Math.max(monthKeys.length - 1, 1) * W_PER_MONTH;
+        const svgW        = innerW + PAD_X * 2;
+        const plotH       = CHART_H - PAD_T - PAD_B;
+
+        const xFor    = (i: number) => PAD_X + i * W_PER_MONTH;
+        const yMonthly = (v: number) => PAD_T + plotH * (1 - (maxMonth > 0 ? v / maxMonth : 0));
+        const yCum     = (v: number) => PAD_T + plotH * (1 - (maxCum   > 0 ? v / maxCum   : 0));
+
+        const monthlyPts = monthKeys.map((mk, i) => ({ x: xFor(i), y: yMonthly(totalByMonth[mk]) }));
+        const cumPts     = monthKeys.map((mk, i) => ({ x: xFor(i), y: yCum(cumByMonth[mk]) }));
+
+        // Smooth cubic bezier through points
+        const smooth = (pts: { x: number; y: number }[]) => {
+          if (pts.length === 0) return "";
+          if (pts.length === 1) return `M ${pts[0].x},${pts[0].y}`;
+          let d = `M ${pts[0].x},${pts[0].y}`;
+          for (let i = 1; i < pts.length; i++) {
+            const prev = pts[i - 1], cur = pts[i];
+            const cx = (prev.x + cur.x) / 2;
+            d += ` C ${cx},${prev.y} ${cx},${cur.y} ${cur.x},${cur.y}`;
+          }
+          return d;
+        };
+
+        const areaPath = smooth(monthlyPts) +
+          ` L ${monthlyPts[monthlyPts.length - 1].x},${CHART_H - PAD_B}` +
+          ` L ${monthlyPts[0].x},${CHART_H - PAD_B} Z`;
+        const monthlyLine = smooth(monthlyPts);
+        const cumLine     = smooth(cumPts);
+
+        const todayKey = toYYYYMM(TODAY);
+        const nowIdx   = monthKeys.findIndex(mk => mk === todayKey);
+
+        const hovered = hoverIdx !== null && hoverIdx >= 0 && hoverIdx < monthKeys.length
+          ? { mk: monthKeys[hoverIdx], idx: hoverIdx } : null;
+
+        return (
+        <div className="bg-white rounded-2xl border border-gray-200/70 shadow-sm p-6 space-y-4">
           <div className="flex items-start justify-between flex-wrap gap-3">
             <div>
-              <h2 className="text-base font-semibold text-gray-900 tracking-tight">Projected Monthly Cash Flow</h2>
-              <p className="text-xs text-gray-500 mt-1">Past bars = milestones already reached · Future bars = upcoming</p>
+              <h2 className="text-base font-semibold text-gray-900 tracking-tight">Projected Cash Flow</h2>
+              <p className="text-xs text-gray-500 mt-1">Monthly inflow (area) with running total banked (line)</p>
             </div>
             <div className="flex items-center gap-4 text-xs text-gray-600">
-              <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-gray-300" />Past</div>
-              <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#00BAD6" }} />Upcoming</div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-2 rounded-sm" style={{ background: "linear-gradient(180deg, rgba(0,186,214,0.55), rgba(0,186,214,0.08))" }} />
+                Monthly
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-[2px] rounded-full bg-amber-500" />Running total
+              </div>
             </div>
           </div>
 
-          {/* Bar chart */}
-          <div className="relative">
-            <div className="relative flex items-end gap-2 h-32 overflow-x-auto pb-4 -mx-1 px-1
-                            [&::-webkit-scrollbar]:h-3
-                            [&::-webkit-scrollbar-track]:bg-gray-100
-                            [&::-webkit-scrollbar-track]:rounded-full
-                            [&::-webkit-scrollbar-thumb]:bg-gray-400
-                            [&::-webkit-scrollbar-thumb]:rounded-full
-                            [&::-webkit-scrollbar-thumb]:border-2
-                            [&::-webkit-scrollbar-thumb]:border-gray-100
-                            hover:[&::-webkit-scrollbar-thumb]:bg-gray-500">
-              {monthKeys.map(mk => {
-                const total = totalByMonth[mk];
-                // Square-root scale — compresses range so small bars are still visible next to giants
-                const heightPct = Math.sqrt(total / maxMonth) * 100;
-                const isMonthPast = mk < toYYYYMM(TODAY);
-                const isThisMonth = mk === toYYYYMM(TODAY);
+          {/* Summary ribbon */}
+          <div className="flex flex-wrap gap-4 text-xs">
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">Total forecast</div>
+              <div className="text-lg font-bold text-gray-900 tabular-nums">{fmt$(totalForecast)}</div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">Peak month</div>
+              <div className="text-lg font-bold tabular-nums" style={{ color: "#00BAD6" }}>{fmt$(maxMonth)}</div>
+            </div>
+            {nowIdx >= 0 && (
+              <div>
+                <div className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">Banked thru this month</div>
+                <div className="text-lg font-bold text-amber-600 tabular-nums">{fmt$(cumByMonth[todayKey] ?? 0)}</div>
+              </div>
+            )}
+          </div>
+
+          {/* Chart */}
+          <div className="relative overflow-x-auto
+                          [&::-webkit-scrollbar]:h-3
+                          [&::-webkit-scrollbar-track]:bg-gray-100
+                          [&::-webkit-scrollbar-track]:rounded-full
+                          [&::-webkit-scrollbar-thumb]:bg-gray-400
+                          [&::-webkit-scrollbar-thumb]:rounded-full
+                          [&::-webkit-scrollbar-thumb]:border-2
+                          [&::-webkit-scrollbar-thumb]:border-gray-100
+                          hover:[&::-webkit-scrollbar-thumb]:bg-gray-500">
+            <svg width={svgW} height={CHART_H} className="block">
+              <defs>
+                <linearGradient id="cf-area" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%"   stopColor="#00BAD6" stopOpacity="0.55" />
+                  <stop offset="100%" stopColor="#00BAD6" stopOpacity="0.02" />
+                </linearGradient>
+              </defs>
+
+              {/* horizontal gridlines */}
+              {[0, 0.25, 0.5, 0.75, 1].map((f, i) => (
+                <line key={i}
+                  x1={PAD_X} x2={svgW - PAD_X}
+                  y1={PAD_T + plotH * f} y2={PAD_T + plotH * f}
+                  stroke="#f3f4f6" strokeDasharray={i === 4 ? "0" : "3 4"} />
+              ))}
+
+              {/* "NOW" vertical marker */}
+              {nowIdx >= 0 && (
+                <g>
+                  <line
+                    x1={xFor(nowIdx)} x2={xFor(nowIdx)}
+                    y1={PAD_T}        y2={CHART_H - PAD_B}
+                    stroke="#f59e0b" strokeDasharray="3 3" strokeWidth="1.5" opacity="0.7" />
+                  <rect x={xFor(nowIdx) - 18} y={PAD_T - 12} width="36" height="16" rx="8" fill="#fef3c7" />
+                  <text x={xFor(nowIdx)} y={PAD_T - 1} textAnchor="middle"
+                    className="fill-amber-700" fontSize="9" fontWeight="700" letterSpacing="1">NOW</text>
+                </g>
+              )}
+
+              {/* Monthly area */}
+              <path d={areaPath} fill="url(#cf-area)" />
+              <path d={monthlyLine} fill="none" stroke="#00BAD6" strokeWidth="2" />
+
+              {/* Cumulative line */}
+              <path d={cumLine} fill="none" stroke="#f59e0b" strokeWidth="2.5"
+                strokeLinecap="round" strokeDasharray="0" />
+
+              {/* Dots + hover targets */}
+              {monthKeys.map((mk, i) => {
+                const isPast = mk < todayKey;
+                const isNow  = mk === todayKey;
+                const px = xFor(i);
                 return (
-                  <div key={mk} className="group flex flex-col items-center gap-1 min-w-[4.25rem]">
-                    <span className={`text-[10px] font-semibold tabular-nums transition-colors ${
-                      isThisMonth ? "text-amber-600" : isMonthPast ? "text-gray-400" : "text-gray-700"
-                    }`}>
-                      {fmt$(total)}
-                    </span>
-                    <div className="w-full rounded-t-md transition-all duration-200 group-hover:brightness-110 group-hover:-translate-y-0.5"
-                      style={{
-                        height: `${heightPct}%`,
-                        minHeight: "8px",
-                        background: isMonthPast
-                          ? "linear-gradient(180deg, #e5e7eb 0%, #cbd5e1 100%)"
-                          : isThisMonth
-                          ? "linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%)"
-                          : "linear-gradient(180deg, #22d3ee 0%, #00BAD6 100%)",
-                        boxShadow: isThisMonth ? "0 4px 12px -2px rgba(245, 158, 11, 0.35)"
-                          : !isMonthPast ? "0 4px 12px -4px rgba(0, 186, 214, 0.35)" : "none",
-                      }}
-                    />
-                    <span className={`text-[10px] whitespace-nowrap font-medium ${
-                      isThisMonth ? "text-amber-700" : "text-gray-500"
-                    }`}>
+                  <g key={mk}
+                    onMouseEnter={() => setHoverIdx(i)}
+                    onMouseLeave={() => setHoverIdx(null)}
+                    style={{ cursor: "default" }}>
+                    {/* Invisible hit area */}
+                    <rect x={px - W_PER_MONTH / 2} y={PAD_T}
+                      width={W_PER_MONTH} height={plotH}
+                      fill="transparent" />
+                    {/* Monthly dot */}
+                    <circle cx={px} cy={monthlyPts[i].y} r={hoverIdx === i ? 5 : 3}
+                      fill={isPast ? "#9ca3af" : isNow ? "#f59e0b" : "#00BAD6"}
+                      stroke="white" strokeWidth="1.5" />
+                    {/* Cumulative dot */}
+                    <circle cx={px} cy={cumPts[i].y} r={hoverIdx === i ? 4.5 : 2.5}
+                      fill="#f59e0b" stroke="white" strokeWidth="1.5" />
+                    {/* Month label */}
+                    <text x={px} y={CHART_H - PAD_B + 14} textAnchor="middle"
+                      fontSize="10" className={isNow ? "fill-amber-700 font-semibold" : "fill-gray-500"}>
                       {monthLabel(mk)}
-                    </span>
-                    {isThisMonth && (
-                      <span className="text-[9px] text-amber-600 font-bold tracking-wider bg-amber-50 px-1.5 py-0.5 rounded-full">
-                        NOW
-                      </span>
-                    )}
-                  </div>
+                    </text>
+                    {/* Cumulative value (subtle, below month) */}
+                    <text x={px} y={CHART_H - PAD_B + 28} textAnchor="middle"
+                      fontSize="9" className="fill-gray-400 tabular-nums">
+                      {fmt$(cumByMonth[mk])}
+                    </text>
+                  </g>
                 );
               })}
-            </div>
+
+              {/* Hover vertical guide */}
+              {hovered && (
+                <line
+                  x1={xFor(hovered.idx)} x2={xFor(hovered.idx)}
+                  y1={PAD_T} y2={CHART_H - PAD_B}
+                  stroke="#9ca3af" strokeDasharray="2 3" strokeWidth="1" opacity="0.5" />
+              )}
+            </svg>
+
+            {/* Floating tooltip */}
+            {hovered && (() => {
+              const leftPx = xFor(hovered.idx);
+              const placeRight = leftPx > svgW / 2;
+              return (
+                <div className="pointer-events-none absolute bg-gray-900 text-white rounded-lg shadow-xl px-3 py-2 text-[11px] space-y-0.5"
+                  style={{
+                    top: PAD_T + 4,
+                    left: placeRight ? undefined : leftPx + 12,
+                    right: placeRight ? svgW - leftPx + 12 : undefined,
+                    minWidth: "150px",
+                  }}>
+                  <div className="font-semibold text-white/90 mb-1">{monthLabel(hovered.mk)}</div>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-cyan-300">Monthly</span>
+                    <span className="font-semibold tabular-nums">{fmt$(totalByMonth[hovered.mk])}</span>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-amber-300">Running total</span>
+                    <span className="font-semibold tabular-nums">{fmt$(cumByMonth[hovered.mk])}</span>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Month detail table */}
@@ -388,7 +526,8 @@ export default function ForecastClient({ rows, role }: Props) {
             </table>
           </div>
         </div>
-      ) : (
+        );
+      })() : (
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 text-sm text-blue-800">
           📅 No milestone dates available. Add stage start/end dates on the <strong>Timeline</strong> page — they'll flow here automatically.
         </div>
