@@ -44,7 +44,7 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
   projects: Project[]; finishDateByProject: Record<number, string>;
 }) {
   const [view, setView] = useState<"margin" | "foreman" | "builder">("margin");
-  const [marginChartView, setMarginChartView] = useState<"line" | "bar" | "pie">("bar");
+  const [marginChartView, setMarginChartView] = useState<"scatter" | "bar" | "pie">("bar");
 
   // ── Margin per project ────────────────────────────────────────────────────
   const marginRows = useMemo(() => {
@@ -179,16 +179,19 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-sm font-semibold text-gray-800">
-                {marginChartView === "line" && "Margin Trend (Quarterly)"}
+                {marginChartView === "scatter" && "Margin vs. Contract Size"}
                 {marginChartView === "bar"  && "Margin by Project"}
                 {marginChartView === "pie"  && "Portfolio Cost Structure"}
               </h2>
               <div className="flex items-center gap-3">
                 {/* Legend changes per view */}
                 <div className="flex items-center gap-4 text-xs">
-                  {marginChartView === "line" && <>
-                    <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: "#00BAD6" }} />Actual</span>
-                    <span className="flex items-center gap-1.5"><div className="w-3 h-0.5" style={{ backgroundColor: "#9ca3af", borderTop: "2px dashed #9ca3af" }} />Estimate</span>
+                  {marginChartView === "scatter" && <>
+                    <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-500"     />Loss</span>
+                    <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-amber-500"   />Thin</span>
+                    <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-green-500"   />Healthy</span>
+                    <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-emerald-600" />Great+</span>
+                    <span className="text-gray-400">· dot size = hours</span>
                   </>}
                   {marginChartView === "bar" && <>
                     <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-red-500"   />Loss</span>
@@ -200,9 +203,9 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
                 {/* View switcher */}
                 <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-xs bg-gray-50">
                   {([
-                    { key: "line", label: "Line", icon: "📈" },
-                    { key: "bar",  label: "Bar",  icon: "📊" },
-                    { key: "pie",  label: "Pie",  icon: "🥧" },
+                    { key: "bar",     label: "Bar",     icon: "📊" },
+                    { key: "scatter", label: "Scatter", icon: "🎯" },
+                    { key: "pie",     label: "Pie",     icon: "🥧" },
                   ] as const).map(v => (
                     <button key={v.key} onClick={() => setMarginChartView(v.key)}
                       className={`px-2.5 py-1 font-medium transition-colors ${
@@ -224,61 +227,57 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
               </p>
             ) : (
               <>
-              {/* ═══ LINE view — Quarterly margin trend ═══ */}
-              {marginChartView === "line" && (() => {
-                // Aggregate by quarter based on each project's sortDate (finish or updated_at).
-                const qMap: Record<string, {
-                  act: number[]; est: number[]; count: number; contract: number; marginDollars: number;
-                  sortKey: string; labelShort: string; labelLong: string;
-                }> = {};
-                for (const r of trendRows) {
-                  const dt = new Date(r.sortDate + "T00:00:00");
-                  const y  = dt.getFullYear();
-                  const q  = Math.ceil((dt.getMonth() + 1) / 3);
-                  const key = `${y}-Q${q}`;
-                  if (!qMap[key]) qMap[key] = {
-                    act: [], est: [], count: 0, contract: 0, marginDollars: 0,
-                    sortKey: `${y}-${String(q).padStart(2, "0")}`,
-                    labelShort: `Q${q} '${String(y).slice(-2)}`,
-                    labelLong:  `Q${q} ${y}`,
-                  };
-                  qMap[key].act.push(r.m.actualPct);
-                  qMap[key].est.push(r.m.estPct);
-                  qMap[key].count        += 1;
-                  qMap[key].contract     += (r.contract_value ?? 0);
-                  qMap[key].marginDollars += r.m.actual;
-                }
-                const quarters = Object.values(qMap)
-                  .map(v => ({
-                    ...v,
-                    avgAct: v.act.reduce((s, x) => s + x, 0) / v.act.length,
-                    avgEst: v.est.reduce((s, x) => s + x, 0) / v.est.length,
-                  }))
-                  .sort((a, b) => a.sortKey.localeCompare(b.sortKey));
-
-                if (quarters.length === 0) {
-                  return <p className="text-xs text-gray-400 py-10 text-center">Not enough dated projects yet to trend.</p>;
+              {/* ═══ SCATTER view — Margin % vs Contract Size ═══ */}
+              {marginChartView === "scatter" && (() => {
+                const pts = trendRows.filter(r => (r.contract_value ?? 0) > 0);
+                if (pts.length === 0) {
+                  return <p className="text-xs text-gray-400 py-10 text-center">No projects with contract values yet.</p>;
                 }
 
-                // Geometry
-                const QW    = 96;
-                const QH    = 300;
-                const QPL   = 54;
-                const QPR   = 24;
-                const QPT   = 30;
-                const QPB   = 70;
-                const innerW = Math.max((quarters.length - 1) * QW, QW);
-                const sw     = innerW + QPL + QPR;
-                const plotH  = QH - QPT - QPB;
-                const allPcts = quarters.flatMap(q => [q.avgAct, q.avgEst]);
-                const yMinQ = Math.min(-0.1, ...allPcts) - 0.05;
-                const yMaxQ = Math.max(0.6,  ...allPcts) + 0.08;
-                const yRng  = yMaxQ - yMinQ;
-                const xQ = (i: number) => QPL + (quarters.length > 1 ? (i / (quarters.length - 1)) * innerW : innerW / 2);
-                const yQ = (v: number) => QPT + plotH * (1 - (v - yMinQ) / yRng);
-                const ticksQ: number[] = [];
-                for (let v = Math.floor(yMinQ * 10) / 10; v <= yMaxQ; v += 0.1) ticksQ.push(Math.round(v * 100) / 100);
-                const maxCount = Math.max(...quarters.map(q => q.count), 1);
+                const SW    = 820;
+                const SH    = 380;
+                const SPL   = 62;
+                const SPR   = 24;
+                const SPT   = 24;
+                const SPB   = 52;
+                const plotW = SW - SPL - SPR;
+                const plotH = SH - SPT - SPB;
+
+                const maxContract = Math.max(...pts.map(r => r.contract_value ?? 0));
+                const minPct      = Math.min(-0.1, ...pts.map(r => r.m.actualPct)) - 0.05;
+                const maxPct      = Math.max( 0.6, ...pts.map(r => r.m.actualPct)) + 0.05;
+                const pctRange    = maxPct - minPct;
+
+                const xS = (v: number) => SPL + plotW * (maxContract > 0 ? v / maxContract : 0);
+                const yS = (v: number) => SPT + plotH * (1 - (v - minPct) / pctRange);
+
+                // Median contract for quadrant divider
+                const sortedC = [...pts.map(r => r.contract_value ?? 0)].sort((a, b) => a - b);
+                const medianContract = sortedC[Math.floor(sortedC.length / 2)];
+
+                const hoursOf = (r: any) => (r.actual_total_hours ?? 0) + (r.unrecorded_hours ?? 0) + (r.est_total_hours ?? 0);
+                const maxHours = Math.max(...pts.map(hoursOf), 1);
+                const dotR = (r: any) => 5 + Math.sqrt(hoursOf(r) / maxHours) * 14;
+
+                const colorFor = (p: number) =>
+                  p < 0     ? "#ef4444" :
+                  p < 0.15  ? "#f59e0b" :
+                  p < 0.30  ? "#10b981" :
+                              "#059669";
+
+                // X-axis ticks in $K/$M
+                const contractTicks = [0, 0.25, 0.5, 0.75, 1].map(f => f * maxContract);
+                const fmtAxis = (n: number) =>
+                  n >= 1_000_000 ? `$${(n/1_000_000).toFixed(1)}M`
+                  : n >= 1000    ? `$${Math.round(n/1000)}k`
+                  : `$${n}`;
+                const yTicks: number[] = [];
+                for (let v = Math.floor(minPct * 10) / 10; v <= maxPct; v += 0.1) yTicks.push(Math.round(v * 100) / 100);
+
+                // Simple label placement: show label next to every dot, but only the ~6 outliers get bold non-faded style
+                const scored = [...pts].map(r => ({
+                  r, score: Math.abs(r.m.actualPct - avgActualMargin) * Math.sqrt((r.contract_value ?? 0) / (maxContract || 1))
+                })).sort((a, b) => b.score - a.score).slice(0, 6).map(x => x.r.id);
 
                 return (
                   <div className="overflow-x-auto
@@ -287,83 +286,116 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
                                   [&::-webkit-scrollbar-track]:rounded-full
                                   [&::-webkit-scrollbar-thumb]:bg-gray-400
                                   [&::-webkit-scrollbar-thumb]:rounded-full">
-                    <svg width={sw} height={QH} className="block">
-                      <defs>
-                        <linearGradient id="margin-area" x1="0" x2="0" y1="0" y2="1">
-                          <stop offset="0%"   stopColor="#00BAD6" stopOpacity="0.35" />
-                          <stop offset="100%" stopColor="#00BAD6" stopOpacity="0.03" />
-                        </linearGradient>
-                      </defs>
-                      {/* gridlines */}
-                      {ticksQ.map((v, i) => (
-                        <g key={i}>
-                          <line x1={QPL} x2={sw - QPR}
-                            y1={yQ(v)} y2={yQ(v)}
-                            stroke={v === 0 ? "#374151" : "#f3f4f6"}
+                    <svg width={SW} height={SH} className="min-w-full">
+                      {/* Quadrant backgrounds — subtle */}
+                      <rect x={SPL}          y={SPT}                      width={plotW / 2} height={plotH / 2}
+                        fill="#ecfdf5" opacity="0.45" />
+                      <rect x={SPL + plotW/2} y={SPT}                     width={plotW / 2} height={plotH / 2}
+                        fill="#d1fae5" opacity="0.55" />
+                      <rect x={SPL}          y={SPT + plotH/2}            width={plotW / 2} height={plotH / 2}
+                        fill="#fff7ed" opacity="0.45" />
+                      <rect x={SPL + plotW/2} y={SPT + plotH/2}           width={plotW / 2} height={plotH / 2}
+                        fill="#fef2f2" opacity="0.55" />
+
+                      {/* Y gridlines + labels */}
+                      {yTicks.map((v, i) => (
+                        <g key={`y${i}`}>
+                          <line x1={SPL} x2={SW - SPR}
+                            y1={yS(v)} y2={yS(v)}
+                            stroke={v === 0 ? "#374151" : "#e5e7eb"}
                             strokeWidth={v === 0 ? 1.5 : 1}
                             strokeDasharray={v === 0 ? "0" : "3 4"} />
-                          <text x={QPL - 8} y={yQ(v) + 3}
+                          <text x={SPL - 8} y={yS(v) + 3}
                             fontSize="10" fill="#6b7280" textAnchor="end">
                             {(v * 100).toFixed(0)}%
                           </text>
                         </g>
                       ))}
-                      {/* Area under actual */}
-                      <path fill="url(#margin-area)"
-                        d={
-                          `M ${xQ(0)},${yQ(quarters[0].avgAct)} ` +
-                          quarters.slice(1).map((q, i) => `L ${xQ(i + 1)},${yQ(q.avgAct)}`).join(" ") +
-                          ` L ${xQ(quarters.length - 1)},${QPT + plotH}` +
-                          ` L ${xQ(0)},${QPT + plotH} Z`
-                        } />
-                      {/* Estimate line */}
-                      <polyline fill="none" stroke="#9ca3af" strokeWidth={1.5} strokeDasharray="4 3"
-                        points={quarters.map((q, i) => `${xQ(i)},${yQ(q.avgEst)}`).join(" ")} />
-                      {/* Actual line */}
-                      <polyline fill="none" stroke="#00BAD6" strokeWidth={2.5} strokeLinecap="round"
-                        points={quarters.map((q, i) => `${xQ(i)},${yQ(q.avgAct)}`).join(" ")} />
-                      {/* Points + labels */}
-                      {quarters.map((q, i) => {
-                        const px = xQ(i);
-                        const actY = yQ(q.avgAct);
-                        const estY = yQ(q.avgEst);
-                        const r = 4 + (q.count / maxCount) * 5; // bubble grows with volume
+
+                      {/* X gridlines + labels */}
+                      {contractTicks.map((v, i) => (
+                        <g key={`x${i}`}>
+                          <line x1={xS(v)} x2={xS(v)}
+                            y1={SPT} y2={SPT + plotH}
+                            stroke="#e5e7eb" strokeDasharray="3 4" />
+                          <text x={xS(v)} y={SPT + plotH + 16}
+                            fontSize="10" fill="#6b7280" textAnchor="middle">
+                            {fmtAxis(v)}
+                          </text>
+                        </g>
+                      ))}
+
+                      {/* Median contract divider */}
+                      <line x1={xS(medianContract)} x2={xS(medianContract)}
+                        y1={SPT} y2={SPT + plotH}
+                        stroke="#6b7280" strokeDasharray="2 4" strokeWidth="1" opacity="0.5" />
+
+                      {/* Avg margin divider */}
+                      <line x1={SPL} x2={SW - SPR}
+                        y1={yS(avgActualMargin)} y2={yS(avgActualMargin)}
+                        stroke="#00BAD6" strokeDasharray="3 4" strokeWidth="1.5" opacity="0.6" />
+                      <text x={SW - SPR - 3} y={yS(avgActualMargin) - 4}
+                        fontSize="9" fill="#0e7490" textAnchor="end" fontWeight="700">
+                        portfolio avg {fmtPct(avgActualMargin)}
+                      </text>
+
+                      {/* Quadrant labels */}
+                      <text x={SPL + 10} y={SPT + 14}
+                        fontSize="9" fill="#047857" opacity="0.7" fontWeight="600" letterSpacing="0.5">
+                        SMALL & HEALTHY
+                      </text>
+                      <text x={SW - SPR - 10} y={SPT + 14}
+                        fontSize="9" fill="#047857" opacity="0.7" fontWeight="700" textAnchor="end" letterSpacing="0.5">
+                        BIG & HEALTHY ★
+                      </text>
+                      <text x={SPL + 10} y={SPT + plotH - 6}
+                        fontSize="9" fill="#b45309" opacity="0.7" fontWeight="600" letterSpacing="0.5">
+                        SMALL &amp; THIN
+                      </text>
+                      <text x={SW - SPR - 10} y={SPT + plotH - 6}
+                        fontSize="9" fill="#b91c1c" opacity="0.7" fontWeight="700" textAnchor="end" letterSpacing="0.5">
+                        BIG &amp; AT RISK ⚠
+                      </text>
+
+                      {/* Dots */}
+                      {pts.map(r => {
+                        const cx = xS(r.contract_value ?? 0);
+                        const cy = yS(r.m.actualPct);
+                        const dr = dotR(r);
+                        const fill = colorFor(r.m.actualPct);
+                        const isHighlighted = scored.includes(r.id);
                         return (
-                          <g key={q.sortKey}>
-                            {/* Est dot */}
-                            <circle cx={px} cy={estY} r={3} fill="#9ca3af" opacity={0.7} />
-                            {/* Actual dot sized by project count */}
-                            <circle cx={px} cy={actY} r={r}
-                              fill="#00BAD6" stroke="white" strokeWidth="2" />
-                            {/* Value label above */}
-                            <text x={px} y={actY - r - 5} textAnchor="middle"
-                              fontSize="11" fontWeight="700" fill="#0e7490">
-                              {fmtPct(q.avgAct)}
-                            </text>
-                            {/* Quarter label */}
-                            <text x={px} y={QH - QPB + 16} textAnchor="middle"
-                              fontSize="11" fontWeight="600" fill="#374151">
-                              {q.labelShort}
-                            </text>
-                            {/* Project count */}
-                            <text x={px} y={QH - QPB + 30} textAnchor="middle"
-                              fontSize="9" fill="#9ca3af">
-                              {q.count} proj · {fmt$(q.marginDollars)}
-                            </text>
+                          <g key={r.id} className="hover:brightness-110">
+                            <circle cx={cx} cy={cy} r={dr}
+                              fill={fill} fillOpacity={r.isCompleted ? 0.75 : 0.45}
+                              stroke={fill} strokeWidth={r.isCompleted ? 0 : 2}
+                              strokeDasharray={r.isCompleted ? "0" : "3 2"} />
                             <title>
-                              {q.labelLong} — Actual {fmtPct(q.avgAct)} / Est {fmtPct(q.avgEst)}
-                              {"\n"}{q.count} project(s) · {fmt$(q.contract)} contracts · {fmt$(q.marginDollars)} margin
+                              {r.name}
+                              {"\n"}Contract: {fmt$(r.contract_value ?? 0)}
+                              {"\n"}Margin: {fmtPct(r.m.actualPct)} ({fmt$(r.m.actual)})
+                              {"\n"}Est: {fmtPct(r.m.estPct)}
+                              {"\n"}{r.isCompleted ? "Completed" : "In progress"}
                             </title>
+                            {isHighlighted && (
+                              <text x={cx + dr + 4} y={cy + 3}
+                                fontSize="10" fontWeight="600" fill="#374151">
+                                {r.name.length > 16 ? r.name.slice(0, 14) + "…" : r.name}
+                              </text>
+                            )}
                           </g>
                         );
                       })}
-                      {/* Avg baseline */}
-                      <line x1={QPL} x2={sw - QPR}
-                        y1={yQ(avgActualMargin)} y2={yQ(avgActualMargin)}
-                        stroke="#00BAD6" strokeWidth="1" strokeDasharray="2 4" opacity="0.35" />
-                      <text x={sw - QPR - 2} y={yQ(avgActualMargin) - 3}
-                        fontSize="9" fill="#00BAD6" textAnchor="end" fontWeight="600">
-                        all-time avg {fmtPct(avgActualMargin)}
+
+                      {/* Axis titles */}
+                      <text x={SPL + plotW / 2} y={SH - 8} textAnchor="middle"
+                        fontSize="10" fill="#9ca3af" fontWeight="600" letterSpacing="0.5">
+                        CONTRACT VALUE  →
+                      </text>
+                      <text x={10} y={SPT + plotH / 2}
+                        fontSize="10" fill="#9ca3af" fontWeight="600" letterSpacing="0.5"
+                        textAnchor="middle" transform={`rotate(-90, 10, ${SPT + plotH / 2})`}>
+                        ACTUAL MARGIN %  →
                       </text>
                     </svg>
                   </div>
@@ -592,7 +624,7 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
               </>
             )}
             <p className="text-[10px] text-gray-400">
-              {marginChartView === "line" && "Projects grouped by completion/update quarter · Dot size = # projects in that quarter · Dashed line = avg estimate"}
+              {marginChartView === "scatter" && "Each dot = a project · X = contract size · Y = actual margin % · Dot size = total hours · Top-right quadrant is where you want to live"}
               {marginChartView === "bar"  && "Bar color = margin band · Dashed line across each bar = estimate · Faded/outlined bars = in-progress"}
               {marginChartView === "pie"  && "Portfolio-wide: every dollar of contract value broken into Materials, Labor, and retained Margin"}
             </p>
