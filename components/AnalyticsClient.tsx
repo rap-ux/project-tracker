@@ -367,43 +367,60 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
                 );
               })()}
 
-              {/* ═══ PIE view ═══ */}
+              {/* ═══ PIE view — Portfolio Cost Structure ═══ */}
               {marginChartView === "pie" && (() => {
-                const BUCKETS = [
-                  { key: "loss",    label: "Loss (<0%)",        color: "#ef4444", test: (p: number) => p < 0 },
-                  { key: "thin",    label: "Thin (0–15%)",      color: "#f59e0b", test: (p: number) => p >= 0    && p < 0.15 },
-                  { key: "healthy", label: "Healthy (15–30%)",  color: "#10b981", test: (p: number) => p >= 0.15 && p < 0.30 },
-                  { key: "great",   label: "Great (30–50%)",    color: "#059669", test: (p: number) => p >= 0.30 && p < 0.50 },
-                  { key: "stellar", label: "Stellar (50%+)",    color: "#0891b2", test: (p: number) => p >= 0.50 },
-                ] as const;
-                const groups = BUCKETS.map(b => ({
-                  ...b,
-                  projects: trendRows.filter(r => b.test(r.m.actualPct)),
-                }));
-                const total = trendRows.length;
-                const cx = 150, cy = 150, r = 110, inner = 66;
+                // Roll up every project's cost structure across the portfolio.
+                let totalMat = 0, totalLabor = 0, totalContract = 0;
+                for (const r of trendRows) {
+                  const wage     = r.blended_hourly_wage ?? 37;
+                  const effMat   = (r.actual_materials    ?? 0) + (r.unrecorded_materials ?? 0);
+                  const effHours = (r.actual_total_hours  ?? 0) + (r.unrecorded_hours     ?? 0);
+                  totalMat      += effMat;
+                  totalLabor    += effHours * wage;
+                  totalContract += (r.contract_value ?? 0);
+                }
+                const totalMargin = totalContract - totalMat - totalLabor;
+                const inOverrun   = totalMargin < 0;
+
+                // When margin is positive, all 3 slices add up to the contract total.
+                // When margin is negative, show Materials + Labor only and flag the overrun separately.
+                const slices0 = inOverrun
+                  ? [
+                      { key: "mat",   label: "Materials", color: "#f59e0b", value: totalMat   },
+                      { key: "labor", label: "Labor",     color: "#6366f1", value: totalLabor },
+                    ]
+                  : [
+                      { key: "mat",    label: "Materials", color: "#f59e0b", value: totalMat    },
+                      { key: "labor",  label: "Labor",     color: "#6366f1", value: totalLabor  },
+                      { key: "margin", label: "Margin",    color: "#10b981", value: totalMargin },
+                    ];
+                const sum = slices0.reduce((s, x) => s + x.value, 0);
+
+                const cx = 150, cy = 150, R = 110, inner = 66;
                 let ang = -Math.PI / 2;
-                const slices = groups.map(g => {
-                  const frac = total > 0 ? g.projects.length / total : 0;
+                const slices = slices0.map(s => {
+                  const frac = sum > 0 ? s.value / sum : 0;
                   const a0 = ang, a1 = ang + frac * Math.PI * 2;
                   ang = a1;
                   const large = a1 - a0 > Math.PI ? 1 : 0;
-                  const x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0);
-                  const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+                  const x0 = cx + R * Math.cos(a0), y0 = cy + R * Math.sin(a0);
+                  const x1 = cx + R * Math.cos(a1), y1 = cy + R * Math.sin(a1);
                   const xi0 = cx + inner * Math.cos(a0), yi0 = cy + inner * Math.sin(a0);
                   const xi1 = cx + inner * Math.cos(a1), yi1 = cy + inner * Math.sin(a1);
                   const d = frac > 0 ? (frac >= 1
-                    ? `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx - 0.01} ${cy - r} Z`
-                    : `M ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} L ${xi1} ${yi1} A ${inner} ${inner} 0 ${large} 0 ${xi0} ${yi0} Z`
+                    ? `M ${cx} ${cy - R} A ${R} ${R} 0 1 1 ${cx - 0.01} ${cy - R} Z`
+                    : `M ${x0} ${y0} A ${R} ${R} 0 ${large} 1 ${x1} ${y1} L ${xi1} ${yi1} A ${inner} ${inner} 0 ${large} 0 ${xi0} ${yi0} Z`
                   ) : "";
                   const midA = (a0 + a1) / 2;
-                  const labelR = (r + inner) / 2;
+                  const labelR = (R + inner) / 2;
                   return {
-                    ...g, frac, d,
+                    ...s, frac, d,
                     labelX: cx + labelR * Math.cos(midA),
                     labelY: cy + labelR * Math.sin(midA),
                   };
                 });
+                const centerLabel = inOverrun ? "IN OVERRUN" : "MARGIN";
+                const centerValue = inOverrun ? fmt$(totalMargin) : fmt$(totalMargin);
                 return (
                   <div className="flex flex-col md:flex-row items-center gap-6 py-2">
                     <svg width="300" height="300" className="shrink-0">
@@ -411,52 +428,67 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
                         <g key={s.key}>
                           <path d={s.d} fill={s.color} stroke="white" strokeWidth="2"
                             className="hover:brightness-110 transition" />
-                          {s.frac > 0.05 && (
+                          {s.frac > 0.06 && (
                             <text x={s.labelX} y={s.labelY} textAnchor="middle"
-                              fontSize="12" fontWeight="700" fill="white">
-                              {s.projects.length}
+                              fontSize="11" fontWeight="700" fill="white">
+                              {(s.frac * 100).toFixed(0)}%
                             </text>
                           )}
-                          <title>{s.label} — {s.projects.length} project(s)</title>
+                          <title>{s.label} — {fmt$(s.value)} ({(s.frac * 100).toFixed(1)}%)</title>
                         </g>
                       ))}
-                      {/* Center total */}
-                      <text x={cx} y={cy - 4} textAnchor="middle" fontSize="26" fontWeight="800" fill="#1f2937">
-                        {total}
+                      <text x={cx} y={cy - 8} textAnchor="middle"
+                        fontSize="20" fontWeight="800"
+                        fill={inOverrun ? "#dc2626" : "#10b981"}>
+                        {centerValue}
                       </text>
-                      <text x={cx} y={cy + 16} textAnchor="middle" fontSize="10" fill="#6b7280" letterSpacing="1">
-                        PROJECTS
+                      <text x={cx} y={cy + 10} textAnchor="middle"
+                        fontSize="9" fill="#6b7280" letterSpacing="1.5" fontWeight="600">
+                        {centerLabel}
+                      </text>
+                      <text x={cx} y={cy + 26} textAnchor="middle"
+                        fontSize="10" fill="#9ca3af">
+                        of {fmt$(totalContract)}
                       </text>
                     </svg>
                     <div className="flex-1 w-full space-y-2">
-                      {slices.map(s => {
-                        const pct = total > 0 ? (s.projects.length / total * 100) : 0;
+                      <div className="text-[10px] uppercase tracking-wide text-gray-400 font-semibold mb-2">
+                        Where every contract dollar goes
+                      </div>
+                      {slices0.map(s => {
+                        const pct = sum > 0 ? (s.value / sum * 100) : 0;
                         return (
-                          <div key={s.key} className="border border-gray-100 rounded-lg p-2.5 bg-gray-50/50">
-                            <div className="flex items-center justify-between gap-2 mb-1">
+                          <div key={s.key} className="border border-gray-100 rounded-lg p-3 bg-gray-50/50">
+                            <div className="flex items-center justify-between gap-2 mb-1.5">
                               <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: s.color }} />
-                                <span className="text-xs font-semibold text-gray-700">{s.label}</span>
+                                <span className="text-sm font-semibold text-gray-700">{s.label}</span>
                               </div>
-                              <span className="text-xs font-bold tabular-nums text-gray-800">
-                                {s.projects.length} <span className="text-gray-400 font-normal">({pct.toFixed(0)}%)</span>
+                              <span className="text-sm font-bold tabular-nums text-gray-900">
+                                {fmt$(s.value)}
+                                <span className="text-gray-400 font-medium ml-2 text-xs">
+                                  {pct.toFixed(1)}%
+                                </span>
                               </span>
                             </div>
-                            {s.projects.length > 0 && (
-                              <div className="flex flex-wrap gap-1">
-                                {s.projects.slice(0, 8).map(p => (
-                                  <span key={p.id} className="text-[10px] px-1.5 py-0.5 rounded bg-white border border-gray-200 text-gray-600">
-                                    {p.name.length > 18 ? p.name.slice(0, 16) + "…" : p.name}
-                                  </span>
-                                ))}
-                                {s.projects.length > 8 && (
-                                  <span className="text-[10px] text-gray-400">+{s.projects.length - 8} more</span>
-                                )}
-                              </div>
-                            )}
+                            {/* Progress bar */}
+                            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-full rounded-full transition-all"
+                                style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: s.color }} />
+                            </div>
                           </div>
                         );
                       })}
+                      {!inOverrun && totalMargin > 0 && (
+                        <div className="text-[11px] text-gray-500 pt-1">
+                          Across <strong className="text-gray-700">{trendRows.length}</strong> project{trendRows.length === 1 ? "" : "s"}, we keep <strong className="text-green-600">{((totalMargin / totalContract) * 100).toFixed(1)}%</strong> as margin on <strong className="text-gray-700">{fmt$(totalContract)}</strong> of contracts.
+                        </div>
+                      )}
+                      {inOverrun && (
+                        <div className="text-[11px] text-red-600 bg-red-50 border border-red-100 rounded p-2 mt-2">
+                          ⚠ Portfolio-wide costs exceed contracts by <strong>{fmt$(Math.abs(totalMargin))}</strong>. Review high-burn projects on the table below.
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -466,7 +498,7 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
             <p className="text-[10px] text-gray-400">
               {marginChartView === "line" && "Hollow dots = in-progress · Solid dots = completed"}
               {marginChartView === "bar"  && "Bar color = margin band · Dashed line across each bar = estimate · Faded/outlined bars = in-progress"}
-              {marginChartView === "pie"  && "Projects grouped by actual margin band"}
+              {marginChartView === "pie"  && "Portfolio-wide: every dollar of contract value broken into Materials, Labor, and retained Margin"}
             </p>
           </div>
 
