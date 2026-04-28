@@ -14,7 +14,7 @@ interface NavbarProps { userName: string; role: string; userEmail?: string; user
 
 type IconKey =
   | "home" | "dashboard" | "inputs" | "forecast" | "timeline"
-  | "analytics" | "bonuses" | "clients" | "uploads" | "report";
+  | "analytics" | "bonuses" | "clients" | "uploads" | "report" | "help";
 
 // Line-style icons matching the Switchboard aesthetic (2px stroke, rounded caps)
 function NavIcon({ name, size = 16 }: { name: IconKey; size?: number }) {
@@ -43,6 +43,8 @@ function NavIcon({ name, size = 16 }: { name: IconKey; size?: number }) {
       return (<svg {...common}><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/><polyline points="8 9 12 5 16 9"/><line x1="12" y1="5" x2="12" y2="16"/></svg>);
     case "report":
       return (<svg {...common}><path d="M7 2h8l4 4v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><polyline points="14 2 14 7 19 7"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>);
+    case "help":
+      return (<svg {...common}><circle cx="12" cy="12" r="10"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7"/><line x1="12" y1="17" x2="12" y2="17.01"/></svg>);
   }
 }
 
@@ -56,6 +58,7 @@ const OWNER_LINKS: Array<{ href: string; label: string; icon: IconKey; superOnly
   { href: "/bonuses",   label: "Bonuses",   icon: "bonuses"   },
   { href: "/clients",   label: "Clients",   icon: "clients"   },
   { href: "/uploads",   label: "Uploads",   icon: "uploads"   },
+  { href: "/help",      label: "Help",      icon: "help"      },
   { href: "/report",    label: "Report",    icon: "report",    superOnly: true },
 ];
 
@@ -236,12 +239,20 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
                 );
               })}
               {!isOwner && (
-                <Link href="/foreman"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center px-3 py-3 rounded-lg text-sm font-medium"
-                  style={{ color: "#00BAD6" }}>
-                  My Projects
-                </Link>
+                <>
+                  <Link href="/foreman"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center px-3 py-3 rounded-lg text-sm font-medium"
+                    style={{ color: "#00BAD6" }}>
+                    My Projects
+                  </Link>
+                  <Link href="/help"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-white/85 hover:bg-white/10">
+                    <NavIcon name="help" size={18} />
+                    Help
+                  </Link>
+                </>
               )}
             </div>
           </div>
