@@ -223,7 +223,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
         <section className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="px-5 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
             <h2 className="text-sm font-bold text-gray-800">💰 Upcoming milestones</h2>
-            <Link href="/forecast" className="text-xs text-gray-500 hover:text-gray-700">Forecast →</Link>
+            <Link href="/forecast" className="text-xs text-gray-500 hover:text-gray-700">Associated Est. Revenue →</Link>
           </div>
           <div className="p-2">
             {data.upcomingMilestones.length === 0 ? (
