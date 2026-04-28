@@ -66,6 +66,9 @@ function KpiCard({ label, value, sub }: { label: string; value: string; sub?: st
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
+// Keep in sync with Navbar's SUPER_ADMIN_EMAILS list.
+const SUPER_ADMIN_EMAILS = ["rap@totallywiredelectric.com"];
+
 interface Props {
   projects:         any[];
   pipeline:         any[];
@@ -73,10 +76,11 @@ interface Props {
   flagged:          any[];
   uploads:          any[];
   role:             string;
+  userEmail?:       string;
   stagesByProject:  Record<number, any[]>;
 }
 
-export default function DashboardClient({ projects, pipeline, kpis, flagged, uploads, role, stagesByProject }: Props) {
+export default function DashboardClient({ projects, pipeline, kpis, flagged, uploads, role, userEmail, stagesByProject }: Props) {
   const [view,          setView]          = useState<"active" | "pipeline">("active");
   const [search,        setSearch]        = useState("");
   const [filterForeman, setFilterForeman] = useState("all");
@@ -360,8 +364,9 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
     window.location.reload();
   }
 
-  const isAdmin    = role === "owner" || role === "admin";
-  const isForeman  = role === "foreman";
+  const isAdmin       = role === "owner" || role === "admin";
+  const isForeman     = role === "foreman";
+  const isSuperAdmin  = !!userEmail && SUPER_ADMIN_EMAILS.includes(userEmail);
 
   return (
     <main className="flex-1 max-w-screen-xl mx-auto w-full px-4 py-6 space-y-6">
@@ -431,6 +436,14 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
             </Link>
             <input ref={importRef} type="file" accept=".xlsx,.csv" className="hidden" onChange={handleImportFile} />
           </>}
+          {isSuperAdmin && (
+            <a
+              href="/api/admin/backup"
+              title="Download a snapshot of the entire database"
+              className="text-sm px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition-colors inline-block">
+              💾 Backup DB
+            </a>
+          )}
         </div>
       </div>
 

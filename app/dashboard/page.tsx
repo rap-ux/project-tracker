@@ -92,6 +92,7 @@ export default async function DashboardPage() {
         flagged={flaggedProjects}
         uploads={uploads}
         role={role}
+        userEmail={session.user?.email ?? undefined}
         stagesByProject={stagesByProject}
       />
     </div>
