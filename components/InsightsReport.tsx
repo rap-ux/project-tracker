@@ -185,8 +185,8 @@ function PerfRow({ p, type }: { p: ProjectData; type: "pos" | "watch" }) {
         p.stage_completion >= 0.9
           ? "Approaching completion with no sign of recovery."
           : p.stage_completion >= 0.7
-            ? "Overage is significant — review crew loading and sequencing."
-            : "Monitor closely — crew allocation and site conditions should be reviewed."
+            ? "Overage is significant — check sequencing, rework, and unformalized COs."
+            : "Monitor closely — review crew allocation, site conditions, and any unformalized COs."
       }`;
 
   return (

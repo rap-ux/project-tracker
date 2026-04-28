@@ -73,7 +73,7 @@ export function getHighlight(
     if (isOver) return `${stage} complete — over budget by ${hrsStr} (${pctStr}). Finish must recover hours — tighten plan, eliminate rework, escalate blockers early.`;
     return `${stage} complete — under budget by ${hrsStr} (${pctStr}). Shift focus to next stage — keep efficiency and avoid rework to protect bonus.`;
   }
-  if (isOver) return `${complete} complete — over pace by ${hrsStr} (${pctStr}). Check crew loading, sequencing, rework, or scope creep.`;
+  if (isOver) return `${complete} complete — over pace by ${hrsStr} (${pctStr}). Check crew allocation, project sequencing, rework, scope creep, or additional COs not yet formalized.`;
   return `${complete} complete — under pace by ${hrsStr} (${pctStr}). Good pace — maintain quality and document any scope changes early.`;
 }
 
