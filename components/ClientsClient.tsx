@@ -179,7 +179,7 @@ export default function ClientsClient({ projects: initial, role }: { projects: P
           onClick={() => {
             const csv = toCSV(filtered.map(p => ({
               name: p.name, foreman: p.foreman, stage: p.stage,
-              type: p.is_pipeline ? "Minor" : "Active",
+              type: p.is_pipeline ? "Minor" : "Tracked",
               region: p.region, builder: p.builder, contacts: p.contacts, phone: p.phone,
               contract_value: p.contract_value, notes: p.project_notes,
               basecamp: p.basecamp_link, drive: p.drive_folder,
@@ -470,7 +470,7 @@ export default function ClientsClient({ projects: initial, role }: { projects: P
                       <label className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 cursor-pointer hover:border-gray-400 has-[:checked]:bg-cyan-50 has-[:checked]:border-cyan-400">
                         <input type="radio" name="is_pipeline" value="active" className="accent-cyan-500" />
                         <span className="text-sm">
-                          <span className="font-semibold">Active</span>
+                          <span className="font-semibold">Tracked</span>
                           <span className="block text-xs text-gray-400">Signed contract</span>
                         </span>
                       </label>

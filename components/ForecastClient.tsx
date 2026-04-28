@@ -268,7 +268,7 @@ export default function ForecastClient({ rows, role }: Props) {
           { label: "Active Contract Value",    value: fmt$(activeContractTotal) },
           { label: "Already Received",          value: fmt$(pastTotal),     sub: "milestones passed", hi: "#16a34a" },
           { label: "Upcoming Cash",             value: fmt$(futureTotal),   sub: "future milestones", hi: "#00BAD6" },
-          { label: "Active Remaining Unbilled", value: fmt$(activeRemainingTotal), sub: "contract − invoiced" },
+          { label: "Tracked Remaining Unbilled", value: fmt$(activeRemainingTotal), sub: "contract − invoiced" },
           { label: "Tracked Projects",          value: String(activeData.length) },
         ].map(card => (
           <div key={card.label} className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3">

@@ -144,7 +144,7 @@ export default async function ForemanPage() {
           {[
             { label: "Projects",       value: String(projects.length)                                         },
             { label: "Contract Value", value: fmt$(totalContractValue), note: "combined"                      },
-            { label: "Active",         value: String(projects.filter(p => p.project_completion < 1).length)   },
+            { label: "In Progress",    value: String(projects.filter(p => p.project_completion < 1).length)   },
           ].map(s => (
             <div key={s.label} className="bg-white rounded-xl border p-4 shadow-sm">
               <p className="text-xs text-gray-500 uppercase tracking-wide">{s.label}</p>

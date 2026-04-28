@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       result.lastInsertRowid,
       session.user?.name ?? "Unknown",
       "Created",
-      `New ${body.is_pipeline ? "minor" : "active"} project: ${body.name}${body.builder ? ` · ${body.builder}` : ""}`
+      `New ${body.is_pipeline ? "minor" : "tracked"} project: ${body.name}${body.builder ? ` · ${body.builder}` : ""}`
     );
   } catch { /* non-fatal */ }
 

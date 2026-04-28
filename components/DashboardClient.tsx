@@ -166,7 +166,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
       name:            p.name,
       foreman:         p.foreman,
       stage:           p.stage,
-      is_pipeline:     p.is_pipeline ? "Minor" : "Active",
+      is_pipeline:     p.is_pipeline ? "Minor" : "Tracked",
       region:          p.region,
       builder:         p.builder,
       contacts:        p.contacts,
@@ -389,7 +389,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                     : "bg-white text-gray-600 hover:bg-gray-50"
                 }`}
                 style={view === v ? { backgroundColor: "#00BAD6" } : {}}>
-                {v === "active" ? `Active (${projects.length})` : `Minor Projects (${pipeline.length})`}
+                {v === "active" ? `Tracked (${projects.length})` : `Minor Projects (${pipeline.length})`}
               </button>
             ))}
           </div>
@@ -1447,7 +1447,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
               <div className="rounded-lg px-4 py-3 text-xs text-gray-600 space-y-0.5"
                 style={{ backgroundColor: "#f0fdfe", border: "1px solid #a5f3fc" }}>
                 <p className="font-semibold" style={{ color: "#00BAD6" }}>What happens on activation:</p>
-                <p>• Moves to Active projects and counts toward KPIs</p>
+                <p>• Moves to Tracked projects and counts toward KPIs</p>
                 <p>• Appears in Forecast &amp; Inputs pages</p>
                 <p>• Minor Projects toggle no longer needed to see it</p>
               </div>
