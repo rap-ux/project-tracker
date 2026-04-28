@@ -97,7 +97,7 @@ function buildPlainText(
   insights.forEach(l => { t += `• ${l}\n`; });
 
   t += `\nOVERALL SNAPSHOT — Portfolio Labor Health\n`;
-  t += `• ${portfolio.totalProjects} active projects tracked\n`;
+  t += `• ${portfolio.totalProjects} projects tracked\n`;
   t += `• ~${underPct}% of assessable projects currently under allowed labor hours (${portfolio.underBudgetCount} projects)\n`;
   t += `• ~${100 - underPct}% of assessable projects currently over allowed labor hours (${portfolio.overBudgetCount} projects)\n`;
   t += `• ${portfolio.roughCompleteCount} project(s) have completed rough stage; ${portfolio.inFinishCount} actively in finish stage\n`;
@@ -413,7 +413,7 @@ export default function InsightsReport({ projects, portfolio, generatedAt, userN
 
           <p className="text-sm font-semibold text-gray-700 mb-1">Portfolio Labor Health</p>
           <ul className="list-disc pl-5 space-y-0.5 text-sm text-gray-800">
-            <li>{portfolio.totalProjects} active projects tracked</li>
+            <li>{portfolio.totalProjects} projects tracked</li>
             <li>~{underPct}% of assessable projects currently pacing within allowed labor hours ({portfolio.underBudgetCount} projects)</li>
             <li>~{100 - underPct}% of assessable projects currently over allowed labor hours ({portfolio.overBudgetCount} projects)</li>
             <li>{portfolio.roughCompleteCount} project{portfolio.roughCompleteCount !== 1 ? "s" : ""} have completed the rough stage; {portfolio.inFinishCount} {portfolio.inFinishCount !== 1 ? "are" : "is"} actively in the finish stage</li>

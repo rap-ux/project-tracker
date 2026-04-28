@@ -476,7 +476,7 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="px-4 py-2.5 bg-gray-50 border-b">
             <h2 className="text-sm font-semibold text-gray-800">Per-Foreman Performance</h2>
-            <p className="text-xs text-gray-400">Aggregates across all active projects</p>
+            <p className="text-xs text-gray-400">Aggregates across all tracked projects</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

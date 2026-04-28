@@ -180,7 +180,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
             href="/forecast"
           />
           <Card
-            label="Active Projects"
+            label="Tracked Projects"
             value={String(data.totals.activeProjects)}
             sub={`${data.totals.onTrack} on track · ${data.totals.flagged} flagged`}
             href="/dashboard"

@@ -269,7 +269,7 @@ export default function ForecastClient({ rows, role }: Props) {
           { label: "Already Received",          value: fmt$(pastTotal),     sub: "milestones passed", hi: "#16a34a" },
           { label: "Upcoming Cash",             value: fmt$(futureTotal),   sub: "future milestones", hi: "#00BAD6" },
           { label: "Active Remaining Unbilled", value: fmt$(activeRemainingTotal), sub: "contract − invoiced" },
-          { label: "Active Projects",           value: String(activeData.length) },
+          { label: "Tracked Projects",          value: String(activeData.length) },
         ].map(card => (
           <div key={card.label} className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3">
             <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">{card.label}</p>
@@ -826,7 +826,7 @@ export default function ForecastClient({ rows, role }: Props) {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="px-5 py-3 border-b bg-gray-50 flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-gray-800">Active Projects — Milestone Dates</h2>
+            <h2 className="text-sm font-semibold text-gray-800">Tracked Projects — Milestone Dates</h2>
             <p className="text-xs text-gray-400 mt-0.5">
               Dates marked <span className="font-semibold text-cyan-600">T</span> are inherited from Timeline ·{" "}
               <span className="font-semibold text-amber-600">M</span> means manually overridden here
@@ -855,7 +855,7 @@ export default function ForecastClient({ rows, role }: Props) {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {activeData.length === 0 && (
-                <tr><td colSpan={isAdmin ? 11 : 10} className="px-4 py-10 text-center text-gray-400 text-sm">No active projects match filters.</td></tr>
+                <tr><td colSpan={isAdmin ? 11 : 10} className="px-4 py-10 text-center text-gray-400 text-sm">No tracked projects match filters.</td></tr>
               )}
               {activeData.map((row: any) => {
                 const isEditing = editing === row.id;

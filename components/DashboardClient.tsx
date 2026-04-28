@@ -372,7 +372,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
         {!isForeman && <KpiCard label="Total Invoiced"       value={fmt$(kpis.totalInvoiced)} sub={fmtPct(kpis.totalContractValue > 0 ? kpis.totalInvoiced / kpis.totalContractValue : 0) + " billed"} />}
         <KpiCard label="Actual Materials" value={fmt$(kpis.totalActualMat)}      sub={fmtPct(kpis.totalEstMat > 0 ? kpis.totalActualMat / kpis.totalEstMat : 0) + " of budget"} />
         <KpiCard label="Actual Hours"     value={kpis.totalActualHours.toLocaleString()} sub={fmtPct(kpis.totalEstHours > 0 ? kpis.totalActualHours / kpis.totalEstHours : 0) + " of est."} />
-        <KpiCard label="Active Projects"  value={String(projects.length)} />
+        <KpiCard label="Tracked Projects" value={String(projects.length)} />
         <KpiCard label="Flagged"          value={String(flagged.length)} sub={flagged.length > 0 ? "need attention" : "all clear ✅"} />
       </div>
 
@@ -1145,7 +1145,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
           </table>
         </div>
         <div className="px-4 py-2 border-t text-xs text-gray-400 bg-gray-50">
-          Showing {filtered.length} of {projects.length} active projects
+          Showing {filtered.length} of {projects.length} tracked projects
         </div>
       </div>}  {/* end view === "active" */}
 

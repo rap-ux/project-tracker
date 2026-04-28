@@ -130,7 +130,7 @@ export default function BonusesClient({ projects }: { projects: Project[] }) {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <h3 className="text-base font-bold text-gray-900">{f.foreman}</h3>
-                      <p className="text-xs text-gray-500 mt-0.5">{f.projects} active project{f.projects === 1 ? "" : "s"}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{f.projects} tracked project{f.projects === 1 ? "" : "s"}</p>
                     </div>
                     <span className="text-2xl">{pct >= 70 ? "🏆" : pct >= 40 ? "💪" : "📋"}</span>
                   </div>

@@ -118,7 +118,7 @@ export async function GET() {
       alerts.push({
         key:      "no_stages",
         severity: "info",
-        title:    `${missingDates.length} active project${missingDates.length === 1 ? "" : "s"} missing Timeline dates`,
+        title:    `${missingDates.length} tracked project${missingDates.length === 1 ? "" : "s"} missing Timeline dates`,
         detail:   missingDates.slice(0, 3).map(m => m.name).join(", ") + (missingDates.length > 3 ? "…" : ""),
         href:     "/timeline",
       });
