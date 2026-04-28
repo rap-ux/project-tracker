@@ -250,6 +250,16 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     updates.rough_hours_actual = updates.actual_total_hours ?? current.actual_total_hours ?? 0;
   }
 
+  // Finish hours actual — snapshot once when project_completion crosses to 100%
+  const wasNotComplete    = (current.project_completion ?? 0) < 1.0;
+  const nowComplete       = updates.project_completion >= 1.0;
+  const finishNotRecorded = !current.finish_hours_actual || current.finish_hours_actual === 0;
+  if (wasNotComplete && nowComplete && finishNotRecorded && !("finish_hours_actual" in updates)) {
+    const roughActual = updates.rough_hours_actual ?? current.rough_hours_actual ?? 0;
+    const totalActual = updates.actual_total_hours ?? current.actual_total_hours ?? 0;
+    updates.finish_hours_actual = Math.max(0, totalActual - roughActual);
+  }
+
   // ── Compute diff ──────────────────────────────────────────────────────────
   const stagedChanges: {
     project_id: number; project_name: string;

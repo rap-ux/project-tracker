@@ -60,6 +60,20 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
     body.rough_hours_actual = body.actual_total_hours ?? current.actual_total_hours ?? 0;
   }
 
+  // ── Auto-snapshot finish_hours_actual ───────────────────────────────────────
+  // Fires exactly once, when project_completion crosses from <100% to 100%.
+  // Triggers: stage moves to Extras, or Finish stage_completion hits 100%.
+  // Same guard pattern as rough — manual value wins; never overwrites.
+  const wasNotComplete    = (current.project_completion ?? 0) < 1.0;
+  const nowComplete       = (body.project_completion ?? 0) >= 1.0;
+  const finishNotRecorded = !current.finish_hours_actual || current.finish_hours_actual === 0;
+
+  if (wasNotComplete && nowComplete && finishNotRecorded && body.finish_hours_actual == null) {
+    const roughActual = body.rough_hours_actual ?? current.rough_hours_actual ?? 0;
+    const totalActual = body.actual_total_hours ?? current.actual_total_hours ?? 0;
+    body.finish_hours_actual = Math.max(0, totalActual - roughActual);
+  }
+
   const fields  = Object.keys(body)
     .filter(k => k !== "id")
     .map(k => `${k} = @${k}`)
