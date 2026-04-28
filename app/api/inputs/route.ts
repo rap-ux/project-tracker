@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { auth }       from "@/auth";
 import db              from "@/lib/db";
+import { deriveBudgets } from "@/lib/budgets";
 import { NextRequest } from "next/server";
 
 export async function GET() {
@@ -61,6 +62,26 @@ export async function POST(req: NextRequest) {
       finish_hours_est    = excluded.finish_hours_est,
       updated_at          = datetime('now')
   `).run(body);
+
+  // Propagate derived budgets to the projects table so reads stay consistent.
+  const project = db.prepare("SELECT contract_value, stage FROM projects WHERE id = ?")
+    .get(body.project_id) as any;
+  if (project) {
+    const derived = deriveBudgets(
+      { contract_value: project.contract_value, stage: project.stage,
+        rough_hours_allowed: body.rough_hours_est, finish_hours_allowed: body.finish_hours_est },
+      body,
+    );
+    db.prepare(`
+      UPDATE projects SET
+        est_total_hours      = @est_total_hours,
+        rough_hours_allowed  = @rough_hours_allowed,
+        finish_hours_allowed = @finish_hours_allowed,
+        goal_hours           = @goal_hours,
+        updated_at           = datetime('now')
+      WHERE id = @id
+    `).run({ ...derived, id: body.project_id });
+  }
 
   return Response.json({ ok: true });
 }

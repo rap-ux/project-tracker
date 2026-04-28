@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { auth }       from "@/auth";
 import db              from "@/lib/db";
+import { deriveBudgets } from "@/lib/budgets";
 import { NextRequest } from "next/server";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -72,6 +73,29 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
     const roughActual = body.rough_hours_actual ?? current.rough_hours_actual ?? 0;
     const totalActual = body.actual_total_hours ?? current.actual_total_hours ?? 0;
     body.finish_hours_actual = Math.max(0, totalActual - roughActual);
+  }
+
+  // ── Auto-derive hour budgets from inputs (matches spreadsheet formulas) ─────
+  // est_total_hours, goal_hours recompute whenever a driving field changes.
+  // Explicit body values always win — user can still override via the edit form.
+  const driverChanged =
+       body.contract_value       !== undefined
+    || body.stage                 !== undefined
+    || body.rough_hours_allowed   !== undefined
+    || body.finish_hours_allowed  !== undefined;
+
+  if (driverChanged) {
+    const inputs = db.prepare("SELECT * FROM project_inputs WHERE project_id = ?")
+      .get(parseInt(id)) as any;
+    const merged = {
+      contract_value:       body.contract_value       ?? current.contract_value,
+      stage:                body.stage                ?? current.stage,
+      rough_hours_allowed:  body.rough_hours_allowed  ?? current.rough_hours_allowed,
+      finish_hours_allowed: body.finish_hours_allowed ?? current.finish_hours_allowed,
+    };
+    const derived = deriveBudgets(merged, inputs);
+    if (body.est_total_hours      == null) body.est_total_hours      = derived.est_total_hours;
+    if (body.goal_hours           == null) body.goal_hours           = derived.goal_hours;
   }
 
   const fields  = Object.keys(body)

@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { auth }     from "@/auth";
 import db            from "@/lib/db";
+import { deriveBudgets } from "@/lib/budgets";
 import { NextRequest } from "next/server";
 
 export async function GET() {
@@ -58,6 +59,17 @@ export async function POST(req: NextRequest) {
     drive_folder:   body.drive_folder   ?? null,
     is_pipeline:    body.is_pipeline    ?? 0,
   });
+
+  // Seed est_total_hours from contract using default inputs (matches spreadsheet formula).
+  // Rough/finish allowed are 0 for now — user enters those via the /inputs page.
+  if (body.contract_value) {
+    const derived = deriveBudgets(
+      { contract_value: body.contract_value, stage: body.stage ?? "Rough" },
+      null,
+    );
+    db.prepare(`UPDATE projects SET est_total_hours = ?, goal_hours = ? WHERE id = ?`)
+      .run(derived.est_total_hours, derived.goal_hours, result.lastInsertRowid);
+  }
 
   // Log creation
   try {
