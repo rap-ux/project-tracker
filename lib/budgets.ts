@@ -20,40 +20,63 @@ const DEFAULTS = {
   blended_hourly_wage: 37,
 };
 
-// est_total_hours = (contract × wages_share) / blended_hourly_wage  (matches spreadsheet)
+// Rough = first 70% of project_completion, Finish = last 30%.
+function calcProjectCompletion(stage: string, stageCompletion: number): number {
+  const sc = Math.min(1, Math.max(0, stageCompletion ?? 0));
+  if (stage === "Rough" || stage === "Underground") return sc * 0.70;
+  if (stage === "Finish")  return 0.70 + sc * 0.30;
+  if (stage === "Extras")  return 1.0;
+  return 0;
+}
+
+// est_total_hours = (contract × wages_share) / blended_hourly_wage
 function calcEstTotalHours(contractValue: number, wagesShare: number, hourlyWage: number): number {
   if (!hourlyWage || hourlyWage <= 0) return 0;
   return Math.round(((contractValue || 0) * wagesShare) / hourlyWage * 100) / 100;
 }
 
-// While in Rough/Underground, the goal is the rough budget.
-// Once Finish/Extras, the full project budget is in play.
-function calcGoalHours(stage: string, rough: number, finish: number): number {
-  if (stage === "Rough" || stage === "Underground") return rough;
-  if (stage === "Finish" || stage === "Extras")     return rough + finish;
-  return 0;
-}
+const round2 = (n: number) => Math.round(n * 100) / 100;
 
 export function deriveBudgets(
   project: {
-    contract_value?:        number | null;
-    stage?:                 string | null;
-    rough_hours_allowed?:   number | null;
-    finish_hours_allowed?:  number | null;
+    contract_value?:    number | null;
+    stage?:             string | null;
+    stage_completion?:  number | null;
   },
   inputs: ProjectInputs | null | undefined,
 ): DerivedBudgets {
   const wagesShare = inputs?.wages_share         ?? DEFAULTS.wages_share;
   const wage       = inputs?.blended_hourly_wage ?? DEFAULTS.blended_hourly_wage;
 
-  // rough/finish allowed: prefer inputs (user's "official" estimate), fall back to project columns
-  const rough  = inputs?.rough_hours_est  ?? project.rough_hours_allowed  ?? 0;
-  const finish = inputs?.finish_hours_est ?? project.finish_hours_allowed ?? 0;
+  const est = calcEstTotalHours(project.contract_value ?? 0, wagesShare, wage);
+
+  // GOAL Hours and Rough/Finish Hours Allowed are all proportional to project progress.
+  // They grow with the project and ALWAYS equal each other in their respective stage:
+  //   while in Rough/Underground:  rough_allowed = goal_hours = est × project_completion
+  //   once in Finish/Extras:       rough portion locks at est × 0.70,
+  //                                finish_allowed = est × (project_completion - 0.70)
+  const projComp = calcProjectCompletion(project.stage ?? "Rough", project.stage_completion ?? 0);
+
+  const inRough  = project.stage === "Rough" || project.stage === "Underground";
+  const inFinish = project.stage === "Finish" || project.stage === "Extras";
+
+  // Rough portion: dynamic while in rough; capped at full rough share (est × 0.70) afterward
+  const roughAllowed = inRough
+    ? round2(est * projComp)
+    : round2(est * 0.70);
+
+  // Finish portion: 0 until we reach Finish stage
+  const finishAllowed = inFinish
+    ? round2(est * Math.max(0, projComp - 0.70))
+    : 0;
+
+  // Goal Hours = the budget for the work completed so far (overall)
+  const goalHours = round2(est * projComp);
 
   return {
-    est_total_hours:      calcEstTotalHours(project.contract_value ?? 0, wagesShare, wage),
-    rough_hours_allowed:  rough,
-    finish_hours_allowed: finish,
-    goal_hours:           calcGoalHours(project.stage ?? "Rough", rough, finish),
+    est_total_hours:      est,
+    rough_hours_allowed:  roughAllowed,
+    finish_hours_allowed: finishAllowed,
+    goal_hours:           goalHours,
   };
 }

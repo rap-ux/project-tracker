@@ -76,25 +76,26 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
   }
 
   // ── Auto-derive hour budgets from inputs (matches spreadsheet formulas) ─────
-  // est_total_hours, goal_hours recompute whenever a driving field changes.
-  // Explicit body values always win — user can still override via the edit form.
+  // est_total_hours, rough/finish_hours_allowed, goal_hours all recompute
+  // whenever a driving field changes (contract, stage, stage_completion).
+  // Explicit body values still win — user can override via the edit form.
   const driverChanged =
-       body.contract_value       !== undefined
-    || body.stage                 !== undefined
-    || body.rough_hours_allowed   !== undefined
-    || body.finish_hours_allowed  !== undefined;
+       body.contract_value    !== undefined
+    || body.stage              !== undefined
+    || body.stage_completion   !== undefined;
 
   if (driverChanged) {
     const inputs = db.prepare("SELECT * FROM project_inputs WHERE project_id = ?")
       .get(parseInt(id)) as any;
     const merged = {
-      contract_value:       body.contract_value       ?? current.contract_value,
-      stage:                body.stage                ?? current.stage,
-      rough_hours_allowed:  body.rough_hours_allowed  ?? current.rough_hours_allowed,
-      finish_hours_allowed: body.finish_hours_allowed ?? current.finish_hours_allowed,
+      contract_value:   body.contract_value   ?? current.contract_value,
+      stage:            body.stage            ?? current.stage,
+      stage_completion: body.stage_completion ?? current.stage_completion,
     };
     const derived = deriveBudgets(merged, inputs);
     if (body.est_total_hours      == null) body.est_total_hours      = derived.est_total_hours;
+    if (body.rough_hours_allowed  == null) body.rough_hours_allowed  = derived.rough_hours_allowed;
+    if (body.finish_hours_allowed == null) body.finish_hours_allowed = derived.finish_hours_allowed;
     if (body.goal_hours           == null) body.goal_hours           = derived.goal_hours;
   }
 
