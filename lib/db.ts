@@ -186,6 +186,20 @@ db.exec(`
     country_code TEXT,
     looked_up_at TEXT DEFAULT (datetime('now'))
   );
+
+  -- Historical access log: one row per "session start"
+  -- (first heartbeat after >5 min of inactivity). Distinct from user_presence,
+  -- which only tracks the *current* state per user.
+  CREATE TABLE IF NOT EXISTS login_events (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    occurred_at TEXT NOT NULL DEFAULT (datetime('now')),
+    ip_address  TEXT,
+    user_agent  TEXT,
+    page        TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_login_events_occurred_at ON login_events(occurred_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_login_events_user_id     ON login_events(user_id);
 `);
 
 // Add ip_address column if existing user_presence table is missing it
