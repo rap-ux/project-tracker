@@ -168,9 +168,9 @@ export default function HomeClient({ data }: { data: HomeData }) {
         </div>
       </section>
 
-      {/* ── Portfolio snapshot ── */}
+      {/* ── Tracked project highlights ── */}
       <section>
-        <h2 className="text-sm font-bold text-gray-800 mb-3">📊 Portfolio snapshot</h2>
+        <h2 className="text-sm font-bold text-gray-800 mb-3">📊 Tracked Project Highlights</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <Card
             label="Upcoming Cash (30 days)"

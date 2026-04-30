@@ -371,15 +371,22 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
   return (
     <main className="flex-1 max-w-screen-xl mx-auto w-full px-4 py-6 space-y-6">
 
-      {/* ── KPI Bar ── */}
-      <div className={`grid gap-3 ${isForeman ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"}`}>
-        {!isForeman && <KpiCard label="Total Contract Value" value={fmt$(kpis.totalContractValue)} />}
-        {!isForeman && <KpiCard label="Total Invoiced"       value={fmt$(kpis.totalInvoiced)} sub={fmtPct(kpis.totalContractValue > 0 ? kpis.totalInvoiced / kpis.totalContractValue : 0) + " billed"} />}
-        <KpiCard label="Actual Materials" value={fmt$(kpis.totalActualMat)}      sub={fmtPct(kpis.totalEstMat > 0 ? kpis.totalActualMat / kpis.totalEstMat : 0) + " of budget"} />
-        <KpiCard label="Actual Hours"     value={kpis.totalActualHours.toLocaleString()} sub={fmtPct(kpis.totalEstHours > 0 ? kpis.totalActualHours / kpis.totalEstHours : 0) + " of est."} />
-        <KpiCard label="Tracked Projects" value={String(projects.length)} />
-        <KpiCard label="Flagged"          value={String(flagged.length)} sub={flagged.length > 0 ? "need attention" : "all clear ✅"} />
-      </div>
+      {/* ── Tracked Project KPIs ── */}
+      {/* Wrapped + labeled so it's clear these totals reflect tracked projects only */}
+      {/* and don't change with the Tracked / Minor toggle below. */}
+      <section className="border border-amber-200 bg-amber-50/60 rounded-xl p-4">
+        <h2 className="text-xs font-semibold text-amber-900 uppercase tracking-wide mb-3">
+          📊 Tracked Project KPIs
+        </h2>
+        <div className={`grid gap-3 ${isForeman ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"}`}>
+          {!isForeman && <KpiCard label="Total Contract Value" value={fmt$(kpis.totalContractValue)} />}
+          {!isForeman && <KpiCard label="Total Invoiced"       value={fmt$(kpis.totalInvoiced)} sub={fmtPct(kpis.totalContractValue > 0 ? kpis.totalInvoiced / kpis.totalContractValue : 0) + " billed"} />}
+          <KpiCard label="Actual Materials" value={fmt$(kpis.totalActualMat)}      sub={fmtPct(kpis.totalEstMat > 0 ? kpis.totalActualMat / kpis.totalEstMat : 0) + " of budget"} />
+          <KpiCard label="Actual Hours"     value={kpis.totalActualHours.toLocaleString()} sub={fmtPct(kpis.totalEstHours > 0 ? kpis.totalActualHours / kpis.totalEstHours : 0) + " of est."} />
+          <KpiCard label="Tracked Projects" value={String(projects.length)} />
+          <KpiCard label="Flagged"          value={String(flagged.length)} sub={flagged.length > 0 ? "need attention" : "all clear ✅"} />
+        </div>
+      </section>
 
       {/* ── Toolbar ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
