@@ -4,9 +4,6 @@ import { auth }     from "@/auth";
 import Navbar       from "@/components/Navbar";
 import db           from "@/lib/db";
 
-// Keep in sync with Navbar's SUPER_ADMIN_EMAILS list.
-const SUPER_ADMIN_EMAILS = ["rap@totallywiredelectric.com"];
-
 interface AccessRow {
   id:           number;
   occurred_at:  string;
@@ -79,7 +76,8 @@ export default async function AccessLogPage() {
   const userTitle = user?.title ?? "";
   const role      = user?.role  ?? "user";
 
-  if (!SUPER_ADMIN_EMAILS.includes(userEmail)) {
+  // Owners only — admins/foremen redirected away.
+  if (role !== "owner") {
     redirect("/dashboard");
   }
 

@@ -50,7 +50,7 @@ function NavIcon({ name, size = 16 }: { name: IconKey; size?: number }) {
   }
 }
 
-const OWNER_LINKS: Array<{ href: string; label: string; icon: IconKey; superOnly?: boolean }> = [
+const OWNER_LINKS: Array<{ href: string; label: string; icon: IconKey; superOnly?: boolean; ownerOnly?: boolean }> = [
   { href: "/",          label: "Home",      icon: "home"      },
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
   { href: "/inputs",    label: "Inputs",    icon: "inputs"    },
@@ -62,7 +62,7 @@ const OWNER_LINKS: Array<{ href: string; label: string; icon: IconKey; superOnly
   { href: "/uploads",   label: "Uploads",   icon: "uploads"   },
   { href: "/help",      label: "Help",      icon: "help"      },
   { href: "/report",     label: "Report",     icon: "report", superOnly: true },
-  { href: "/access-log", label: "Access Log", icon: "log",    superOnly: true },
+  { href: "/access-log", label: "Access Log", icon: "log",    ownerOnly: true },
 ];
 
 // Super-admin emails — links flagged superOnly only appear for these users,
@@ -81,7 +81,10 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
   const emailOverride = userEmail && EMAIL_TITLE_OVERRIDES[userEmail];
   const displayRole   = emailOverride || (userTitle && userTitle.trim()) || role;
   const isSuperAdmin  = !!userEmail && SUPER_ADMIN_EMAILS.includes(userEmail);
-  const visibleLinks = OWNER_LINKS.filter(l => !l.superOnly || isSuperAdmin);
+  const visibleLinks = OWNER_LINKS.filter(l =>
+       (!l.superOnly || isSuperAdmin)
+    && (!l.ownerOnly || role === "owner")
+  );
 
   return (
     <nav

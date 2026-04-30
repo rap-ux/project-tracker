@@ -5,15 +5,13 @@ import { auth } from "@/auth";
 import db       from "@/lib/db";
 import type { NextRequest } from "next/server";
 
-// Keep in sync with Navbar's SUPER_ADMIN_EMAILS list.
-const SUPER_ADMIN_EMAILS = ["rap@totallywiredelectric.com"];
-
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-  const email = session.user?.email ?? "";
-  if (!SUPER_ADMIN_EMAILS.includes(email)) {
+  // Owners only — admins/foremen don't see access telemetry.
+  const role = (session.user as any)?.role;
+  if (role !== "owner") {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
 
