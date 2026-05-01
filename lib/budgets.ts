@@ -20,15 +20,6 @@ const DEFAULTS = {
   blended_hourly_wage: 37,
 };
 
-// Rough = first 70% of project_completion, Finish = last 30%.
-function calcProjectCompletion(stage: string, stageCompletion: number): number {
-  const sc = Math.min(1, Math.max(0, stageCompletion ?? 0));
-  if (stage === "Rough" || stage === "Underground") return sc * 0.70;
-  if (stage === "Finish")  return 0.70 + sc * 0.30;
-  if (stage === "Extras")  return 1.0;
-  return 0;
-}
-
 // est_total_hours = (contract × wages_share) / blended_hourly_wage
 function calcEstTotalHours(contractValue: number, wagesShare: number, hourlyWage: number): number {
   if (!hourlyWage || hourlyWage <= 0) return 0;
@@ -48,33 +39,42 @@ export function deriveBudgets(
   const wagesShare = inputs?.wages_share         ?? DEFAULTS.wages_share;
   const wage       = inputs?.blended_hourly_wage ?? DEFAULTS.blended_hourly_wage;
 
-  const est = calcEstTotalHours(project.contract_value ?? 0, wagesShare, wage);
+  // Planned totals: prefer owner-set rough_hours_est / finish_hours_est (the source-of-truth
+  // values entered on the Inputs page). Fall back to deriving from contract × wages_share / wage,
+  // split 70% rough / 30% finish — matches the spreadsheet's standing assumption.
+  const explicitRough  = inputs?.rough_hours_est;
+  const explicitFinish = inputs?.finish_hours_est;
+  const hasExplicit =
+       explicitRough  != null && explicitRough  > 0
+    && explicitFinish != null && explicitFinish > 0;
 
-  // GOAL Hours and Rough/Finish Hours Allowed are all proportional to project progress.
-  // They grow with the project and ALWAYS equal each other in their respective stage:
-  //   while in Rough/Underground:  rough_allowed = goal_hours = est × project_completion
-  //   once in Finish/Extras:       rough portion locks at est × 0.70,
-  //                                finish_allowed = est × (project_completion - 0.70)
-  const projComp = calcProjectCompletion(project.stage ?? "Rough", project.stage_completion ?? 0);
+  const derivedTotal  = calcEstTotalHours(project.contract_value ?? 0, wagesShare, wage);
+  const totalEst      = hasExplicit ? (explicitRough! + explicitFinish!) : derivedTotal;
+  const roughPlanned  = hasExplicit ? explicitRough!  : round2(derivedTotal * 0.70);
+  const finishPlanned = hasExplicit ? explicitFinish! : round2(derivedTotal * 0.30);
 
-  const inRough  = project.stage === "Rough" || project.stage === "Underground";
-  const inFinish = project.stage === "Finish" || project.stage === "Extras";
+  // Stage-progressive "allowed" — the slice of the planned total earned at current completion.
+  // Rough grows while in rough; locks at full rough total once past it.
+  // Finish is 0 until Finish stage; grows with stage_completion; locks at full finish in Extras.
+  const sc       = Math.min(1, Math.max(0, project.stage_completion ?? 0));
+  const stage    = project.stage ?? "Rough";
+  const inRough  = stage === "Rough"  || stage === "Underground";
+  const inFinish = stage === "Finish";
+  const inExtras = stage === "Extras";
 
-  // Rough portion: dynamic while in rough; capped at full rough share (est × 0.70) afterward
   const roughAllowed = inRough
-    ? round2(est * projComp)
-    : round2(est * 0.70);
+    ? round2(roughPlanned * sc)
+    : roughPlanned;
 
-  // Finish portion: 0 until we reach Finish stage
-  const finishAllowed = inFinish
-    ? round2(est * Math.max(0, projComp - 0.70))
+  const finishAllowed =
+      inExtras ? finishPlanned
+    : inFinish ? round2(finishPlanned * sc)
     : 0;
 
-  // Goal Hours = the budget for the work completed so far (overall)
-  const goalHours = round2(est * projComp);
+  const goalHours = round2(roughAllowed + finishAllowed);
 
   return {
-    est_total_hours:      est,
+    est_total_hours:      round2(totalEst),
     rough_hours_allowed:  roughAllowed,
     finish_hours_allowed: finishAllowed,
     goal_hours:           goalHours,
