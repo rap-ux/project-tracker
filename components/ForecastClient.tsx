@@ -205,9 +205,9 @@ export default function ForecastClient({ rows, role }: Props) {
       {/* ── Header ── */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Revenue Forecasting</h1>
+          <h1 className="text-xl font-bold text-gray-900">Revenue Forecasting — Accrual</h1>
           <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-            Dates from Timeline · 10 / 25 / 25 / 30 / 10% split · {RECEIPT_DELAY_DAYS}-day receipt delay
+            Dates from Timeline · 10 / 25 / 25 / 30 / 10% milestone split
           </p>
         </div>
 
@@ -228,14 +228,11 @@ export default function ForecastClient({ rows, role }: Props) {
             })}
           </div>
 
-          <button
-            onClick={() => setIncludeMinor(v => !v)}
-            className="text-xs px-3 py-1 rounded-full border font-medium transition-all"
-            style={includeMinor
-              ? { backgroundColor: "#101010", borderColor: "#101010", color: "#fff" }
-              : { backgroundColor: "#fff", borderColor: "#d1d5db", color: "#9ca3af" }}>
-            {includeMinor ? "Minor Projects: Shown" : "Minor Projects: Hidden"}
-          </button>
+          {/* Per Nicole: this used to be a toggle but it didn't move anything in
+              the data we have, so it's now a static informative pill. */}
+          <span className="text-xs px-3 py-1 rounded-full border border-gray-200 bg-gray-50 text-gray-500 font-medium">
+            Minor projects not included
+          </span>
 
           <button
             onClick={() => {
@@ -263,15 +260,15 @@ export default function ForecastClient({ rows, role }: Props) {
       </div>
 
       {/* ── KPI strip ──
-          Upcoming Cash is the forward-looking headline (milestone-schedule based).
+          Upcoming Sales is the forward-looking accrual headline (milestone-schedule based).
           Tracked Remaining Unbilled is a secondary health-check (AR-based, QBO).
           The two diverge when the milestone schedule drifts from actual billing —
           that gap is itself signal, so we keep both but visually tier them. */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
         {([
-          { label: "Active Contract Value",      value: fmt$(activeContractTotal) },
+          { label: "Tracked Contract Value",     value: fmt$(activeContractTotal) },
           { label: "Already Received",           value: fmt$(pastTotal),            sub: "milestones passed", hi: "#16a34a" },
-          { label: "Upcoming Cash",              value: fmt$(futureTotal),          sub: "future milestones", hi: "#00BAD6", prominent: true },
+          { label: "Upcoming Sales",             value: fmt$(futureTotal),          sub: "future milestones", hi: "#00BAD6", prominent: true },
           { label: "Tracked Remaining Unbilled", value: fmt$(activeRemainingTotal), sub: "contract − invoiced · secondary health-check", muted: true },
           { label: "Tracked Projects",           value: String(activeData.length) },
         ] as Array<{ label: string; value: string; sub?: string; hi?: string; prominent?: boolean; muted?: boolean }>).map(card => (

@@ -15,8 +15,10 @@ export async function GET() {
            COALESCE(pi.wages_share,         0.20)  AS wages_share,
            COALESCE(pi.blended_hourly_rate, 125)   AS blended_hourly_rate,
            COALESCE(pi.blended_hourly_wage, 37)    AS blended_hourly_wage,
-           COALESCE(pi.rough_hours_est,     p.rough_hours_allowed) AS rough_hours_est,
-           COALESCE(pi.finish_hours_est,    p.finish_hours_allowed) AS finish_hours_est
+           -- See app/inputs/page.tsx for rationale: planned totals via 70/30
+           -- split of est_total_hours, not the dynamic to-date allowed.
+           COALESCE(pi.rough_hours_est,     ROUND(p.est_total_hours * 0.70, 2)) AS rough_hours_est,
+           COALESCE(pi.finish_hours_est,    ROUND(p.est_total_hours * 0.30, 2)) AS finish_hours_est
     FROM projects p
     LEFT JOIN project_inputs pi ON pi.project_id = p.id
     ORDER BY p.foreman, p.name
