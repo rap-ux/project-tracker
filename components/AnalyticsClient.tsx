@@ -45,12 +45,28 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
 }) {
   const [view, setView] = useState<"margin" | "foreman" | "builder">("margin");
   const [marginChartView, setMarginChartView] = useState<"bar" | "pie">("bar");
+  // Filter: hide early-stage projects whose margins are misleading
+  // (cash collected but materials not yet spent). "Past Rough" = project_completion >= 70%.
+  // Defaults ON because early-project margins inflate the portfolio view.
+  const [pastRoughOnly, setPastRoughOnly] = useState(true);
+
+  const pastRoughCount = useMemo(
+    () => projects.filter(p => (p.project_completion ?? 0) >= 0.70).length,
+    [projects],
+  );
+
+  const filteredProjects = useMemo(
+    () => pastRoughOnly
+      ? projects.filter(p => (p.project_completion ?? 0) >= 0.70)
+      : projects,
+    [projects, pastRoughOnly],
+  );
 
   // ── Margin per project ────────────────────────────────────────────────────
   const marginRows = useMemo(() => {
-    return projects.map(p => ({ ...p, m: marginForProject(p), finishDate: finishDateByProject[p.id] }))
+    return filteredProjects.map(p => ({ ...p, m: marginForProject(p), finishDate: finishDateByProject[p.id] }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [projects, finishDateByProject]);
+  }, [filteredProjects, finishDateByProject]);
 
   // Sort by date for trend — use finish date if completed, else updated_at
   const trendRows = useMemo(() => {
@@ -125,20 +141,43 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
             Margin trends, per-foreman performance, and per-builder profitability
           </p>
         </div>
-        <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm">
-          {([
-            { v: "margin",  label: "📊 Margin Trend" },
-            { v: "foreman", label: "👷 Foreman"       },
-            { v: "builder", label: "🏗️ Builder"      },
-          ] as const).map(o => (
-            <button key={o.v} onClick={() => setView(o.v)}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Past-Rough filter — hides early-stage projects whose margins look
+              inflated because cash is in but materials/labor not yet spent. */}
+          <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm" title="Filter projects that have completed Rough stage (project_completion ≥ 70%)">
+            <button
+              onClick={() => setPastRoughOnly(false)}
               className="px-3 py-1.5 font-medium transition-colors"
-              style={view === o.v
+              style={!pastRoughOnly
                 ? { backgroundColor: "#101010", color: "#fff" }
                 : { backgroundColor: "#fff", color: "#6b7280" }}>
-              {o.label}
+              All ({projects.length})
             </button>
-          ))}
+            <button
+              onClick={() => setPastRoughOnly(true)}
+              className="px-3 py-1.5 font-medium transition-colors"
+              style={pastRoughOnly
+                ? { backgroundColor: "#101010", color: "#fff" }
+                : { backgroundColor: "#fff", color: "#6b7280" }}>
+              Past Rough ({pastRoughCount})
+            </button>
+          </div>
+
+          <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm">
+            {([
+              { v: "margin",  label: "📊 Margin Trend" },
+              { v: "foreman", label: "👷 Foreman"       },
+              { v: "builder", label: "🏗️ Builder"      },
+            ] as const).map(o => (
+              <button key={o.v} onClick={() => setView(o.v)}
+                className="px-3 py-1.5 font-medium transition-colors"
+                style={view === o.v
+                  ? { backgroundColor: "#101010", color: "#fff" }
+                  : { backgroundColor: "#fff", color: "#6b7280" }}>
+                {o.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
