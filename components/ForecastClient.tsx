@@ -262,21 +262,30 @@ export default function ForecastClient({ rows, role }: Props) {
         </div>
       </div>
 
-      {/* ── KPI strip ── */}
+      {/* ── KPI strip ──
+          Upcoming Cash is the forward-looking headline (milestone-schedule based).
+          Tracked Remaining Unbilled is a secondary health-check (AR-based, QBO).
+          The two diverge when the milestone schedule drifts from actual billing —
+          that gap is itself signal, so we keep both but visually tier them. */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
-        {[
-          { label: "Active Contract Value",    value: fmt$(activeContractTotal) },
-          { label: "Already Received",          value: fmt$(pastTotal),     sub: "milestones passed", hi: "#16a34a" },
-          { label: "Upcoming Cash",             value: fmt$(futureTotal),   sub: "future milestones", hi: "#00BAD6" },
-          { label: "Tracked Remaining Unbilled", value: fmt$(activeRemainingTotal), sub: "contract − invoiced" },
-          { label: "Tracked Projects",          value: String(activeData.length) },
-        ].map(card => (
-          <div key={card.label} className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3">
-            <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">{card.label}</p>
-            <p className="text-xl font-bold mt-0.5" style={card.hi ? { color: card.hi } : { color: "#111827" }}>
+        {([
+          { label: "Active Contract Value",      value: fmt$(activeContractTotal) },
+          { label: "Already Received",           value: fmt$(pastTotal),            sub: "milestones passed", hi: "#16a34a" },
+          { label: "Upcoming Cash",              value: fmt$(futureTotal),          sub: "future milestones", hi: "#00BAD6", prominent: true },
+          { label: "Tracked Remaining Unbilled", value: fmt$(activeRemainingTotal), sub: "contract − invoiced · secondary health-check", muted: true },
+          { label: "Tracked Projects",           value: String(activeData.length) },
+        ] as Array<{ label: string; value: string; sub?: string; hi?: string; prominent?: boolean; muted?: boolean }>).map(card => (
+          <div key={card.label} className={`bg-white rounded-xl border shadow-sm px-4 py-3 ${
+            card.prominent ? "border-cyan-200 ring-1 ring-cyan-100" :
+            card.muted     ? "border-gray-150 bg-gray-50/40"        :
+                             "border-gray-200"
+          }`}>
+            <p className={`text-[10px] font-semibold uppercase tracking-wide ${card.muted ? "text-gray-400" : "text-gray-500"}`}>{card.label}</p>
+            <p className={`font-bold mt-0.5 ${card.prominent ? "text-2xl" : card.muted ? "text-base" : "text-xl"}`}
+               style={card.muted ? { color: "#6b7280" } : card.hi ? { color: card.hi } : { color: "#111827" }}>
               {card.value}
             </p>
-            {card.sub && <p className="text-[10px] text-gray-400 mt-0.5">{card.sub}</p>}
+            {card.sub && <p className={`text-[10px] mt-0.5 ${card.muted ? "text-gray-400/80" : "text-gray-400"}`}>{card.sub}</p>}
           </div>
         ))}
       </div>
