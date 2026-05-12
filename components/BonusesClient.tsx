@@ -167,7 +167,7 @@ export default function BonusesClient({ projects }: { projects: Project[] }) {
                 <th className="px-4 py-2.5 text-left">Project</th>
                 <th className="px-4 py-2.5 text-left">Foreman</th>
                 <th className="px-4 py-2.5 text-right">Contract</th>
-                <th className="px-4 py-2.5 text-left">Tier</th>
+                <th className="px-4 py-2.5 text-left">Per-Stage Tier</th>
                 <th className="px-4 py-2.5 text-center">Rough</th>
                 <th className="px-4 py-2.5 text-center">Finish</th>
                 <th className="px-4 py-2.5 text-right">Earned</th>
@@ -182,7 +182,7 @@ export default function BonusesClient({ projects }: { projects: Project[] }) {
               {filtered.map(p => {
                 const roughSty  = stageStatusStyle(p.inc.rough.status);
                 const finishSty = stageStatusStyle(p.inc.finish.status);
-                const tierLabel = `${fmt$(p.tier.max)} max · ${fmt$(p.tier.meet)} met / ${fmt$(p.tier.beat)} beat`;
+                const tierLabel = `${fmt$(p.tier.max)} per stage (rough + finish = up to ${fmt$(p.tier.max * 2)} total) · ${fmt$(p.tier.meet)} met / ${fmt$(p.tier.beat)} beat`;
 
                 return (
                   <tr key={p.id} className="hover:bg-gray-50 transition-colors">
@@ -193,7 +193,7 @@ export default function BonusesClient({ projects }: { projects: Project[] }) {
                     <td className="px-4 py-3 text-xs text-gray-600">{p.foreman}</td>
                     <td className="px-4 py-3 text-right font-mono text-xs text-gray-700">{fmt$(p.contract_value)}</td>
                     <td className="px-4 py-3 text-xs text-gray-500" title={tierLabel}>
-                      <span className="font-mono">{fmt$(p.tier.max)} max</span>
+                      <span className="font-mono">{fmt$(p.tier.max)}/stage</span>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <StageBadge sb={p.inc.rough} sty={roughSty} />
