@@ -63,7 +63,7 @@ export default function InputsClient({ inputs, role }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Project Inputs</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Financial assumptions and planned stage-hour totals per project — these are the totals we&apos;re aiming for, not progress-to-date.</p>
+          <p className="text-sm text-gray-500 mt-0.5">Financial assumptions and planned stage-hour totals per project. These are the totals we&apos;re aiming for, not progress-to-date.</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           <button
