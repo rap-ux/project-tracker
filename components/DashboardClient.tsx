@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import ChangeOrdersPanel     from "./ChangeOrdersPanel";
 import CommentsPanel           from "./CommentsPanel";
@@ -91,19 +91,12 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
   const [expandedRows,   setExpandedRows]   = useState<Set<number>>(new Set());
   const [activateProject, setActivateProject] = useState<any>(null);
   const [activating,      setActivating]      = useState(false);
-  const [openDropdown,    setOpenDropdown]    = useState<number | null>(null);
   const [activitiesByProject, setActivitiesByProject] = useState<Record<number, any[]>>({});
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkStatus,  setBulkStatus]  = useState<string>("");
   // Live preview of calculated project_completion in the edit modal
   const [draftStage,      setDraftStage]      = useState<string>("");
   const [draftStagePct,   setDraftStagePct]   = useState<number>(0);
-  // Per-project import
-  const [importProjectId, setImportProjectId] = useState<number | null>(null);
-  const [importingId,     setImportingId]     = useState<number | null>(null);
-  const [importMsg,       setImportMsg]       = useState<{ id: number; text: string; ok: boolean } | null>(null);
-  const importRef  = useRef<HTMLInputElement>(null);
-
   function calcProjectCompletion(stage: string, stagePct: number): number {
     const sc = Math.min(1, Math.max(0, stagePct / 100));
     if (stage === "Rough" || stage === "Underground") return sc * 0.70;
@@ -206,31 +199,6 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
     ]);
     const today = new Date().toISOString().slice(0, 10);
     downloadCSV(`projects-${filenameHint}-${today}.csv`, csv);
-  }
-
-  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || importProjectId == null) return;
-    // Reset so the same file can be re-selected later
-    e.target.value = "";
-
-    setImportingId(importProjectId);
-    setImportMsg(null);
-
-    const fd = new FormData();
-    fd.append("file", file);
-
-    const res  = await fetch(`/api/projects/${importProjectId}/import`, { method: "POST", body: fd });
-    const data = await res.json();
-
-    setImportingId(null);
-    if (data.ok) {
-      setImportMsg({ id: importProjectId, text: `✅ ${data.changeCount} change(s) staged — review at Uploads`, ok: true });
-      setTimeout(() => setImportMsg(null), 5000);
-    } else {
-      setImportMsg({ id: importProjectId, text: `❌ ${data.error ?? "Import failed"}`, ok: false });
-      setTimeout(() => setImportMsg(null), 4000);
-    }
   }
 
   const currentList = view === "active" ? projects : pipeline;
@@ -441,7 +409,6 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
               className="text-sm px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors inline-block">
               📤 Uploads
             </Link>
-            <input ref={importRef} type="file" accept=".xlsx,.csv" className="hidden" onChange={handleImportFile} />
           </>}
           {isSuperAdmin && (
             <a
@@ -744,11 +711,11 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
       )}
 
       {/* ── Active Projects Table (desktop) ── */}
-      {view === "active" && <div className="hidden md:block bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      {view === "active" && <div className="hidden md:block bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-slate-800 text-white text-xs uppercase tracking-wide">
+              <tr className="bg-gray-50/80 border-b border-gray-200 text-[11px] uppercase tracking-wider text-gray-500 font-semibold">
                 {isAdmin && (
                   <th className="px-3 py-3 text-center w-8">
                     <input type="checkbox"
@@ -768,8 +735,8 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                 <th className="px-4 py-3 text-center">Hours</th>
                 <th className="px-4 py-3 text-center">Status</th>
                 <th className="px-4 py-3 text-center">Links</th>
-                <th className="px-4 py-3 text-center">Last Updated</th>
-                <th className="px-4 py-3 text-center w-10"></th>
+                <th className="px-4 py-3 text-center">Updated</th>
+                <th className="px-4 py-3 text-center w-20"></th>
               </tr>
             </thead>
             <tbody>
@@ -789,14 +756,17 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
 
                 return (
                   <React.Fragment key={p.id}>
-                  <tr className={`hover:bg-gray-50 transition-colors border-b border-gray-100 ${
+                  <tr
+                    onClick={() => toggleRow(p.id)}
+                    title={expandedRows.has(p.id) ? "Click to hide insights" : "Click to show insights"}
+                    className={`cursor-pointer hover:bg-cyan-50/40 transition-colors border-b border-gray-100 ${
                     selectedIds.has(p.id)                  ? "bg-cyan-50/60" :
                     inc.projectStatus.key === "critical"   ? "bg-red-50/60" :
                     inc.projectStatus.key === "at-risk"    ? "bg-orange-50/40" :
                     overMat                                ? "bg-yellow-50/40" : ""
                   }`}>
                     {isAdmin && (
-                      <td className="px-3 py-3 text-center">
+                      <td className="px-3 py-3 text-center" onClick={e => e.stopPropagation()}>
                         <input type="checkbox"
                           checked={selectedIds.has(p.id)}
                           onChange={() => toggleSelect(p.id)}
@@ -899,57 +869,28 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                         );
                       })()}
                     </td>
-                    <td className="px-2 py-3 text-center relative">
-                      {/* Inline import feedback */}
-                      {importMsg?.id === p.id && importMsg && (
-                        <span className={`absolute -top-1 right-8 text-[10px] whitespace-nowrap px-2 py-0.5 rounded-full shadow-sm z-40 ${importMsg.ok ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                          {importMsg.text}
-                        </span>
-                      )}
-                      <button
-                        onClick={() => setOpenDropdown(openDropdown === p.id ? null : p.id)}
-                        onBlur={() => setTimeout(() => setOpenDropdown(null), 150)}
-                        className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors text-lg leading-none mx-auto"
-                        title="Actions">
-                        {importingId === p.id ? (
-                          <span className="text-xs animate-pulse text-blue-500">…</span>
-                        ) : "⋮"}
-                      </button>
-                      {openDropdown === p.id && (
-                        <div className="absolute right-2 top-full z-30 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[160px] text-left">
+                    <td className="px-2 py-3" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-1 pr-1">
+                        {isAdmin && (
                           <button
-                            onMouseDown={e => e.preventDefault()}
-                            onClick={() => { toggleRow(p.id); setOpenDropdown(null); }}
-                            className="w-full px-3 py-2 text-xs text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                            {expandedRows.has(p.id) ? "▲ Hide Insights" : "▼ Show Insights"}
+                            onClick={() => { setEditProject(p); setDraftStage(p.stage ?? "Rough"); setDraftStagePct(Math.round((p.stage_completion ?? 0) * 100)); }}
+                            title="Edit project"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-cyan-50 hover:text-cyan-600 transition-colors">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                            </svg>
                           </button>
-                          {isAdmin && <>
-                            <div className="border-t border-gray-100 my-1" />
-                            <button
-                              onMouseDown={e => e.preventDefault()}
-                              onClick={() => {
-                                setImportProjectId(p.id);
-                                setOpenDropdown(null);
-                                setTimeout(() => importRef.current?.click(), 50);
-                              }}
-                              className="w-full px-3 py-2 text-xs text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                              📥 Import Data
-                            </button>
-                            <button
-                              onMouseDown={e => e.preventDefault()}
-                              onClick={() => { setEditProject(p); setDraftStage(p.stage ?? "Rough"); setDraftStagePct(Math.round((p.stage_completion ?? 0) * 100)); setOpenDropdown(null); }}
-                              className="w-full px-3 py-2 text-xs text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                              ✏️ Edit
-                            </button>
-                            <button
-                              onMouseDown={e => e.preventDefault()}
-                              onClick={() => { handleDelete(p.id); setOpenDropdown(null); }}
-                              className="w-full px-3 py-2 text-xs text-left text-red-600 hover:bg-red-50 flex items-center gap-2">
-                              🗑️ Delete
-                            </button>
-                          </>}
-                        </div>
-                      )}
+                        )}
+                        <button
+                          onClick={() => toggleRow(p.id)}
+                          title={expandedRows.has(p.id) ? "Hide insights" : "Show insights"}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                            className={`transition-transform duration-200 ${expandedRows.has(p.id) ? "rotate-180" : ""}`}>
+                            <polyline points="6 9 12 15 18 9"/>
+                          </svg>
+                        </button>
+                      </div>
                     </td>
                   </tr>
 
@@ -1154,6 +1095,17 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
 
                           {/* ── Comments / @mentions ── */}
                           <CommentsPanel projectId={p.id} availableUsers={availableUsers} />
+
+                          {/* ── Danger zone ── */}
+                          {isAdmin && (
+                            <div className="flex justify-end border-t border-gray-100 pt-2">
+                              <button
+                                onClick={() => handleDelete(p.id)}
+                                className="text-[11px] px-2.5 py-1 rounded-md text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                                Delete project…
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </td>
                     </tr>
