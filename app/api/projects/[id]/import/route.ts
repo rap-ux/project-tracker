@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { auth }       from "@/auth";
 import db              from "@/lib/db";
+import { deriveBudgets } from "@/lib/budgets";
 import { NextRequest } from "next/server";
 import ExcelJS         from "exceljs";
 
@@ -258,6 +259,37 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     const roughActual = updates.rough_hours_actual ?? current.rough_hours_actual ?? 0;
     const totalActual = updates.actual_total_hours ?? current.actual_total_hours ?? 0;
     updates.finish_hours_actual = Math.max(0, totalActual - roughActual);
+  }
+
+  // ── Live-mirror per-stage actuals (spreadsheet formula semantics) ──────────
+  // Same rules as the PUT route: rough mirrors total while in Rough/Underground;
+  // finish = total − frozen rough while in Finish/Extras. Explicit values in the
+  // imported file win (they'd already be in `updates`).
+  const inRoughPhase  = current.stage === "Rough" || current.stage === "Underground";
+  const inFinishPhase = current.stage === "Finish" || current.stage === "Extras";
+  const totalHoursNow = updates.actual_total_hours ?? current.actual_total_hours ?? 0;
+  if (inRoughPhase && !("rough_hours_actual" in updates)) {
+    updates.rough_hours_actual = totalHoursNow;
+  }
+  if (inFinishPhase && !("finish_hours_actual" in updates)) {
+    const frozenRough = updates.rough_hours_actual ?? current.rough_hours_actual ?? 0;
+    updates.finish_hours_actual = Math.max(0, totalHoursNow - frozenRough);
+  }
+
+  // ── Re-derive hour budgets when a driver changed (matches PUT route) ────────
+  if ("stage_completion" in updates || "contract_value" in updates) {
+    const inputs = db.prepare("SELECT * FROM project_inputs WHERE project_id = ?")
+      .get(projectId) as any;
+    const derived = deriveBudgets(
+      { contract_value:   updates.contract_value ?? current.contract_value,
+        stage:            current.stage,
+        stage_completion: newStageCompletion },
+      inputs,
+    );
+    if (!("est_total_hours"      in updates)) updates.est_total_hours      = derived.est_total_hours;
+    if (!("rough_hours_allowed"  in updates)) updates.rough_hours_allowed  = derived.rough_hours_allowed;
+    if (!("finish_hours_allowed" in updates)) updates.finish_hours_allowed = derived.finish_hours_allowed;
+    if (!("goal_hours"           in updates)) updates.goal_hours           = derived.goal_hours;
   }
 
   // ── Compute diff ──────────────────────────────────────────────────────────

@@ -1288,14 +1288,14 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                       { key: "est_materials_budget",  label: "Est. Materials Budget ($)",      type: "number" },
                       { key: "actual_materials",      label: "Actual Materials ($)",           type: "number" },
                       { key: "unrecorded_materials",  label: "Unrecorded Materials ($)",       type: "number" },
-                      { key: "est_total_hours",       label: "Est. Total Hours",               type: "number" },
+                      { key: "est_total_hours",       label: "Est. Total Hours (auto)",        type: "number" },
                       { key: "actual_total_hours",    label: "Actual Total Hours",             type: "number" },
                       { key: "unrecorded_hours",      label: "Unrecorded Hours",               type: "number" },
-                      { key: "goal_hours",           label: "Goal Hours (stage)",        type: "number" },
-                      { key: "rough_hours_allowed",  label: "Rough Hours Allowed",       type: "number" },
-                      { key: "rough_hours_actual",   label: "Rough Hours Actual",        type: "number" },
-                      { key: "finish_hours_allowed", label: "Finish Hours Allowed",      type: "number" },
-                      { key: "finish_hours_actual",  label: "Finish Hours Actual",       type: "number" },
+                      { key: "goal_hours",           label: "Goal Hours (auto)",         type: "number" },
+                      { key: "rough_hours_allowed",  label: "Rough Hours Allowed (auto)", type: "number" },
+                      { key: "rough_hours_actual",   label: "Rough Hours Actual (auto)",  type: "number" },
+                      { key: "finish_hours_allowed", label: "Finish Hours Allowed (auto)", type: "number" },
+                      { key: "finish_hours_actual",  label: "Finish Hours Actual (auto)",  type: "number" },
                     ].map(f => (
                       <div key={f.key}>
                         <label className="block text-xs font-medium text-gray-600 mb-1">{f.label}</label>

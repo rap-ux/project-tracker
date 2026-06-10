@@ -75,6 +75,27 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
     body.finish_hours_actual = Math.max(0, totalActual - roughActual);
   }
 
+  // ── Live-mirror per-stage actuals (spreadsheet formula semantics) ───────────
+  // While in Rough/Underground: rough_hours_actual mirrors actual_total_hours.
+  // While in Finish/Extras:     finish_hours_actual = total − frozen rough.
+  // The freeze still happens naturally: once the stage moves on, the mirror stops.
+  // A caller-CHANGED value wins — compare against current so the edit form echoing
+  // back unchanged values doesn't count as an explicit override.
+  const inRoughPhase  = newStage === "Rough" || newStage === "Underground";
+  const inFinishPhase = newStage === "Finish" || newStage === "Extras";
+  const newTotalHours = body.actual_total_hours ?? current.actual_total_hours ?? 0;
+  const roughChanged  = body.rough_hours_actual  != null && body.rough_hours_actual  !== current.rough_hours_actual;
+  const finishChanged = body.finish_hours_actual != null && body.finish_hours_actual !== current.finish_hours_actual;
+
+  if (inRoughPhase && !roughChanged) {
+    body.rough_hours_actual = newTotalHours;
+  }
+  if (inFinishPhase && !finishChanged) {
+    // body.rough_hours_actual here is either a snapshot value, a user override, or a form echo == current
+    const frozenRough = body.rough_hours_actual ?? current.rough_hours_actual ?? 0;
+    body.finish_hours_actual = Math.max(0, newTotalHours - frozenRough);
+  }
+
   // ── Auto-derive hour budgets from inputs (matches spreadsheet formulas) ─────
   // est_total_hours, rough/finish_hours_allowed, goal_hours all recompute
   // whenever a driving field changes (contract, stage, stage_completion).
