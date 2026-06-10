@@ -57,10 +57,10 @@ function ProgressBar({ value, max, color = "blue" }: { value: number; max: numbe
 
 function KpiCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-      <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">{label}</p>
-      <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
-      {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+    <div className="bg-white rounded-xl border border-gray-200/80 px-4 py-3.5 shadow-sm">
+      <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">{label}</p>
+      <p className="text-xl lg:text-2xl font-bold text-gray-900 mt-1 tabular-nums">{value}</p>
+      {sub && <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -394,27 +394,29 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
         </div>
 
         <div className="flex flex-wrap gap-2">
+          {/* One primary action; everything else is a quiet ghost button */}
           <button onClick={() => exportCurrentCSV(filtered, view)}
             title="Export current filtered rows as CSV"
-            className="text-sm px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition-colors">
+            className="text-sm px-3 py-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 rounded-lg font-medium transition-colors">
             ⬇ CSV
           </button>
           {isAdmin && <>
-            <button onClick={() => setShowAddForm(true)}
-              className="text-sm px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
-              + Add Project
-            </button>
             <Link
               href="/uploads"
-              className="text-sm px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors inline-block">
+              className="text-sm px-3 py-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 rounded-lg font-medium transition-colors inline-block">
               📤 Uploads
             </Link>
+            <button onClick={() => setShowAddForm(true)}
+              className="text-sm px-4 py-1.5 text-white rounded-lg font-semibold transition-opacity hover:opacity-90 shadow-sm"
+              style={{ backgroundColor: "#00BAD6" }}>
+              + Add Project
+            </button>
           </>}
           {isSuperAdmin && (
             <a
               href="/api/admin/backup"
               title="Download a snapshot of the entire database"
-              className="text-sm px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition-colors inline-block">
+              className="text-sm px-3 py-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 rounded-lg font-medium transition-colors inline-block">
               💾 Backup DB
             </a>
           )}
@@ -726,16 +728,11 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                   </th>
                 )}
                 <th className="px-4 py-3 text-left">Project</th>
-                <th className="px-4 py-3 text-left">Foreman</th>
-                <th className="px-4 py-3 text-left">Stage</th>
-                {!isForeman && <th className="px-4 py-3 text-right">Contract</th>}
-                {!isForeman && <th className="px-4 py-3 text-right">Invoiced</th>}
-                <th className="px-4 py-3 text-center">% Complete</th>
-                <th className="px-4 py-3 text-center">Materials</th>
-                <th className="px-4 py-3 text-center">Hours</th>
-                <th className="px-4 py-3 text-center">Status</th>
-                <th className="px-4 py-3 text-center">Links</th>
-                <th className="px-4 py-3 text-center">Updated</th>
+                <th className="px-4 py-3 text-left">Health</th>
+                <th className="px-4 py-3 text-left">Progress</th>
+                <th className="px-4 py-3 text-left">Hours</th>
+                <th className="px-4 py-3 text-left">Materials</th>
+                {!isForeman && <th className="px-4 py-3 text-right">Billing</th>}
                 <th className="px-4 py-3 text-center w-20"></th>
               </tr>
             </thead>
@@ -773,102 +770,80 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                           className="cursor-pointer w-3.5 h-3.5 accent-cyan-500" />
                       </td>
                     )}
-                    <td className="px-4 py-3 font-medium text-gray-900">
-                      {p.name}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{p.foreman}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${p.stage === "Finish" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"}`}>
-                        {p.stage}
-                      </span>
-                    </td>
-                    {!isForeman && <td className="px-4 py-3 text-right font-mono text-gray-700">{fmt$(p.contract_value)}</td>}
-                    {!isForeman && (
-                      <td className="px-4 py-3 text-right text-gray-600">
-                        <div>{fmt$(p.total_invoiced)}</div>
-                        <div className="text-xs text-gray-400">{fmtPct(p.contract_value > 0 ? p.total_invoiced / p.contract_value : 0)}</div>
-                      </td>
-                    )}
-                    <td className="px-4 py-3 min-w-[110px]">
-                      <div className="flex flex-col gap-1.5">
-                        <div className="flex flex-col gap-0.5">
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-400">Stage</span>
-                            <span className="text-xs font-semibold text-gray-700">{fmtPct(p.stage_completion)}</span>
-                          </div>
-                          <ProgressBar value={p.stage_completion} max={1} color="green" />
-                        </div>
-                        <div className="flex flex-col gap-0.5">
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-400">Project</span>
-                            <span className="text-xs font-semibold text-gray-700">{fmtPct(p.project_completion)}</span>
-                          </div>
-                          <ProgressBar value={p.project_completion} max={1} color="blue" />
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-col items-center gap-1">
-                        <span className={`text-xs font-semibold ${overMat ? "text-red-600" : "text-gray-700"}`}>{fmtPct(matPct)}</span>
-                        <ProgressBar value={p.effectiveMaterials} max={p.est_materials_budget} color={overMat ? "red" : matPct > 0.8 ? "yellow" : "green"} />
-                        <span className="text-xs text-gray-400">{fmt$(p.effectiveMaterials)} / {fmt$(p.est_materials_budget)}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-col items-center gap-1">
-                        <span className={`text-xs font-semibold ${overHrs ? "text-red-600" : "text-gray-700"}`}>
-                          {p.effectiveHours.toLocaleString()} / {p.goal_hours.toLocaleString()} hrs
+                    {/* Project — name + everything secondary as a subtitle */}
+                    <td className="px-4 py-3.5">
+                      <div className="font-semibold text-gray-900 leading-tight">{p.name}</div>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                        <span>{p.foreman}</span>
+                        <span className="text-gray-300">·</span>
+                        <span className={`px-1.5 py-px rounded font-medium text-[11px] ${p.stage === "Finish" ? "bg-purple-50 text-purple-600" : p.stage === "Extras" ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600"}`}>
+                          {p.stage}
                         </span>
-                        <ProgressBar value={p.effectiveHours} max={p.goal_hours} color={overHrs ? "red" : "green"} />
-                      </div>
-                    </td>
-                    {/* Status */}
-                    <td className="px-4 py-3 text-center">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap inline-flex items-center gap-1 ${statusColors[inc.projectStatus.color] ?? statusColors.gray}`}>
-                        {inc.projectStatus.emoji} {inc.projectStatus.label}
-                      </span>
-                    </td>
-                    {/* Links */}
-                    <td className="px-4 py-3 text-center">
-                      <div className="flex items-center gap-1.5 justify-center">
                         {p.basecamp_link && (
-                          <a href={p.basecamp_link} target="_blank" rel="noopener noreferrer"
-                            title="Open in Basecamp"
-                            onClick={e => e.stopPropagation()}
-                            className="flex items-center justify-center w-7 h-7 rounded transition-opacity hover:opacity-70">
-                            <img src="/icons/basecamp.svg" alt="Basecamp" className="w-5 h-5" />
+                          <a href={p.basecamp_link} target="_blank" rel="noopener noreferrer" title="Open in Basecamp"
+                            onClick={e => e.stopPropagation()} className="hover:opacity-70 transition-opacity">
+                            <img src="/icons/basecamp.svg" alt="Basecamp" className="w-3.5 h-3.5" />
                           </a>
                         )}
                         {p.drive_folder && (
                           <a href={p.drive_folder.startsWith("http") ? p.drive_folder : `https://drive.google.com/drive/search?q=${encodeURIComponent(p.drive_folder)}`}
-                            target="_blank" rel="noopener noreferrer"
-                            title="Open in Google Drive"
-                            onClick={e => e.stopPropagation()}
-                            className="flex items-center justify-center w-7 h-7 rounded transition-opacity hover:opacity-70">
-                            <img src="/icons/google-drive.svg" alt="Drive" className="w-5 h-5" />
+                            target="_blank" rel="noopener noreferrer" title="Open in Google Drive"
+                            onClick={e => e.stopPropagation()} className="hover:opacity-70 transition-opacity">
+                            <img src="/icons/google-drive.svg" alt="Drive" className="w-3.5 h-3.5" />
                           </a>
                         )}
-                        {!p.basecamp_link && !p.drive_folder && (
-                          <span className="text-gray-300 text-xs">—</span>
-                        )}
+                        {(() => {
+                          const rt = relativeTime(p.updated_at);
+                          return (
+                            <span title={rt.title}
+                              className={`text-[10px] ${rt.stale ? "text-amber-600" : "text-gray-400"}`}>
+                              {rt.stale ? "⚠ " : ""}{rt.label}
+                            </span>
+                          );
+                        })()}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-center">
-                      {(() => {
-                        const rt = relativeTime(p.updated_at);
-                        return (
-                          <span
-                            title={rt.title}
-                            className="text-xs font-medium px-2 py-0.5 rounded-full"
-                            style={rt.stale
-                              ? { backgroundColor: "#fef9c3", color: "#854d0e" }   // yellow — stale
-                              : { backgroundColor: "#f0fdfe", color: "#00BAD6" }   // cyan — recent
-                            }>
-                            {rt.label}
-                          </span>
-                        );
-                      })()}
+                    {/* Health */}
+                    <td className="px-4 py-3.5">
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-semibold whitespace-nowrap inline-flex items-center gap-1 ${statusColors[inc.projectStatus.color] ?? statusColors.gray}`}>
+                        {inc.projectStatus.emoji} {inc.projectStatus.label}
+                      </span>
                     </td>
+                    {/* Progress — one bar: overall project, stage % as context */}
+                    <td className="px-4 py-3.5 min-w-[130px]">
+                      <div className="flex items-baseline justify-between mb-1">
+                        <span className="text-sm font-bold text-gray-800">{fmtPct(p.project_completion)}</span>
+                        <span className="text-[10px] text-gray-400">stage {fmtPct(p.stage_completion)}</span>
+                      </div>
+                      <ProgressBar value={p.project_completion} max={1} color="blue" />
+                    </td>
+                    {/* Hours — spent vs goal */}
+                    <td className="px-4 py-3.5 min-w-[130px]">
+                      <div className="flex items-baseline justify-between mb-1">
+                        <span className={`text-sm font-bold ${overHrs ? "text-red-600" : "text-gray-800"}`}>
+                          {p.effectiveHours.toLocaleString()}
+                        </span>
+                        <span className="text-[10px] text-gray-400">of {p.goal_hours.toLocaleString()} hrs</span>
+                      </div>
+                      <ProgressBar value={p.effectiveHours} max={p.goal_hours} color={overHrs ? "red" : "green"} />
+                    </td>
+                    {/* Materials — burn vs budget */}
+                    <td className="px-4 py-3.5 min-w-[130px]">
+                      <div className="flex items-baseline justify-between mb-1">
+                        <span className={`text-sm font-bold ${overMat ? "text-red-600" : "text-gray-800"}`}>{fmtPct(matPct)}</span>
+                        <span className="text-[10px] text-gray-400">{fmt$(p.effectiveMaterials)}</span>
+                      </div>
+                      <ProgressBar value={p.effectiveMaterials} max={p.est_materials_budget} color={overMat ? "red" : matPct > 0.8 ? "yellow" : "green"} />
+                    </td>
+                    {/* Billing — contract + invoiced in one glance */}
+                    {!isForeman && (
+                      <td className="px-4 py-3.5 text-right">
+                        <div className="font-mono text-sm font-semibold text-gray-800">{fmt$(p.contract_value)}</div>
+                        <div className="text-[11px] text-gray-400 mt-0.5">
+                          {fmt$(p.total_invoiced)} · {fmtPct(p.contract_value > 0 ? p.total_invoiced / p.contract_value : 0)} billed
+                        </div>
+                      </td>
+                    )}
                     <td className="px-2 py-3" onClick={e => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1 pr-1">
                         {isAdmin && (
@@ -896,7 +871,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
 
                   {expandedRows.has(p.id) && (
                     <tr className="border-b border-gray-100" style={{ backgroundColor: "#f8fffe" }}>
-                      <td colSpan={isAdmin ? 13 : isForeman ? 9 : 11} className="px-6 py-4">
+                      <td colSpan={isAdmin ? 8 : isForeman ? 6 : 7} className="px-6 py-4">
                         <div className="flex flex-col gap-3">
                           {/* Insight line */}
                           <div className="flex items-start gap-2 text-sm text-gray-700">
