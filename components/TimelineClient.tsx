@@ -354,8 +354,8 @@ export default function TimelineClient({ projects, stagesByProject }: Props) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-800 text-white text-xs uppercase tracking-wide">
-                  <th className="px-4 py-3 text-left sticky left-0 bg-slate-800">Project</th>
+                <tr className="bg-gray-50 border-b border-gray-200 text-[11px] uppercase tracking-wider text-gray-500 font-semibold">
+                  <th className="px-4 py-3 text-left sticky left-0 bg-gray-50">Project</th>
                   <th className="px-4 py-3 text-left">Foreman</th>
                   <th className="px-4 py-3 text-left">Stage</th>
                   <th className="px-4 py-3 text-center">Status</th>

@@ -470,7 +470,7 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-white text-xs uppercase tracking-wide bg-slate-800">
+                  <tr className="bg-gray-50 border-b border-gray-200 text-[11px] uppercase tracking-wider text-gray-500 font-semibold">
                     <th className="px-4 py-2 text-left">Project</th>
                     <th className="px-4 py-2 text-left">Foreman</th>
                     <th className="px-4 py-2 text-right">Contract</th>
@@ -520,7 +520,7 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-white text-xs uppercase tracking-wide bg-slate-800">
+                <tr className="bg-gray-50 border-b border-gray-200 text-[11px] uppercase tracking-wider text-gray-500 font-semibold">
                   <th className="px-4 py-2 text-left">Foreman</th>
                   <th className="px-4 py-2 text-center">Projects</th>
                   <th className="px-4 py-2 text-right">Total Contract</th>
@@ -558,7 +558,7 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-white text-xs uppercase tracking-wide bg-slate-800">
+                <tr className="bg-gray-50 border-b border-gray-200 text-[11px] uppercase tracking-wider text-gray-500 font-semibold">
                   <th className="px-4 py-2 text-left">Builder / GC</th>
                   <th className="px-4 py-2 text-center">Projects</th>
                   <th className="px-4 py-2 text-right">Total Contract</th>

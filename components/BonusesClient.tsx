@@ -163,7 +163,7 @@ export default function BonusesClient({ projects }: { projects: Project[] }) {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-slate-800 text-white text-xs uppercase tracking-wide">
+              <tr className="bg-gray-50 border-b border-gray-200 text-[11px] uppercase tracking-wider text-gray-500 font-semibold">
                 <th className="px-4 py-2.5 text-left">Project</th>
                 <th className="px-4 py-2.5 text-left">Foreman</th>
                 <th className="px-4 py-2.5 text-right">Contract</th>

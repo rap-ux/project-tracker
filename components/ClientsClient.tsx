@@ -282,7 +282,7 @@ export default function ClientsClient({ projects: initial, role }: { projects: P
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-white text-xs uppercase tracking-wide" style={{ backgroundColor: "#101010" }}>
+              <tr className="bg-gray-50 border-b border-gray-200 text-[11px] uppercase tracking-wider text-gray-500 font-semibold">
                 <th className="px-4 py-2.5 text-left">Project</th>
                 <th className="px-4 py-2.5 text-left">Region</th>
                 <th className="px-4 py-2.5 text-left">Foreman</th>

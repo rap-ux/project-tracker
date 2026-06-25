@@ -840,8 +840,8 @@ export default function ForecastClient({ rows, role }: Props) {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-slate-800 text-white text-xs uppercase tracking-wide">
-                <th className="px-4 py-3 text-left sticky left-0 bg-slate-800 z-10">Project</th>
+              <tr className="bg-gray-50 border-b border-gray-200 text-[11px] uppercase tracking-wider text-gray-500 font-semibold">
+                <th className="px-4 py-3 text-left sticky left-0 bg-gray-50 z-10">Project</th>
                 <th className="px-4 py-3 text-left">Foreman</th>
                 <th className="px-4 py-3 text-center">Dates Set</th>
                 <th className="px-4 py-3 text-right">Contract</th>
