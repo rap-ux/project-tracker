@@ -396,7 +396,7 @@ export default function ForecastClient({ rows, role }: Props) {
             <div>
               <h2 className="text-base font-semibold text-gray-900 tracking-tight">Projected Cash Flow</h2>
               <p className="text-xs text-gray-500 mt-1">
-                {chartView === "flow"        && "Monthly inflow (area) with running total banked (line)"}
+                {chartView === "flow"        && "How much cash lands each month. Faint line = running total, for reference only."}
                 {chartView === "heatmap"     && "Months as a grid — color intensity = cash amount"}
                 {chartView === "composition" && "Monthly bars broken down by which project contributes"}
               </p>
@@ -445,10 +445,10 @@ export default function ForecastClient({ rows, role }: Props) {
               <>
                 <div className="flex items-center gap-1.5">
                   <div className="w-3 h-2 rounded-sm" style={{ background: "linear-gradient(180deg, rgba(0,186,214,0.55), rgba(0,186,214,0.08))" }} />
-                  Monthly
+                  <span className="font-medium text-gray-700">Cash per month</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <div className="w-4 h-[2px] rounded-full bg-amber-500" />Running total
+                  <div className="w-4 h-[2px] rounded-full bg-gray-300" /><span className="text-gray-400">Running total (reference)</span>
                 </div>
               </>
             )}
@@ -518,13 +518,13 @@ export default function ForecastClient({ rows, role }: Props) {
                 </g>
               )}
 
-              {/* Monthly area */}
-              <path d={areaPath} fill="url(#cf-area)" />
-              <path d={monthlyLine} fill="none" stroke="#00BAD6" strokeWidth="2" />
+              {/* Cumulative line — faint reference behind the monthly emphasis */}
+              <path d={cumLine} fill="none" stroke="#d1d5db" strokeWidth="1.5"
+                strokeLinecap="round" strokeDasharray="4 4" opacity="0.8" />
 
-              {/* Cumulative line */}
-              <path d={cumLine} fill="none" stroke="#f59e0b" strokeWidth="2.5"
-                strokeLinecap="round" strokeDasharray="0" />
+              {/* Monthly area — the primary read */}
+              <path d={areaPath} fill="url(#cf-area)" />
+              <path d={monthlyLine} fill="none" stroke="#00BAD6" strokeWidth="2.5" />
 
               {/* Dots + hover targets */}
               {monthKeys.map((mk, i) => {
@@ -540,22 +540,19 @@ export default function ForecastClient({ rows, role }: Props) {
                     <rect x={px - W_PER_MONTH / 2} y={PAD_T}
                       width={W_PER_MONTH} height={plotH}
                       fill="transparent" />
-                    {/* Monthly dot */}
-                    <circle cx={px} cy={monthlyPts[i].y} r={hoverIdx === i ? 5 : 3}
+                    {/* Monthly dot — the primary marker */}
+                    <circle cx={px} cy={monthlyPts[i].y} r={hoverIdx === i ? 5 : 3.5}
                       fill={isPast ? "#9ca3af" : isNow ? "#f59e0b" : "#00BAD6"}
                       stroke="white" strokeWidth="1.5" />
-                    {/* Cumulative dot */}
-                    <circle cx={px} cy={cumPts[i].y} r={hoverIdx === i ? 4.5 : 2.5}
-                      fill="#f59e0b" stroke="white" strokeWidth="1.5" />
                     {/* Month label */}
                     <text x={px} y={CHART_H - PAD_B + 14} textAnchor="middle"
                       fontSize="10" className={isNow ? "fill-amber-700 font-semibold" : "fill-gray-500"}>
                       {monthLabel(mk)}
                     </text>
-                    {/* Cumulative value (subtle, below month) */}
+                    {/* Monthly amount printed below — the number that matters per period */}
                     <text x={px} y={CHART_H - PAD_B + 28} textAnchor="middle"
-                      fontSize="9" className="fill-gray-400 tabular-nums">
-                      {fmt$(cumByMonth[mk])}
+                      fontSize="9" className={`tabular-nums ${totalByMonth[mk] > 0 ? "fill-gray-600 font-medium" : "fill-gray-300"}`}>
+                      {totalByMonth[mk] > 0 ? fmt$(totalByMonth[mk]) : "—"}
                     </text>
                   </g>
                 );

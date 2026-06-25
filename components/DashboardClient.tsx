@@ -347,8 +347,8 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
           📊 Tracked Project KPIs
         </h2>
         <div className={`grid gap-3 ${isForeman ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"}`}>
-          {!isForeman && <KpiCard label="Total Contract Value" value={fmt$(kpis.totalContractValue)} />}
-          {!isForeman && <KpiCard label="Total Invoiced"       value={fmt$(kpis.totalInvoiced)} sub={fmtPct(kpis.totalContractValue > 0 ? kpis.totalInvoiced / kpis.totalContractValue : 0) + " billed"} />}
+          {!isForeman && <KpiCard label="Total Contract Value" value={fmt$(kpis.totalContractValue)} sub="lifetime · all tracked jobs" />}
+          {!isForeman && <KpiCard label="Total Invoiced"       value={fmt$(kpis.totalInvoiced)} sub={`${fmtPct(kpis.totalContractValue > 0 ? kpis.totalInvoiced / kpis.totalContractValue : 0)} billed · ${fmt$(Math.max(0, kpis.totalContractValue - kpis.totalInvoiced))} to go`} />}
           <KpiCard label="Actual Materials" value={fmt$(kpis.totalActualMat)}      sub={fmtPct(kpis.totalEstMat > 0 ? kpis.totalActualMat / kpis.totalEstMat : 0) + " of budget"} />
           <KpiCard label="Actual Hours"     value={kpis.totalActualHours.toLocaleString()} sub={fmtPct(kpis.totalEstHours > 0 ? kpis.totalActualHours / kpis.totalEstHours : 0) + " of est."} />
           <KpiCard label="Tracked Projects" value={String(projects.length)} />
