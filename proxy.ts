@@ -46,3 +46,5 @@ export async function proxy(req: NextRequest) {
 export const config = {
   matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\..*).*)"],
 };
+
+// redeploy: ensure secret-auth webhook bypass is live
