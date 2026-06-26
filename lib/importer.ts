@@ -155,9 +155,11 @@ export function stageColumnGrid(grid: string[][]): { changes: StagedChange[]; ne
 
 // Persist a set of staged changes as a pending batch. Returns batch id.
 export function createBatch(filename: string, source: string, userId: number, changes: StagedChange[]): number {
+  // userId 0 = no logged-in user (webhook/secret path). uploaded_by has a FK to
+  // users(id), so store null rather than a non-existent id 0.
   const batchId = (db.prepare(
     "INSERT INTO import_batches (filename, source, uploaded_by, change_count) VALUES (?, ?, ?, ?)"
-  ).run(filename, source, userId, changes.length).lastInsertRowid) as number;
+  ).run(filename, source, userId || null, changes.length).lastInsertRowid) as number;
 
   const insChange = db.prepare(`
     INSERT INTO import_staged_changes (batch_id, project_id, project_name, field, old_value, new_value)
