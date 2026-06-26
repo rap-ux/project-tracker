@@ -68,7 +68,7 @@ interface StagedChange {
 interface Batch {
   id:           number;
   filename:     string;
-  source:       "bulk" | "project";
+  source:       "bulk" | "project" | "sheet";
   project_id:   number | null;
   project_name: string | null;
   uploaded_at:  string;
@@ -92,6 +92,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
   const [discarding,     setDiscarding]     = useState<number | null>(null);
   const [reverting,      setReverting]      = useState<number | null>(null);
   const [uploading,      setUploading]      = useState(false);
+  const [syncing,        setSyncing]        = useState(false);
   const [uploadMode,     setUploadMode]     = useState<"bulk" | "project">("bulk");
   const [inputMethod,    setInputMethod]    = useState<"file" | "paste">("file");
   const [pasteText,      setPasteText]      = useState("");
@@ -154,6 +155,24 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
       setTimeout(() => window.location.reload(), 1500);
     } else {
       setMsg({ text: `❌ ${data.error ?? "Upload failed"}`, ok: false });
+    }
+  }
+
+  async function handleSheetSync() {
+    setSyncing(true);
+    setMsg(null);
+    const res  = await fetch("/api/upload/sheet-sync", { method: "POST" });
+    const data = await res.json();
+    setSyncing(false);
+    if (data.ok) {
+      const newNote = data.newProjects?.length
+        ? ` Note: ${data.newProjects.length} new project(s) not tracked yet (${data.newProjects.join(", ")}) — add with "+ Add Project", then sync again.`
+        : "";
+      setMsg({ text: `✅ Pulled from Google Sheet: ${data.changeCount} change(s) across ${data.projectCount} project(s). Review below.${newNote}`, ok: true });
+      setTab("pending");
+      setTimeout(() => window.location.reload(), 1500);
+    } else {
+      setMsg({ text: `❌ ${data.error ?? "Sheet sync failed"}`, ok: false });
     }
   }
 
@@ -266,9 +285,26 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
         </div>
       )}
 
+      {/* ── One-click Google Sheet sync ── */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Sync from Google Sheet</h2>
+          <p className="text-xs text-gray-400 mt-1 max-w-md">
+            Pulls the live spreadsheet and stages every change for your review. No download needed. Unrecorded hours/materials preserved automatically.
+          </p>
+        </div>
+        <button
+          onClick={handleSheetSync}
+          disabled={syncing}
+          className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          style={{ backgroundColor: "#00BAD6" }}>
+          {syncing ? "Pulling from sheet…" : "🔄 Sync from Google Sheet"}
+        </button>
+      </div>
+
       {/* ── Upload section ── */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4">
-        <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Upload New Report</h2>
+        <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Or Upload a File</h2>
 
         {/* Mode toggle */}
         <div className="flex rounded-lg border border-gray-300 overflow-hidden text-sm w-fit">
@@ -430,7 +466,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
                   className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-gray-50 transition-colors"
                   onClick={() => handleExpand(batch.id)}>
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-xl shrink-0">{batch.source === "bulk" ? "📊" : "📋"}</span>
+                    <span className="text-xl shrink-0">{batch.source === "sheet" ? "🔄" : batch.source === "bulk" ? "📊" : "📋"}</span>
                     <div className="min-w-0">
                       <p className="font-semibold text-gray-900 truncate">{batch.filename}</p>
                       <p className="text-xs text-gray-500 mt-0.5">
@@ -570,7 +606,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
             return (
               <div key={batch.id} className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className="text-xl shrink-0">{batch.source === "bulk" ? "📊" : "📋"}</span>
+                  <span className="text-xl shrink-0">{batch.source === "sheet" ? "🔄" : batch.source === "bulk" ? "📊" : "📋"}</span>
                   <div className="min-w-0">
                     <p className="font-semibold text-gray-900 truncate">{batch.filename}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
