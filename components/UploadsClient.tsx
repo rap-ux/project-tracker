@@ -17,6 +17,8 @@ const FIELD_LABELS: Record<string, string> = {
   finish_hours_actual:  "Finish Hours Actual",
   stage_completion:     "Stage Completion",
   project_completion:   "Project Completion",
+  stage:                "Stage",
+  foreman:              "Foreman",
 };
 
 const DOLLAR_FIELDS  = new Set(["contract_value","total_invoiced","est_materials_budget","actual_materials"]);
@@ -144,9 +146,12 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
     const data = await res.json();
     setUploading(false);
     if (data.ok) {
-      setMsg({ text: `✅ ${data.changeCount} change(s) staged across ${data.projectCount} project(s). Review below.`, ok: true });
+      const newNote = data.newProjects?.length
+        ? ` Note: ${data.newProjects.length} new project(s) not tracked yet (${data.newProjects.join(", ")}) — add with "+ Add Project", then re-upload.`
+        : "";
+      setMsg({ text: `✅ ${data.changeCount} change(s) staged across ${data.projectCount} project(s). Review below.${newNote}`, ok: true });
       setTab("pending");
-      setTimeout(() => window.location.reload(), 800);
+      setTimeout(() => window.location.reload(), 1500);
     } else {
       setMsg({ text: `❌ ${data.error ?? "Upload failed"}`, ok: false });
     }
@@ -246,7 +251,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Profitability Uploads</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Upload a QBO report, review every change before it's applied, and revert any batch at any time.
+          Drop in the weekly spreadsheet export, review every change before it's applied, and revert any batch at any time.
         </p>
       </div>
 
@@ -297,8 +302,8 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
                 disabled={uploading}
               />
             </label>
-            <p className="text-xs text-gray-400">
-              Auto-detects projects from the report. Supports column-oriented (Project Profitability Summary) and row-oriented formats.
+            <p className="text-xs text-gray-400 max-w-md">
+              Best file: the SUMMARY_Project KPIs export. Syncs contract, invoiced, materials, hours, stage, foreman, and completion in one shot. Unrecorded hours/materials are preserved automatically, and you review every change before applying. New projects not in Switchboard yet are flagged to add first.
             </p>
           </div>
         ) : (

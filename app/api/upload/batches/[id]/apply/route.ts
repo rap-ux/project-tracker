@@ -42,11 +42,15 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     return Response.json({ error: "No valid changes found" }, { status: 400 });
   }
 
+  // Text fields are stored/applied as strings; everything else parses to number.
+  const TEXT_FIELDS = new Set(["stage", "foreman"]);
+
   // Group updates by project_id
-  const byProject = new Map<number, Array<{ field: string; newValue: number }>>();
+  const byProject = new Map<number, Array<{ field: string; newValue: number | string }>>();
   for (const c of changes) {
     if (!byProject.has(c.project_id)) byProject.set(c.project_id, []);
-    byProject.get(c.project_id)!.push({ field: c.field, newValue: parseFloat(c.new_value) });
+    const newValue = TEXT_FIELDS.has(c.field) ? String(c.new_value) : parseFloat(c.new_value);
+    byProject.get(c.project_id)!.push({ field: c.field, newValue });
   }
 
   // Apply updates

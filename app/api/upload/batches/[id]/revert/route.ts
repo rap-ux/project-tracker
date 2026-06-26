@@ -27,14 +27,22 @@ export async function POST(_req: NextRequest, ctx: Ctx) {
     "SELECT * FROM import_staged_changes WHERE batch_id = ?"
   ).all(batchId) as any[];
 
+  const TEXT_FIELDS = new Set(["stage", "foreman"]);
+
   // Group by project, only revert fields that have a non-null old_value
-  const byProject = new Map<number, Array<{ field: string; oldValue: number }>>();
+  const byProject = new Map<number, Array<{ field: string; oldValue: number | string }>>();
   for (const c of changes) {
     if (c.old_value === null || c.old_value === undefined) continue;
-    const oldNum = parseFloat(c.old_value);
-    if (isNaN(oldNum)) continue;
+    let oldValue: number | string;
+    if (TEXT_FIELDS.has(c.field)) {
+      oldValue = String(c.old_value);
+    } else {
+      const oldNum = parseFloat(c.old_value);
+      if (isNaN(oldNum)) continue;
+      oldValue = oldNum;
+    }
     if (!byProject.has(c.project_id)) byProject.set(c.project_id, []);
-    byProject.get(c.project_id)!.push({ field: c.field, oldValue: oldNum });
+    byProject.get(c.project_id)!.push({ field: c.field, oldValue });
   }
 
   if (byProject.size === 0) {

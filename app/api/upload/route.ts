@@ -45,6 +45,13 @@ const ROW_MAP: Record<string, string> = {
   "50100 job materials":                   "actual_materials",
 };
 
+// ── Text (non-numeric) row labels → DB field ──────────────────────────────────
+const TEXT_ROW_MAP: Record<string, string> = {
+  "stage":   "stage",
+  "foreman": "foreman",
+};
+const TEXT_FIELDS = new Set(["stage", "foreman"]);
+
 const PCT_FIELDS = new Set(["stage_completion", "project_completion"]);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -137,9 +144,10 @@ function computeDiff(
   projectName: string,
   current:     Record<string, any>,
   updates:     Record<string, number>,
+  textUpdates: Record<string, string> = {},
 ): StagedChange[] {
-  // Apply calculated fields
-  const stage = current.stage as string;
+  // New stage may arrive as a text update; it drives the completion math.
+  const stage = (textUpdates.stage ?? current.stage) as string;
   const newSC = updates.stage_completion ?? (current.stage_completion as number ?? 0);
 
   // Recalc project_completion whenever stage_completion or actual_total_hours changes
@@ -168,6 +176,13 @@ function computeDiff(
         old_value:    oldNum !== null ? String(oldNum) : null,
         new_value:    String(newVal),
       });
+    }
+  }
+  // Text fields (stage, foreman) — compare as trimmed strings
+  for (const [field, newVal] of Object.entries(textUpdates)) {
+    const oldRaw = current[field] != null ? String(current[field]).trim() : null;
+    if (oldRaw !== newVal.trim()) {
+      changes.push({ project_id: projectId, project_name: projectName, field, old_value: oldRaw, new_value: newVal.trim() });
     }
   }
   return changes;
@@ -223,6 +238,7 @@ export async function POST(req: NextRequest) {
 
   let allChanges: StagedChange[] = [];
   const errors: string[] = [];
+  const newProjects: string[] = [];  // names in the file with no matching project
 
   // ── Column-oriented format ────────────────────────────────────────────────
   if (firstRow[0]?.trim().toLowerCase() === "last update") {
@@ -233,14 +249,15 @@ export async function POST(req: NextRequest) {
     if (!projectRow) return Response.json({ error: "Could not find 'Project' row in CSV" }, { status: 400 });
 
     const projectNames = projectRow.slice(1);
-    const fieldData: Record<string, string[]> = {};
+    const fieldData:     Record<string, string[]> = {};
+    const textFieldData: Record<string, string[]> = {};
     for (const row of grid) {
-      const label   = normaliseRowLabel(row[0] ?? "");
-      const dbField = ROW_MAP[label];
-      if (dbField) fieldData[dbField] = row.slice(1);
+      const label = normaliseRowLabel(row[0] ?? "");
+      if (ROW_MAP[label])      fieldData[ROW_MAP[label]]          = row.slice(1);
+      if (TEXT_ROW_MAP[label]) textFieldData[TEXT_ROW_MAP[label]] = row.slice(1);
     }
 
-    if (Object.keys(fieldData).length === 0) {
+    if (Object.keys(fieldData).length === 0 && Object.keys(textFieldData).length === 0) {
       return Response.json({ error: "No recognised data rows found." }, { status: 400 });
     }
 
@@ -248,20 +265,37 @@ export async function POST(req: NextRequest) {
       const name = projectNames[ci]?.trim();
       if (!name) continue;
 
-      const proj = db.prepare(
-        "SELECT * FROM projects WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) LIMIT 1"
-      ).get(name) as Record<string, any> | undefined;
+      const proj = (
+        db.prepare("SELECT * FROM projects WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) LIMIT 1").get(name) ??
+        db.prepare("SELECT * FROM projects WHERE LOWER(TRIM(name)) LIKE LOWER(?) LIMIT 1").get(`${name.split(" ")[0]}%`)
+      ) as Record<string, any> | undefined;
 
-      if (!proj) { errors.push(`"${name}" not found — skipped`); continue; }
+      if (!proj) { newProjects.push(name); continue; }
 
       const updates: Record<string, number> = {};
       for (const [dbField, vals] of Object.entries(fieldData)) {
         const num = parseColVal(vals[ci] ?? "", dbField);
         if (num !== null) updates[dbField] = num;
       }
-      if (Object.keys(updates).length === 0) continue;
 
-      allChanges.push(...computeDiff(proj.id, proj.name, proj, updates));
+      // Unrecorded rule: the sheet's "Actual TOTAL" already folds in the app's
+      // unrecorded ledger, so store actual = sheetTotal − unrecorded (keeps the
+      // effective total matching the sheet without double-counting).
+      if ("actual_total_hours" in updates) {
+        updates.actual_total_hours = Math.max(0, updates.actual_total_hours - (proj.unrecorded_hours || 0));
+      }
+      if ("actual_materials" in updates) {
+        updates.actual_materials = Math.max(0, updates.actual_materials - (proj.unrecorded_materials || 0));
+      }
+
+      const textUpdates: Record<string, string> = {};
+      for (const [dbField, vals] of Object.entries(textFieldData)) {
+        const v = (vals[ci] ?? "").trim();
+        if (v) textUpdates[dbField] = v;
+      }
+
+      if (Object.keys(updates).length === 0 && Object.keys(textUpdates).length === 0) continue;
+      allChanges.push(...computeDiff(proj.id, proj.name, proj, updates, textUpdates));
     }
   } else {
     // ── Row-oriented format ────────────────────────────────────────────────
@@ -287,7 +321,7 @@ export async function POST(req: NextRequest) {
         db.prepare("SELECT * FROM projects WHERE LOWER(name) LIKE LOWER(?) LIMIT 1").get(`%${projectName.split(" ")[0]}%`)
       ) as Record<string, any> | undefined;
 
-      if (!proj) { errors.push(`Row ${i + 1}: "${projectName}" not found — skipped`); continue; }
+      if (!proj) { newProjects.push(projectName); continue; }
 
       const updates: Record<string, number> = {};
       headers.forEach((h, idx) => {
@@ -305,10 +339,11 @@ export async function POST(req: NextRequest) {
   if (allChanges.length === 0) {
     return Response.json({
       ok: false,
-      error: errors.length > 0
-        ? `No changes detected. ${errors.length} project(s) not found.`
+      error: newProjects.length > 0
+        ? `No changes to existing projects. ${newProjects.length} name(s) in the file aren't tracked yet — add them with "+ Add Project" first: ${newProjects.join(", ")}.`
         : "No changes detected — file values match what's already in the database.",
       errors,
+      newProjects,
     });
   }
 
@@ -335,5 +370,6 @@ export async function POST(req: NextRequest) {
     projectCount: uniqueProjects,
     changeCount:  allChanges.length,
     errors,
+    newProjects,
   });
 }
