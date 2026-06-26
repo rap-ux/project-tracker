@@ -2,8 +2,22 @@ import { NextResponse }  from "next/server";
 import type { NextRequest } from "next/server";
 import { auth }           from "@/auth";
 
+// Webhook endpoints that authenticate themselves with a shared secret (?secret=)
+// and must be reachable without a login session — schedulers and the sheet's
+// Apps Script have no cookies. Each route still enforces the secret internally.
+const SECRET_AUTH_ROUTES = [
+  "/api/upload/sheet-receive",
+  "/api/upload/sheet-sync",
+  "/api/admin/backup-email",
+];
+
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // Secret-authenticated webhooks bypass the session gate (they self-protect).
+  if (SECRET_AUTH_ROUTES.some(p => pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
 
   // Public routes (accessible without auth)
   if (pathname === "/login" || pathname === "/signed-out") {
