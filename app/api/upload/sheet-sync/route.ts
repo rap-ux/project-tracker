@@ -4,14 +4,24 @@ export const runtime = "nodejs";
 import { auth } from "@/auth";
 import { fetchSheetGrid, gsheetConfigured } from "@/lib/gsheet";
 import { stageColumnGrid, createBatch } from "@/lib/importer";
+import type { NextRequest } from "next/server";
 
-export async function POST() {
-  const session = await auth();
-  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+export async function POST(req: NextRequest) {
+  // Two ways in: an owner/admin session (the Sync button) OR a matching
+  // ?secret= (a nightly scheduler, so Nicole's sheet flows in hands-free).
+  const providedSecret = req.nextUrl.searchParams.get("secret");
+  const expectedSecret = process.env.BACKUP_SECRET;
+  const secretOk = !!expectedSecret && providedSecret === expectedSecret;
 
-  const role = (session.user as any).role;
-  if (role !== "owner" && role !== "admin") {
-    return Response.json({ error: "Forbidden" }, { status: 403 });
+  let userId = 0;
+  if (!secretOk) {
+    const session = await auth();
+    if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+    const role = (session.user as any).role;
+    if (role !== "owner" && role !== "admin") {
+      return Response.json({ error: "Forbidden" }, { status: 403 });
+    }
+    userId = (session.user as any).id ?? 0;
   }
 
   if (!gsheetConfigured()) {
@@ -44,7 +54,6 @@ export async function POST() {
     });
   }
 
-  const userId  = (session.user as any).id ?? 0;
   const stamp   = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   const batchId = createBatch(`Google Sheet sync — ${stamp}`, "sheet", userId, result.changes);
   const projectCount = new Set(result.changes.map(c => c.project_id)).size;
