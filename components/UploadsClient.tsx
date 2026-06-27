@@ -86,6 +86,10 @@ interface Props {
   projects:       { id: number; name: string }[];
 }
 
+// Manual file upload is archived now that data syncs from the Google Sheet.
+// Flip to true to bring the upload UI back (handlers/endpoints are intact).
+const FILE_UPLOAD_ENABLED = false;
+
 export default function UploadsClient({ batches, changesByBatch, projects }: Props) {
   const router = useRouter();
   const { confirm, dialog: confirmDialog } = useConfirm();
@@ -277,14 +281,15 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
         <div>
           <h2 className="text-sm font-bold text-text uppercase tracking-wide">Synced from the Google Sheet</h2>
           <p className="text-xs text-subtle mt-1 max-w-xl">
-            Changes arrive automatically from the spreadsheet (via the <strong>Switchboard → Sync now</strong> menu in the sheet, or the nightly auto-sync) and appear below for review. Unrecorded hours/materials are preserved. You can also upload a file manually below.
+            Changes arrive automatically from the spreadsheet (via the <strong>Switchboard → Sync now</strong> menu in the sheet, or the nightly auto-sync) and appear below for review and approval. Unrecorded hours and materials are preserved automatically.
           </p>
         </div>
       </div>
 
-      {/* ── Upload section ── */}
+      {/* ── Manual file upload (archived: the Google Sheet sync is the path now) ── */}
+      {FILE_UPLOAD_ENABLED && (
       <div className="bg-surface rounded-xl border border-border shadow-sm p-6 space-y-4">
-        <h2 className="text-sm font-bold text-text uppercase tracking-wide">Or Upload a File</h2>
+        <h2 className="text-sm font-bold text-text uppercase tracking-wide">Upload a File</h2>
 
         {/* Mode toggle */}
         <div className="flex rounded-lg border border-border-strong overflow-hidden text-sm w-fit">
@@ -397,6 +402,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
           </div>
         )}
       </div>
+      )}
 
       {/* ── Tabs ── */}
       <div className="flex gap-1 border-b border-border">
