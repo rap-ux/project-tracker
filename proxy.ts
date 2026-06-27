@@ -9,6 +9,7 @@ const SECRET_AUTH_ROUTES = [
   "/api/upload/sheet-receive",
   "/api/upload/sheet-sync",
   "/api/admin/backup-email",
+  "/api/slack/weekly-digest",
 ];
 
 export async function proxy(req: NextRequest) {
