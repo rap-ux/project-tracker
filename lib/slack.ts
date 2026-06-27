@@ -16,7 +16,11 @@ export async function notifySlack(text: string): Promise<void> {
     await fetch(url, {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ text }),
+      body:    JSON.stringify({
+        text,
+        username: "Switchboard",
+        icon_url: appUrl("/switchboard-icon.png"),
+      }),
     });
   } catch {
     // Notifications are best-effort; never let them break the request.
