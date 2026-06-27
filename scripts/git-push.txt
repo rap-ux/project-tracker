@@ -1,5 +1,0 @@
-warning: in the working copy of 'lib/db.ts', LF will be replaced by CRLF the next time Git touches it
-[main 32debfa] Auto-seed default users on first startup
- 1 file changed, 18 insertions(+), 2 deletions(-)
-To https://github.com/rap-ux/project-tracker.git
-   5eafecc..32debfa  main -> main
