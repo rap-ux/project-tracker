@@ -167,6 +167,15 @@ export default async function Home() {
     "SELECT COALESCE(SUM(change_count),0) AS changes, COUNT(*) AS batches FROM import_batches WHERE status = 'pending'"
   ).get() as { changes: number; batches: number };
 
+  // ── When financial data was last refreshed ─────────────────────────────────
+  const lastSyncRow = db.prepare(`
+    SELECT MAX(ts) AS ts FROM (
+      SELECT applied_at AS ts FROM import_batches WHERE status = 'applied'
+      UNION ALL
+      SELECT uploaded_at AS ts FROM uploads
+    )
+  `).get() as { ts: string | null };
+
   const data = {
     userName,
     totals: {
@@ -182,6 +191,7 @@ export default async function Home() {
       qboDays,
       pendingChanges: pendingSync.changes,
       pendingBatches: pendingSync.batches,
+      lastSync: lastSyncRow?.ts ?? null,
     },
     flaggedList: flagged.slice(0, 5).map(p => ({
       id:       p.id,

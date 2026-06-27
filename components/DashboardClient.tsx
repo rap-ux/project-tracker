@@ -78,9 +78,10 @@ interface Props {
   role:             string;
   userEmail?:       string;
   stagesByProject:  Record<number, any[]>;
+  lastSync?:        string | null;
 }
 
-export default function DashboardClient({ projects, pipeline, kpis, flagged, uploads, role, userEmail, stagesByProject }: Props) {
+export default function DashboardClient({ projects, pipeline, kpis, flagged, uploads, role, userEmail, stagesByProject, lastSync }: Props) {
   const [view,          setView]          = useState<"active" | "pipeline">("active");
   const [search,        setSearch]        = useState("");
   const [filterForeman, setFilterForeman] = useState("all");
@@ -343,9 +344,16 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
       {/* Wrapped + labeled so it's clear these totals reflect tracked projects only */}
       {/* and don't change with the Tracked / Minor toggle below. */}
       <section>
-        <h2 className="text-xs font-semibold text-subtle uppercase tracking-wider mb-3">
-          Tracked portfolio
-        </h2>
+        <div className="flex items-baseline justify-between mb-3 gap-3 flex-wrap">
+          <h2 className="text-xs font-semibold text-subtle uppercase tracking-wider">
+            Tracked portfolio
+          </h2>
+          <span className="text-xs text-subtle" title={lastSync ? new Date(lastSync.replace(" ", "T") + "Z").toLocaleString() : undefined}>
+            {lastSync
+              ? `Data as of ${relativeTime(lastSync).label.toLowerCase()}`
+              : "No sync yet"}
+          </span>
+        </div>
         <div className={`grid gap-3 ${isForeman ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"}`}>
           {!isForeman && <KpiCard label="Total Contract Value" value={fmt$(kpis.totalContractValue)} sub="lifetime · all tracked jobs" />}
           {!isForeman && <KpiCard label="Total Invoiced"       value={fmt$(kpis.totalInvoiced)} sub={`${fmtPct(kpis.totalContractValue > 0 ? kpis.totalInvoiced / kpis.totalContractValue : 0)} billed · ${fmt$(Math.max(0, kpis.totalContractValue - kpis.totalInvoiced))} to go`} />}

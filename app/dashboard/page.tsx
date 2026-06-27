@@ -82,8 +82,18 @@ export default async function DashboardPage() {
 
   const kpis = { totalContractValue, totalInvoiced, totalActualMat, totalEstMat, totalActualHours, totalEstHours };
 
+  // When the financial data was last refreshed (latest applied sync, else latest upload).
+  const lastSyncRow = db.prepare(`
+    SELECT MAX(ts) AS ts FROM (
+      SELECT applied_at AS ts FROM import_batches WHERE status = 'applied'
+      UNION ALL
+      SELECT uploaded_at AS ts FROM uploads
+    )
+  `).get() as { ts: string | null };
+  const lastSync = lastSyncRow?.ts ?? null;
+
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-bg theme-fade">
       <Navbar userName={session.user?.name ?? "Admin"} role={role} userEmail={session.user?.email ?? undefined} userTitle={(session.user as any)?.title ?? undefined} />
       <DashboardClient
         projects={projectsWithIncentive}
@@ -94,6 +104,7 @@ export default async function DashboardPage() {
         role={role}
         userEmail={session.user?.email ?? undefined}
         stagesByProject={stagesByProject}
+        lastSync={lastSync}
       />
     </div>
   );

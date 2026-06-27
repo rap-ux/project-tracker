@@ -58,7 +58,7 @@ interface HomeData {
     flagged: number; watch: number; onTrack: number; activeProjects: number;
     totalContractValue: number; totalInvoiced: number; upcomingCash: number;
     avgMatBurn: number; avgHoursVsGoal: number; qboDays: number | null;
-    pendingChanges: number; pendingBatches: number;
+    pendingChanges: number; pendingBatches: number; lastSync: string | null;
   };
   flaggedList: Array<{ id: number; name: string; foreman: string; status: { key: string; label: string; emoji: string; color: string }; highlight: string; }>;
   upcomingMilestones: Array<{ name: string; milestone: string; receiveDate: string; amount: number }>;
@@ -145,7 +145,13 @@ export default function HomeClient({ data }: { data: HomeData }) {
 
       {/* ── Portfolio snapshot ── */}
       <section>
-        <SectionLabel>Tracked portfolio</SectionLabel>
+        <div className="flex items-baseline justify-between gap-3 flex-wrap mb-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-subtle">Tracked portfolio</h2>
+          <span className="text-xs text-subtle"
+            title={t.lastSync ? new Date(t.lastSync.replace(" ", "T") + "Z").toLocaleString() : undefined}>
+            {t.lastSync ? `Data as of ${relTime(t.lastSync)}` : "No sync yet"}
+          </span>
+        </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <Stat label="Upcoming cash" value={fmt$(t.upcomingCash)} sub="next 30 days" href="/forecast" accent />
           <Stat label="Contract value" value={fmt$k(t.totalContractValue)} sub={`${t.activeProjects} projects`} href="/dashboard" />
