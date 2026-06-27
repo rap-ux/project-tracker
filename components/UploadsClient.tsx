@@ -92,7 +92,6 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
   const [discarding,     setDiscarding]     = useState<number | null>(null);
   const [reverting,      setReverting]      = useState<number | null>(null);
   const [uploading,      setUploading]      = useState(false);
-  const [syncing,        setSyncing]        = useState(false);
   const [uploadMode,     setUploadMode]     = useState<"bulk" | "project">("bulk");
   const [inputMethod,    setInputMethod]    = useState<"file" | "paste">("file");
   const [pasteText,      setPasteText]      = useState("");
@@ -155,24 +154,6 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
       setTimeout(() => window.location.reload(), 1500);
     } else {
       setMsg({ text: `❌ ${data.error ?? "Upload failed"}`, ok: false });
-    }
-  }
-
-  async function handleSheetSync() {
-    setSyncing(true);
-    setMsg(null);
-    const res  = await fetch("/api/upload/sheet-sync", { method: "POST" });
-    const data = await res.json();
-    setSyncing(false);
-    if (data.ok) {
-      const newNote = data.newProjects?.length
-        ? ` Note: ${data.newProjects.length} new project(s) not tracked yet (${data.newProjects.join(", ")}) — add with "+ Add Project", then sync again.`
-        : "";
-      setMsg({ text: `✅ Pulled from Google Sheet: ${data.changeCount} change(s) across ${data.projectCount} project(s). Review below.${newNote}`, ok: true });
-      setTab("pending");
-      setTimeout(() => window.location.reload(), 1500);
-    } else {
-      setMsg({ text: `❌ ${data.error ?? "Sheet sync failed"}`, ok: false });
     }
   }
 
@@ -285,21 +266,15 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
         </div>
       )}
 
-      {/* ── One-click Google Sheet sync ── */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* ── How the sheet sync works (push from the sheet's Switchboard menu) ── */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex items-start gap-3">
+        <span className="text-xl shrink-0">🔄</span>
         <div>
-          <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Sync from Google Sheet</h2>
-          <p className="text-xs text-gray-400 mt-1 max-w-md">
-            Pulls the live spreadsheet and stages every change for your review. No download needed. Unrecorded hours/materials preserved automatically.
+          <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Synced from the Google Sheet</h2>
+          <p className="text-xs text-gray-400 mt-1 max-w-xl">
+            Changes arrive automatically from the spreadsheet (via the <strong>Switchboard → Sync now</strong> menu in the sheet, or the nightly auto-sync) and appear below for review. Unrecorded hours/materials are preserved. You can also upload a file manually below.
           </p>
         </div>
-        <button
-          onClick={handleSheetSync}
-          disabled={syncing}
-          className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-          style={{ backgroundColor: "#00BAD6" }}>
-          {syncing ? "Pulling from sheet…" : "🔄 Sync from Google Sheet"}
-        </button>
       </div>
 
       {/* ── Upload section ── */}

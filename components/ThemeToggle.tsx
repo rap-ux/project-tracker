@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from "react";
 
+// Flip to true once every page is migrated to the design tokens. Until then the
+// toggle is hidden so the demo can't land on a half-dark page.
+const THEME_TOGGLE_ENABLED = false;
+
 type Mode = "light" | "dark" | "auto";
 
 function apply(mode: Mode) {
@@ -15,14 +19,21 @@ export default function ThemeToggle({ compact = false }: { compact?: boolean }) 
   const [mode, setMode] = useState<Mode>("auto");
 
   useEffect(() => {
+    if (!THEME_TOGGLE_ENABLED) {
+      // Demo-safe: force light everywhere until all pages are migrated.
+      localStorage.setItem("theme", "light");
+      document.documentElement.classList.remove("dark");
+      return;
+    }
     const saved = (localStorage.getItem("theme") as Mode) || "auto";
     setMode(saved);
-    // Keep auto in sync if the OS theme flips while the app is open.
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const onChange = () => { if ((localStorage.getItem("theme") || "auto") === "auto") apply("auto"); };
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, []);
+
+  if (!THEME_TOGGLE_ENABLED) return null;
 
   function cycle() {
     const next: Mode = mode === "light" ? "dark" : mode === "dark" ? "auto" : "light";
