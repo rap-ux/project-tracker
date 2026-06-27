@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-// Flip to true once every page is migrated to the design tokens. Until then the
-// toggle is hidden so the demo can't land on a half-dark page.
-const THEME_TOGGLE_ENABLED = false;
+// All pages are migrated to the design tokens, so light/dark/auto is live.
+const THEME_TOGGLE_ENABLED = true;
 
 type Mode = "light" | "dark" | "auto";
 
@@ -55,7 +54,7 @@ export default function ThemeToggle({ compact = false }: { compact?: boolean }) 
       title={`Theme: ${label} (click to change)`}
       aria-label={`Theme: ${label}`}
       className={compact
-        ? "flex items-center justify-center w-8 h-8 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+        ? "flex items-center justify-center w-8 h-8 rounded-lg text-white/70 hover:text-white hover:bg-surface/10 transition-colors"
         : "inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm text-muted hover:text-text hover:bg-surface-2 transition-colors"}>
       {icon}
       {!compact && <span>{label}</span>}

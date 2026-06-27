@@ -249,8 +249,8 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
 
       {/* ── Page header ── */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Profitability Uploads</h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <h1 className="text-2xl font-bold text-text">Profitability Uploads</h1>
+        <p className="text-sm text-muted mt-1">
           Drop in the weekly spreadsheet export, review every change before it's applied, and revert any batch at any time.
         </p>
       </div>
@@ -259,30 +259,30 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
       {msg && (
         <div className={`px-4 py-3 rounded-lg text-sm font-medium border ${
           msg.ok
-            ? "bg-green-50 border-green-200 text-green-800"
-            : "bg-red-50   border-red-200   text-red-800"
+            ? "bg-success-bg border-green-200 text-success"
+            : "bg-danger-bg   border-red-200   text-danger"
         }`}>
           {msg.text}
         </div>
       )}
 
       {/* ── How the sheet sync works (push from the sheet's Switchboard menu) ── */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex items-start gap-3">
+      <div className="bg-surface rounded-xl border border-border shadow-sm p-6 flex items-start gap-3">
         <span className="text-xl shrink-0">🔄</span>
         <div>
-          <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Synced from the Google Sheet</h2>
-          <p className="text-xs text-gray-400 mt-1 max-w-xl">
+          <h2 className="text-sm font-bold text-text uppercase tracking-wide">Synced from the Google Sheet</h2>
+          <p className="text-xs text-subtle mt-1 max-w-xl">
             Changes arrive automatically from the spreadsheet (via the <strong>Switchboard → Sync now</strong> menu in the sheet, or the nightly auto-sync) and appear below for review. Unrecorded hours/materials are preserved. You can also upload a file manually below.
           </p>
         </div>
       </div>
 
       {/* ── Upload section ── */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4">
-        <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Or Upload a File</h2>
+      <div className="bg-surface rounded-xl border border-border shadow-sm p-6 space-y-4">
+        <h2 className="text-sm font-bold text-text uppercase tracking-wide">Or Upload a File</h2>
 
         {/* Mode toggle */}
-        <div className="flex rounded-lg border border-gray-300 overflow-hidden text-sm w-fit">
+        <div className="flex rounded-lg border border-border-strong overflow-hidden text-sm w-fit">
           {(["bulk", "project"] as const).map(m => (
             <button
               key={m}
@@ -290,7 +290,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
               className={`px-4 py-1.5 transition-colors font-medium ${
                 uploadMode === m
                   ? "text-white"
-                  : "bg-white text-gray-600 hover:bg-gray-50"
+                  : "bg-surface text-muted hover:bg-surface-2"
               }`}
               style={uploadMode === m ? { backgroundColor: "#00BAD6" } : {}}>
               {m === "bulk" ? "📊 Bulk (all projects)" : "📋 Single project"}
@@ -301,7 +301,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
         {uploadMode === "bulk" ? (
           <div className="flex items-center gap-4">
             <label className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white cursor-pointer transition-colors ${
-              uploading ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
+              uploading ? "bg-subtle cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
             }`}>
               {uploading ? "Uploading…" : "📤 Choose File (.xlsx or .csv)"}
               <input
@@ -313,7 +313,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
                 disabled={uploading}
               />
             </label>
-            <p className="text-xs text-gray-400 max-w-md">
+            <p className="text-xs text-subtle max-w-md">
               Best file: the SUMMARY_Project KPIs export. Syncs contract, invoiced, materials, hours, stage, foreman, and completion in one shot. Unrecorded hours/materials are preserved automatically, and you review every change before applying. New projects not in Switchboard yet are flagged to add first.
             </p>
           </div>
@@ -321,11 +321,11 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
           <div className="space-y-3">
             {/* Project selector */}
             <div className="flex flex-col gap-1.5 w-fit">
-              <label className="text-xs font-medium text-gray-600">Select project</label>
+              <label className="text-xs font-medium text-muted">Select project</label>
               <select
                 value={selectedProject}
                 onChange={e => setSelectedProject(Number(e.target.value))}
-                className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none"
+                className="px-3 py-1.5 text-sm border border-border-strong rounded-lg focus:outline-none"
               >
                 {projects.map(p => (
                   <option key={p.id} value={p.id}>{p.name}</option>
@@ -334,7 +334,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
             </div>
 
             {/* File vs Paste toggle */}
-            <div className="flex rounded-lg border border-gray-200 overflow-hidden text-xs w-fit">
+            <div className="flex rounded-lg border border-border overflow-hidden text-xs w-fit">
               {(["file", "paste"] as const).map(m => (
                 <button
                   key={m}
@@ -342,7 +342,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
                   className={`px-3 py-1.5 font-medium transition-colors ${
                     inputMethod === m
                       ? "bg-gray-700 text-white"
-                      : "bg-white text-gray-500 hover:bg-gray-50"
+                      : "bg-surface text-muted hover:bg-surface-2"
                   }`}>
                   {m === "file" ? "📁 Upload file" : "📋 Paste from QBO"}
                 </button>
@@ -352,7 +352,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
             {inputMethod === "file" ? (
               <div className="flex items-center gap-3">
                 <label className={`inline-flex items-center gap-2 px-5 py-1.5 rounded-lg text-sm font-semibold text-white cursor-pointer transition-colors ${
-                  uploading ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
+                  uploading ? "bg-subtle cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
                 }`}>
                   {uploading ? "Uploading…" : "📤 Choose File (.xlsx or .csv)"}
                   <input
@@ -364,12 +364,12 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
                     disabled={uploading || !selectedProject}
                   />
                 </label>
-                <p className="text-xs text-gray-400">Accepts .xlsx or .csv exports.</p>
+                <p className="text-xs text-subtle">Accepts .xlsx or .csv exports.</p>
               </div>
             ) : (
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-4">
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted">
                     In QBO, open the Project Profitability report → select all (Ctrl+A) → copy (Ctrl+C) → paste below.
                   </p>
                   <button
@@ -385,7 +385,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
                   onChange={e => setPasteText(e.target.value)}
                   placeholder="Paste QBO report here…"
                   rows={6}
-                  className="w-full text-xs font-mono border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#00BAD6] resize-y"
+                  className="w-full text-xs font-mono border border-border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#00BAD6] resize-y"
                 />
               </div>
             )}
@@ -394,7 +394,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
       </div>
 
       {/* ── Tabs ── */}
-      <div className="flex gap-1 border-b border-gray-200">
+      <div className="flex gap-1 border-b border-border">
         {(["pending", "history"] as const).map(t => (
           <button
             key={t}
@@ -402,7 +402,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors capitalize ${
               tab === t
                 ? "border-[#00BAD6] text-[#00BAD6]"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                : "border-transparent text-muted hover:text-text"
             }`}>
             {t === "pending"
               ? `Pending Review${pendingBatches.length > 0 ? ` (${pendingBatches.length})` : ""}`
@@ -415,7 +415,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
       {tab === "pending" && (
         <div className="space-y-4">
           {pendingBatches.length === 0 ? (
-            <div className="text-center py-16 text-gray-400">
+            <div className="text-center py-16 text-subtle">
               <p className="text-4xl mb-3">📭</p>
               <p className="font-medium">No pending uploads</p>
               <p className="text-sm mt-1">Upload a file above to stage changes for review.</p>
@@ -434,17 +434,17 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
             }
 
             return (
-              <div key={batch.id} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <div key={batch.id} className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
 
                 {/* Batch header */}
                 <div
-                  className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-surface-2 transition-colors"
                   onClick={() => handleExpand(batch.id)}>
                   <div className="flex items-center gap-3 min-w-0">
                     <span className="text-xl shrink-0">{batch.source === "sheet" ? "🔄" : batch.source === "bulk" ? "📊" : "📋"}</span>
                     <div className="min-w-0">
-                      <p className="font-semibold text-gray-900 truncate">{batch.filename}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">
+                      <p className="font-semibold text-text truncate">{batch.filename}</p>
+                      <p className="text-xs text-muted mt-0.5">
                         {batch.source === "bulk"
                           ? `Bulk upload · ${[...new Set(batchChanges.map(c => c.project_name))].length} project(s)`
                           : `Single project · ${batch.project_name ?? "unknown"}`}
@@ -454,19 +454,19 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-xs bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full font-semibold">
+                    <span className="text-xs bg-warning-bg text-warning px-2.5 py-1 rounded-full font-semibold">
                       {batch.change_count} change{batch.change_count !== 1 ? "s" : ""}
                     </span>
-                    <span className="text-gray-400 text-sm">{isExpanded ? "▲" : "▼"}</span>
+                    <span className="text-subtle text-sm">{isExpanded ? "▲" : "▼"}</span>
                   </div>
                 </div>
 
                 {/* Expanded diff table */}
                 {isExpanded && (
-                  <div className="border-t border-gray-100">
+                  <div className="border-t border-border">
                     {/* Select-all row */}
-                    <div className="flex items-center justify-between px-5 py-2.5 bg-gray-50 border-b border-gray-100">
-                      <label className="flex items-center gap-2 text-xs font-medium text-gray-600 cursor-pointer select-none">
+                    <div className="flex items-center justify-between px-5 py-2.5 bg-surface-2 border-b border-border">
+                      <label className="flex items-center gap-2 text-xs font-medium text-muted cursor-pointer select-none">
                         <input
                           type="checkbox"
                           checked={allChecked}
@@ -475,11 +475,11 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
                         />
                         {allChecked ? "Deselect all" : "Select all"} ({checkedCount}/{batchChanges.length})
                       </label>
-                      <p className="text-xs text-gray-400">Review each change and uncheck any you don't want to apply.</p>
+                      <p className="text-xs text-subtle">Review each change and uncheck any you don't want to apply.</p>
                     </div>
 
                     {/* Changes grouped by project */}
-                    <div className="divide-y divide-gray-50">
+                    <div className="divide-y divide-border">
                       {[...byProject.entries()].map(([projectName, projectChanges]) => (
                         <div key={projectName}>
                           <div className="px-5 py-2 bg-slate-50">
@@ -494,8 +494,8 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
                                 return (
                                   <tr
                                     key={c.id}
-                                    className={`border-b border-gray-50 transition-colors cursor-pointer ${
-                                      isChecked ? "bg-white hover:bg-blue-50/30" : "bg-gray-50/50 hover:bg-gray-100/50 opacity-60"
+                                    className={`border-b border-border transition-colors cursor-pointer ${
+                                      isChecked ? "bg-surface hover:bg-info-bg/30" : "bg-surface-2/50 hover:bg-surface-2/50 opacity-60"
                                     }`}
                                     onClick={() => toggleChange(c.id)}>
                                     <td className="px-5 py-2.5 w-8">
@@ -507,17 +507,17 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
                                         className="rounded"
                                       />
                                     </td>
-                                    <td className="px-3 py-2.5 text-gray-600 text-xs font-medium w-48">
+                                    <td className="px-3 py-2.5 text-muted text-xs font-medium w-48">
                                       {FIELD_LABELS[c.field] ?? c.field}
                                     </td>
-                                    <td className="px-3 py-2.5 text-right font-mono text-xs text-gray-400 w-32">
+                                    <td className="px-3 py-2.5 text-right font-mono text-xs text-subtle w-32">
                                       {fmtVal(c.old_value, c.field)}
                                     </td>
-                                    <td className="px-3 py-2.5 text-gray-400 text-center w-8">→</td>
+                                    <td className="px-3 py-2.5 text-subtle text-center w-8">→</td>
                                     <td className="px-3 py-2.5 font-mono text-xs font-semibold w-32">
                                       <span className={
-                                        hasIncrease ? "text-green-700" :
-                                        hasDecrease ? "text-red-600"   : "text-gray-800"
+                                        hasIncrease ? "text-success" :
+                                        hasDecrease ? "text-danger"   : "text-text"
                                       }>
                                         {fmtVal(c.new_value, c.field)}
                                         {hasIncrease && " ▲"}
@@ -534,11 +534,11 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
                     </div>
 
                     {/* Action buttons */}
-                    <div className="flex items-center justify-between px-5 py-4 bg-gray-50 border-t border-gray-100">
+                    <div className="flex items-center justify-between px-5 py-4 bg-surface-2 border-t border-border">
                       <button
                         onClick={() => handleDiscard(batch.id)}
                         disabled={discarding === batch.id}
-                        className="text-sm px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50">
+                        className="text-sm px-4 py-2 rounded-lg border border-border-strong text-muted hover:bg-surface-2 transition-colors disabled:opacity-50">
                         {discarding === batch.id ? "Discarding…" : "🗑 Discard batch"}
                       </button>
                       <button
@@ -547,7 +547,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
                         className={`text-sm px-5 py-2 rounded-lg font-semibold text-white transition-colors ${
                           checkedCount > 0 && applying !== batch.id
                             ? "bg-[#00BAD6] hover:bg-[#00a5bf] cursor-pointer"
-                            : "bg-gray-400 cursor-not-allowed opacity-60"
+                            : "bg-subtle cursor-not-allowed opacity-60"
                         }`}>
                         {applying === batch.id
                           ? "Applying…"
@@ -566,25 +566,25 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
       {tab === "history" && (
         <div className="space-y-3">
           {historyBatches.length === 0 ? (
-            <div className="text-center py-16 text-gray-400">
+            <div className="text-center py-16 text-subtle">
               <p className="text-4xl mb-3">📜</p>
               <p className="font-medium">No upload history yet</p>
             </div>
           ) : historyBatches.map(batch => {
             const statusMap: Record<string, { label: string; badge: string; icon: string }> = {
-              applied:   { label: "Applied",   badge: "bg-green-100 text-green-800",  icon: "✅" },
-              reverted:  { label: "Reverted",  badge: "bg-gray-100  text-gray-600",   icon: "↩️" },
-              discarded: { label: "Discarded", badge: "bg-red-100   text-red-700",    icon: "🗑" },
+              applied:   { label: "Applied",   badge: "bg-success-bg text-success",  icon: "✅" },
+              reverted:  { label: "Reverted",  badge: "bg-surface-2  text-muted",   icon: "↩️" },
+              discarded: { label: "Discarded", badge: "bg-danger-bg   text-danger",    icon: "🗑" },
             };
-            const statusConfig = statusMap[batch.status] ?? { label: batch.status, badge: "bg-gray-100 text-gray-600", icon: "•" };
+            const statusConfig = statusMap[batch.status] ?? { label: batch.status, badge: "bg-surface-2 text-muted", icon: "•" };
 
             return (
-              <div key={batch.id} className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 flex items-center justify-between gap-4">
+              <div key={batch.id} className="bg-surface rounded-xl border border-border shadow-sm px-5 py-4 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="text-xl shrink-0">{batch.source === "sheet" ? "🔄" : batch.source === "bulk" ? "📊" : "📋"}</span>
                   <div className="min-w-0">
-                    <p className="font-semibold text-gray-900 truncate">{batch.filename}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="font-semibold text-text truncate">{batch.filename}</p>
+                    <p className="text-xs text-muted mt-0.5">
                       {batch.source === "project" ? `${batch.project_name ?? "—"} · ` : ""}
                       {batch.change_count} change{batch.change_count !== 1 ? "s" : ""}
                       {" · "}
@@ -603,7 +603,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
                     <button
                       onClick={() => handleRevert(batch.id)}
                       disabled={reverting === batch.id}
-                      className="text-xs px-3 py-1.5 rounded-lg border border-orange-300 text-orange-700 hover:bg-orange-50 transition-colors font-medium disabled:opacity-50">
+                      className="text-xs px-3 py-1.5 rounded-lg border border-orange-300 text-warning hover:bg-warning-bg transition-colors font-medium disabled:opacity-50">
                       {reverting === batch.id ? "Reverting…" : "↩ Revert"}
                     </button>
                   )}

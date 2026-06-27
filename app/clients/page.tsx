@@ -23,7 +23,7 @@ export default async function ClientsPage() {
   `).all() as any[];
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-surface-2">
       <Navbar userName={session.user?.name ?? "Admin"} role={role} userEmail={session.user?.email ?? undefined} userTitle={(session.user as any)?.title ?? undefined} />
 
       <main className="flex-1 max-w-screen-2xl mx-auto w-full px-4 py-6 space-y-5">
@@ -31,8 +31,8 @@ export default async function ClientsPage() {
         {/* Header */}
         <div className="flex items-center justify-between print:hidden">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Client &amp; Project Directory</h1>
-            <p className="text-sm text-gray-500 mt-1">{projects.length} projects · builder, GC, and contact details</p>
+            <h1 className="text-2xl font-bold text-text">Client &amp; Project Directory</h1>
+            <p className="text-sm text-muted mt-1">{projects.length} projects · builder, GC, and contact details</p>
           </div>
           <PrintButton />
         </div>
@@ -40,7 +40,7 @@ export default async function ClientsPage() {
         {/* Print header */}
         <div className="hidden print:block mb-4">
           <h1 className="text-xl font-bold">Totally Wired Electric — Client Directory</h1>
-          <p className="text-xs text-gray-500">Generated {new Date().toLocaleDateString()}</p>
+          <p className="text-xs text-muted">Generated {new Date().toLocaleDateString()}</p>
         </div>
 
         <ClientsClient projects={projects} role={role} />

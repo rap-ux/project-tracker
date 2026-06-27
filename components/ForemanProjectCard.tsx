@@ -8,22 +8,22 @@ const fmtPct = (n: number) => ((n ?? 0) * 100).toFixed(1) + "%";
 const STAGE_OPTIONS = ["Contracting Phase", "Underground", "Rough", "Finish", "Extras"];
 
 const STATUS_STYLES: Record<string, string> = {
-  critical:  "bg-red-100 text-red-800 border-red-200",
-  "at-risk": "bg-orange-100 text-orange-800 border-orange-200",
-  watch:     "bg-yellow-100 text-yellow-800 border-yellow-200",
-  "on-track":"bg-blue-100 text-blue-800 border-blue-200",
-  ahead:     "bg-green-100 text-green-800 border-green-200",
-  gray:      "bg-gray-100 text-gray-600 border-gray-200",
+  critical:  "bg-danger-bg text-danger border-red-200",
+  "at-risk": "bg-warning-bg text-warning border-orange-200",
+  watch:     "bg-warning-bg text-warning border-yellow-200",
+  "on-track":"bg-info-bg text-info border-blue-200",
+  ahead:     "bg-success-bg text-success border-green-200",
+  gray:      "bg-surface-2 text-muted border-border",
 };
 
 function Bar({ value, max, color = "blue" }: { value: number; max: number; color?: string }) {
   const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
   const cls: Record<string, string> = {
     blue: "bg-blue-500", green: "bg-green-500", red: "bg-red-500",
-    yellow: "bg-yellow-400", orange: "bg-orange-400", gray: "bg-gray-300",
+    yellow: "bg-yellow-400", orange: "bg-orange-400", gray: "bg-surface-3",
   };
   return (
-    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+    <div className="w-full bg-surface-2 rounded-full h-2 overflow-hidden">
       <div className={`h-2 rounded-full transition-all ${cls[color] ?? "bg-blue-500"}`} style={{ width: `${pct}%` }} />
     </div>
   );
@@ -89,16 +89,16 @@ export default function ForemanProjectCard({ project: initial }: { project: Proj
 
   return (
     <>
-      <div className={`bg-white rounded-xl border shadow-sm p-5 space-y-4 ${
+      <div className={`bg-surface rounded-xl border shadow-sm p-5 space-y-4 ${
         inc.projectStatus.key === "critical" ? "border-red-300" :
         inc.projectStatus.key === "at-risk"  ? "border-orange-300" :
-        inc.projectStatus.key === "watch"    ? "border-yellow-300" : "border-gray-200"
+        inc.projectStatus.key === "watch"    ? "border-yellow-300" : "border-border"
       }`}>
         {/* Header */}
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <h3 className="font-bold text-gray-900 truncate">{p.name}</h3>
-            <p className="text-xs text-gray-400 mt-0.5">{p.stage} · {fmtPct(p.project_completion)} complete</p>
+            <h3 className="font-bold text-text truncate">{p.name}</h3>
+            <p className="text-xs text-subtle mt-0.5">{p.stage} · {fmtPct(p.project_completion)} complete</p>
           </div>
           <div className="flex items-center gap-2">
             <span className={`shrink-0 text-xs px-2.5 py-1 rounded-full border font-semibold whitespace-nowrap ${statusSty}`}>
@@ -115,10 +115,10 @@ export default function ForemanProjectCard({ project: initial }: { project: Proj
 
         {/* Highlight */}
         <div className={`text-xs rounded-lg px-3 py-2 leading-relaxed ${
-          inc.projectStatus.key === "critical" ? "bg-red-50 text-red-800" :
-          inc.projectStatus.key === "at-risk"  ? "bg-orange-50 text-orange-800" :
-          inc.projectStatus.key === "watch"    ? "bg-yellow-50 text-yellow-800" :
-          "bg-green-50 text-green-800"
+          inc.projectStatus.key === "critical" ? "bg-danger-bg text-danger" :
+          inc.projectStatus.key === "at-risk"  ? "bg-warning-bg text-warning" :
+          inc.projectStatus.key === "watch"    ? "bg-warning-bg text-warning" :
+          "bg-success-bg text-success"
         }`}>
           {inc.highlight}
         </div>
@@ -126,8 +126,8 @@ export default function ForemanProjectCard({ project: initial }: { project: Proj
         {/* Hours progress */}
         <div className="space-y-1.5">
           <div className="flex justify-between text-xs">
-            <span className="text-gray-500 font-medium">Hours vs Goal</span>
-            <span className={`font-semibold ${inc.varianceHours < 0 ? "text-red-600" : "text-green-700"}`}>
+            <span className="text-muted font-medium">Hours vs Goal</span>
+            <span className={`font-semibold ${inc.varianceHours < 0 ? "text-danger" : "text-success"}`}>
               {p.actual_total_hours.toLocaleString()} / {p.goal_hours.toLocaleString()} hrs
             </span>
           </div>
@@ -144,8 +144,8 @@ export default function ForemanProjectCard({ project: initial }: { project: Proj
         {/* Materials progress */}
         <div className="space-y-1.5">
           <div className="flex justify-between text-xs">
-            <span className="text-gray-500 font-medium">Materials Used</span>
-            <span className={`font-semibold ${overMat ? "text-red-600" : "text-gray-700"}`}>
+            <span className="text-muted font-medium">Materials Used</span>
+            <span className={`font-semibold ${overMat ? "text-danger" : "text-text"}`}>
               {fmt$(p.actual_materials)} / {fmt$(p.est_materials_budget)} ({fmtPct(matPct)})
             </span>
           </div>
@@ -156,35 +156,35 @@ export default function ForemanProjectCard({ project: initial }: { project: Proj
         {/* Project completion */}
         <div className="space-y-1.5">
           <div className="flex justify-between text-xs">
-            <span className="text-gray-500 font-medium">Project Progress</span>
-            <span className="font-semibold text-gray-700">{fmtPct(p.project_completion)}</span>
+            <span className="text-muted font-medium">Project Progress</span>
+            <span className="font-semibold text-text">{fmtPct(p.project_completion)}</span>
           </div>
           <Bar value={p.project_completion} max={1} color="blue" />
         </div>
 
         {/* Per-stage bonus breakdown */}
-        <div className="bg-gray-50 rounded-lg p-3 space-y-2.5 text-xs">
-          <p className="font-semibold text-gray-700">Stage Bonuses</p>
+        <div className="bg-surface-2 rounded-lg p-3 space-y-2.5 text-xs">
+          <p className="font-semibold text-text">Stage Bonuses</p>
           {([
             { label: "Rough",  sb: inc.rough  },
             { label: "Finish", sb: inc.finish },
           ] as const).map(({ label, sb }) => {
             if (sb.status === "no-data") return (
-              <div key={label} className="flex items-center justify-between text-gray-400">
+              <div key={label} className="flex items-center justify-between text-subtle">
                 <span className="font-medium">{label}</span>
                 <span>No budget set</span>
               </div>
             );
             if (sb.status === "too-early") return (
-              <div key={label} className="flex items-center justify-between text-gray-400">
-                <span className="font-medium text-gray-500">{label}</span>
-                <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full">Mobilization phase</span>
+              <div key={label} className="flex items-center justify-between text-subtle">
+                <span className="font-medium text-muted">{label}</span>
+                <span className="text-xs bg-surface-2 px-2 py-0.5 rounded-full">Mobilization phase</span>
               </div>
             );
             if (sb.status === "locked") return (
               <div key={label} className="flex items-center justify-between">
-                <span className="font-medium text-gray-600">{label}</span>
-                <span className="flex items-center gap-1.5 text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                <span className="font-medium text-muted">{label}</span>
+                <span className="flex items-center gap-1.5 text-subtle bg-surface-2 px-2 py-0.5 rounded-full">
                   🔒 Stage must reach 100%
                 </span>
               </div>
@@ -194,39 +194,39 @@ export default function ForemanProjectCard({ project: initial }: { project: Proj
             const varHrs = Math.abs(sb.variance).toFixed(0);
             return (
               <div key={label} className={`rounded-lg px-2.5 py-2 flex items-center justify-between gap-2 ${
-                sb.status === "beat" ? "bg-green-50 border border-green-200" :
-                sb.status === "meet" ? "bg-blue-50  border border-blue-200"  :
-                                      "bg-red-50   border border-red-200"
+                sb.status === "beat" ? "bg-success-bg border border-green-200" :
+                sb.status === "meet" ? "bg-info-bg  border border-blue-200"  :
+                                      "bg-danger-bg   border border-red-200"
               }`}>
                 <div>
-                  <span className="font-semibold text-gray-800">{label} — </span>
+                  <span className="font-semibold text-text">{label} — </span>
                   <span className={
-                    sb.status === "beat" ? "text-green-700 font-semibold" :
-                    sb.status === "meet" ? "text-blue-700 font-semibold"  : "text-red-700 font-semibold"
+                    sb.status === "beat" ? "text-success font-semibold" :
+                    sb.status === "meet" ? "text-info font-semibold"  : "text-danger font-semibold"
                   }>{sb.label}</span>
-                  <span className="ml-2 text-gray-500">
+                  <span className="ml-2 text-muted">
                     {sb.actual.toLocaleString()} / {sb.allowed.toLocaleString()} hrs
                     · {isGood ? "−" : "+"}{varHrs} hrs ({varPct})
                   </span>
                 </div>
                 {sb.earned > 0 && (
-                  <span className="shrink-0 font-bold text-green-700 text-sm">+{fmt$(sb.earned)}</span>
+                  <span className="shrink-0 font-bold text-success text-sm">+{fmt$(sb.earned)}</span>
                 )}
               </div>
             );
           })}
           {inc.totalEarned > 0 ? (
-            <div className="flex justify-between pt-1.5 border-t border-gray-200 font-semibold">
-              <span className="text-gray-700">Confirmed earned</span>
-              <span className="text-green-700">{fmt$(inc.totalEarned)}</span>
+            <div className="flex justify-between pt-1.5 border-t border-border font-semibold">
+              <span className="text-text">Confirmed earned</span>
+              <span className="text-success">{fmt$(inc.totalEarned)}</span>
             </div>
           ) : (
-            <p className="text-gray-400 pt-1 border-t border-gray-200">No bonus confirmed yet.</p>
+            <p className="text-subtle pt-1 border-t border-border">No bonus confirmed yet.</p>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end text-xs text-gray-400 pt-1 border-t border-gray-100">
+        <div className="flex justify-end text-xs text-subtle pt-1 border-t border-border">
           <span>Stage: {fmtPct(p.stage_completion)} done</span>
         </div>
       </div>
@@ -234,18 +234,18 @@ export default function ForemanProjectCard({ project: initial }: { project: Proj
       {/* ── Quick Update Modal ── */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
+          <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-sm">
             <div className="px-6 py-4 border-b flex justify-between items-center">
               <div>
-                <h2 className="text-base font-bold text-gray-900">Quick Update</h2>
-                <p className="text-xs text-gray-400">{p.name}</p>
+                <h2 className="text-base font-bold text-text">Quick Update</h2>
+                <p className="text-xs text-subtle">{p.name}</p>
               </div>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+              <button onClick={() => setShowModal(false)} className="text-subtle hover:text-muted text-2xl leading-none">&times;</button>
             </div>
             <form onSubmit={handleSave} className="p-6 space-y-5">
               {/* Stage */}
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Current Stage</label>
+                <label className="block text-sm font-semibold text-text mb-2">Current Stage</label>
                 <div className="flex flex-wrap gap-2">
                   {STAGE_OPTIONS.map(s => (
                     <button type="button" key={s}
@@ -253,7 +253,7 @@ export default function ForemanProjectCard({ project: initial }: { project: Proj
                       className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-colors ${
                         draftStage === s
                           ? "text-white border-transparent"
-                          : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+                          : "bg-surface text-muted border-border hover:border-border-strong"
                       }`}
                       style={draftStage === s ? { backgroundColor: "#00BAD6", borderColor: "#00BAD6" } : {}}>
                       {s}
@@ -265,7 +265,7 @@ export default function ForemanProjectCard({ project: initial }: { project: Proj
               {/* Stage completion slider */}
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label className="text-sm font-semibold text-gray-800">Stage Completion</label>
+                  <label className="text-sm font-semibold text-text">Stage Completion</label>
                   <span className="text-xl font-bold" style={{ color: "#00BAD6" }}>{draftPct}%</span>
                 </div>
                 <input
@@ -276,7 +276,7 @@ export default function ForemanProjectCard({ project: initial }: { project: Proj
                   className="w-full h-3 rounded-full appearance-none cursor-pointer"
                   style={{ accentColor: "#00BAD6" }}
                 />
-                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                <div className="flex justify-between text-xs text-subtle mt-1">
                   <span>0%</span>
                   <span>25%</span>
                   <span>50%</span>
@@ -286,7 +286,7 @@ export default function ForemanProjectCard({ project: initial }: { project: Proj
               </div>
 
               {msg && (
-                <p className={`text-sm text-center font-medium ${msg.startsWith("✅") ? "text-green-700" : "text-red-600"}`}>{msg}</p>
+                <p className={`text-sm text-center font-medium ${msg.startsWith("✅") ? "text-success" : "text-danger"}`}>{msg}</p>
               )}
 
               <div className="flex gap-3 pt-1">
@@ -296,7 +296,7 @@ export default function ForemanProjectCard({ project: initial }: { project: Proj
                   {saving ? "Saving…" : "✓ Save Update"}
                 </button>
                 <button type="button" onClick={() => setShowModal(false)}
-                  className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl text-sm font-medium transition-colors">
+                  className="flex-1 py-3 bg-surface-2 hover:bg-surface-3 rounded-xl text-sm font-medium transition-colors">
                   Cancel
                 </button>
               </div>

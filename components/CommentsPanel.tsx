@@ -93,16 +93,16 @@ export default function CommentsPanel({ projectId, availableUsers = [] }: {
 
   if (comments === null) {
     return (
-      <div className="border-t border-gray-100 pt-3">
-        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">💬 Comments</p>
-        <p className="text-xs text-gray-400 mt-1">Loading…</p>
+      <div className="border-t border-border pt-3">
+        <p className="text-[10px] font-semibold text-subtle uppercase tracking-wide">💬 Comments</p>
+        <p className="text-xs text-subtle mt-1">Loading…</p>
       </div>
     );
   }
 
   return (
-    <div className="border-t border-gray-100 pt-3">
-      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">
+    <div className="border-t border-border pt-3">
+      <p className="text-[10px] font-semibold text-subtle uppercase tracking-wide mb-2">
         💬 Comments {comments.length > 0 && `(${comments.length})`}
       </p>
 
@@ -116,10 +116,10 @@ export default function CommentsPanel({ projectId, availableUsers = [] }: {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-xs font-semibold text-gray-800">{c.user_name}</span>
-                  <span className="text-[10px] text-gray-400">{relTime(c.created_at)}</span>
+                  <span className="text-xs font-semibold text-text">{c.user_name}</span>
+                  <span className="text-[10px] text-subtle">{relTime(c.created_at)}</span>
                 </div>
-                <p className="text-xs text-gray-700 whitespace-pre-wrap break-words">{renderBody(c.body)}</p>
+                <p className="text-xs text-text whitespace-pre-wrap break-words">{renderBody(c.body)}</p>
               </div>
             </div>
           ))}
@@ -132,16 +132,16 @@ export default function CommentsPanel({ projectId, availableUsers = [] }: {
           onChange={e => onDraftChange(e.target.value)}
           placeholder="Add a comment… use @name to mention someone"
           rows={2}
-          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2"
+          className="w-full px-2 py-1.5 text-xs border border-border-strong rounded-lg resize-none focus:outline-none focus:ring-2"
           style={{ "--tw-ring-color": "#00BAD6" } as React.CSSProperties}
         />
 
         {showMentions && filteredMentions.length > 0 && (
-          <div className="absolute left-0 bottom-full mb-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 py-1 min-w-[160px]">
+          <div className="absolute left-0 bottom-full mb-1 bg-surface border border-border rounded-lg shadow-lg z-10 py-1 min-w-[160px]">
             {filteredMentions.slice(0, 5).map(u => (
               <button key={u} type="button" onMouseDown={e => e.preventDefault()}
                 onClick={() => insertMention(u)}
-                className="w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 flex items-center gap-2">
+                className="w-full text-left px-3 py-1.5 text-xs hover:bg-surface-2 flex items-center gap-2">
                 <span className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
                   style={{ backgroundColor: "#00BAD6" }}>
                   {u.split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase()}
@@ -153,7 +153,7 @@ export default function CommentsPanel({ projectId, availableUsers = [] }: {
         )}
 
         <div className="flex justify-between items-center mt-1.5">
-          <span className="text-[10px] text-gray-400">
+          <span className="text-[10px] text-subtle">
             {draft.includes("@") && "💡 Use @name to mention someone"}
           </span>
           <button type="submit" disabled={saving || !draft.trim()}

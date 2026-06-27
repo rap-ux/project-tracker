@@ -4,7 +4,7 @@ export default function SignedOutPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4"
       style={{ backgroundColor: "#101010" }}>
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 text-center">
+      <div className="w-full max-w-md bg-surface rounded-2xl shadow-2xl p-8 text-center">
 
         {/* TWE logo */}
         <div className="flex justify-center mb-5 bg-slate-900 rounded-xl px-6 py-4">
@@ -14,7 +14,7 @@ export default function SignedOutPage() {
         {/* Checkmark bubble */}
         <div className="flex justify-center mb-4">
           <div className="w-14 h-14 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: "#f0fdfe", border: "2px solid #a5f3fc" }}>
+            style={{ backgroundColor: "var(--accent-soft)", border: "2px solid #a5f3fc" }}>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00BAD6"
               strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
@@ -22,8 +22,8 @@ export default function SignedOutPage() {
           </div>
         </div>
 
-        <h1 className="text-2xl font-bold text-gray-900">You've been signed out</h1>
-        <p className="text-sm text-gray-500 mt-2">
+        <h1 className="text-2xl font-bold text-text">You've been signed out</h1>
+        <p className="text-sm text-muted mt-2">
           Your session has ended. Thanks for using the Switchboard.
         </p>
 
@@ -34,12 +34,12 @@ export default function SignedOutPage() {
             style={{ backgroundColor: "#00BAD6" }}>
             Sign in again
           </Link>
-          <p className="text-[11px] text-gray-400">
+          <p className="text-[11px] text-subtle">
             Your data is safe · Close this tab if you're done
           </p>
         </div>
 
-        <div className="mt-8 pt-5 border-t border-gray-100 text-[11px] text-gray-400">
+        <div className="mt-8 pt-5 border-t border-border text-[11px] text-subtle">
           <p className="font-semibold" style={{ color: "#00BAD6" }}>Totally Wired Electric</p>
           <div className="flex items-center justify-center gap-1.5 mt-1">
             <img src="/switchboard-icon.svg" alt="" className="h-4 w-4" />

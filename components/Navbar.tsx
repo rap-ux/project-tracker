@@ -115,7 +115,7 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
                   className={`group relative flex flex-col items-center gap-0.5 px-2.5 xl:px-3 pt-2 pb-2 transition-all duration-200 whitespace-nowrap ${
                     active
                       ? "text-[#00BAD6]"
-                      : "text-white/55 hover:text-white/95 hover:bg-white/[0.06]"
+                      : "text-white/55 hover:text-white/95 hover:bg-surface/[0.06]"
                   }`}>
                   <span className="transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-110">
                     <NavIcon name={l.icon} size={18} />
@@ -155,7 +155,7 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
         {/* Mobile hamburger */}
         <button
           onClick={() => setMobileOpen(v => !v)}
-          className="min-[1400px]:hidden p-2 rounded-md hover:bg-white/10 transition-colors"
+          className="min-[1400px]:hidden p-2 rounded-md hover:bg-surface/10 transition-colors"
           aria-label="Open menu">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#EBF1F5" }}>
             {mobileOpen ? (
@@ -207,7 +207,7 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
                       await signOut({ redirect: false });
                       window.location.href = "/login?switch=1";
                     }}
-                    className="flex-1 text-xs px-3 py-1.5 rounded-md border border-white/20 transition-colors hover:bg-white/5"
+                    className="flex-1 text-xs px-3 py-1.5 rounded-md border border-white/20 transition-colors hover:bg-surface/5"
                     style={{ color: "rgba(235,241,245,0.85)" }}>
                     ↔ Switch account
                   </button>
@@ -233,7 +233,7 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
                     className={`group flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium transition-all duration-200 ease-out active:scale-[0.98] ${
                       active
                         ? "text-[#00BAD6]"
-                        : "text-white/85 hover:bg-white/10"
+                        : "text-white/85 hover:bg-surface/10"
                     }`}
                     style={active ? { backgroundColor: "rgba(0,186,214,0.15)" } : undefined}>
                     <span className="flex items-center gap-3 transition-transform duration-200 ease-out group-hover:translate-x-1">
@@ -256,7 +256,7 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
                   </Link>
                   <Link href="/help"
                     onClick={() => setMobileOpen(false)}
-                    className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-white/85 hover:bg-white/10">
+                    className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-white/85 hover:bg-surface/10">
                     <NavIcon name="help" size={18} />
                     Help
                   </Link>

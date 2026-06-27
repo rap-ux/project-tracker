@@ -29,11 +29,11 @@ function relTime(ts: string): string {
 
 function actionPill(action: string) {
   const map: Record<string, { bg: string; color: string }> = {
-    "Quick Update": { bg: "#f0fdfe", color: "#00BAD6" },
-    "Edited":       { bg: "#eff6ff", color: "#2563eb" },
-    "Created":      { bg: "#f0fdf4", color: "#16a34a" },
+    "Quick Update": { bg: "var(--accent-soft)", color: "#00BAD6" },
+    "Edited":       { bg: "var(--info-bg)", color: "#2563eb" },
+    "Created":      { bg: "var(--success-bg)", color: "#16a34a" },
   };
-  const s = map[action] ?? { bg: "#f3f4f6", color: "#6b7280" };
+  const s = map[action] ?? { bg: "var(--surface-2)", color: "#6b7280" };
   return (
     <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
       style={{ backgroundColor: s.bg, color: s.color }}>
@@ -92,42 +92,42 @@ export default function GlobalActivityButton() {
 
       {open && (
         <div
-          className="fixed sm:absolute right-2 sm:right-0 top-[52px] sm:top-full sm:mt-2 left-2 sm:left-auto sm:w-[420px] max-h-[calc(100vh-80px)] sm:max-h-[540px] bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50 flex flex-col">
-          <div className="px-4 py-3 border-b flex items-center justify-between bg-gray-50">
+          className="fixed sm:absolute right-2 sm:right-0 top-[52px] sm:top-full sm:mt-2 left-2 sm:left-auto sm:w-[420px] max-h-[calc(100vh-80px)] sm:max-h-[540px] bg-surface rounded-xl shadow-2xl border border-border overflow-hidden z-50 flex flex-col">
+          <div className="px-4 py-3 border-b flex items-center justify-between bg-surface-2">
             <div>
-              <p className="text-sm font-bold text-gray-800">Activity Log</p>
-              <p className="text-xs text-gray-400">Latest changes across all projects</p>
+              <p className="text-sm font-bold text-text">Activity Log</p>
+              <p className="text-xs text-subtle">Latest changes across all projects</p>
             </div>
             <button
               onClick={fetchActivities}
               disabled={loading}
-              className="text-xs px-2 py-1 rounded border border-gray-200 text-gray-600 hover:bg-white disabled:opacity-50">
+              className="text-xs px-2 py-1 rounded border border-border text-muted hover:bg-surface disabled:opacity-50">
               {loading ? "…" : "↻ Refresh"}
             </button>
           </div>
 
           <div className="overflow-y-auto flex-1">
             {activities === null || loading ? (
-              <p className="text-xs text-gray-400 py-10 text-center">Loading…</p>
+              <p className="text-xs text-subtle py-10 text-center">Loading…</p>
             ) : activities.length === 0 ? (
-              <p className="text-xs text-gray-400 py-10 text-center">No activity yet.</p>
+              <p className="text-xs text-subtle py-10 text-center">No activity yet.</p>
             ) : (
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-border">
                 {activities.map(a => (
-                  <li key={a.id} className="px-4 py-2.5 hover:bg-gray-50 transition-colors">
+                  <li key={a.id} className="px-4 py-2.5 hover:bg-surface-2 transition-colors">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-xs font-semibold text-gray-800 truncate">{a.project_name}</span>
+                        <span className="text-xs font-semibold text-text truncate">{a.project_name}</span>
                         {actionPill(a.action)}
                       </div>
-                      <span className="text-[10px] text-gray-400 shrink-0 tabular-nums" title={a.created_at}>
+                      <span className="text-[10px] text-subtle shrink-0 tabular-nums" title={a.created_at}>
                         {relTime(a.created_at)}
                       </span>
                     </div>
                     {a.details && (
-                      <p className="text-xs text-gray-600 mt-0.5 break-words">{a.details}</p>
+                      <p className="text-xs text-muted mt-0.5 break-words">{a.details}</p>
                     )}
-                    <p className="text-[10px] text-gray-400 mt-0.5">
+                    <p className="text-[10px] text-subtle mt-0.5">
                       by <span className="font-medium">{a.user_name}</span>
                       {a.foreman && <span className="ml-1">· {a.foreman}</span>}
                     </p>
@@ -137,7 +137,7 @@ export default function GlobalActivityButton() {
             )}
           </div>
 
-          <div className="px-4 py-2 border-t bg-gray-50 text-[10px] text-gray-400 text-center">
+          <div className="px-4 py-2 border-t bg-surface-2 text-[10px] text-subtle text-center">
             Showing up to 100 recent entries
           </div>
         </div>

@@ -4,11 +4,11 @@ import { useState, useMemo, useRef } from "react";
 
 // ── Stage config ──────────────────────────────────────────────────────────────
 const STAGES = [
-  { key: "Contracting Phase", label: "Contracting",  color: "#6b7280", bg: "#f9fafb",  border: "#d1d5db" },
-  { key: "Underground",       label: "Underground",  color: "#ea580c", bg: "#fff7ed",  border: "#fed7aa" },
-  { key: "Rough",             label: "Rough",        color: "#2563eb", bg: "#eff6ff",  border: "#bfdbfe" },
-  { key: "Finish",            label: "Finish",       color: "#7c3aed", bg: "#f5f3ff",  border: "#ddd6fe" },
-  { key: "Extras",            label: "Extras",       color: "#b45309", bg: "#fffbeb",  border: "#fde68a" },
+  { key: "Contracting Phase", label: "Contracting",  color: "#6b7280", bg: "var(--surface-2)",  border: "#d1d5db" },
+  { key: "Underground",       label: "Underground",  color: "#ea580c", bg: "var(--warning-bg)",  border: "#fed7aa" },
+  { key: "Rough",             label: "Rough",        color: "#2563eb", bg: "var(--info-bg)",  border: "#bfdbfe" },
+  { key: "Finish",            label: "Finish",       color: "#7c3aed", bg: "var(--surface-2)",  border: "#ddd6fe" },
+  { key: "Extras",            label: "Extras",       color: "#b45309", bg: "var(--warning-bg)",  border: "#fde68a" },
 ] as const;
 
 type StageKey  = typeof STAGES[number]["key"];
@@ -28,9 +28,9 @@ const fmt$   = (n: number) => "$" + (n ?? 0).toLocaleString("en-US", { maximumFr
 const fmtPct = (n: number) => ((n ?? 0) * 100).toFixed(0) + "%";
 
 const STATUS_STYLE: Record<string, { bg: string; color: string; border: string }> = {
-  "Complete":    { bg: "#f0fdf4", color: "#16a34a", border: "#bbf7d0" },
-  "In Progress": { bg: "#f0fdfe", color: "#00BAD6", border: "#a5f3fc" },
-  "Pending":     { bg: "#f9fafb", color: "#9ca3af", border: "#e5e7eb" },
+  "Complete":    { bg: "var(--success-bg)", color: "#16a34a", border: "#bbf7d0" },
+  "In Progress": { bg: "var(--accent-soft)", color: "#00BAD6", border: "#a5f3fc" },
+  "Pending":     { bg: "var(--surface-2)", color: "#9ca3af", border: "#e5e7eb" },
 };
 
 function statusStyle(s: string) {
@@ -232,21 +232,21 @@ export default function TimelineClient({ projects, stagesByProject }: Props) {
       {/* ── Header ── */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Project Timeline</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-xl font-bold text-text">Project Timeline</h1>
+          <p className="text-sm text-muted mt-0.5">
             {totalActive} active · {totalPipeline} minor
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           {/* View toggle */}
-          <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm">
+          <div className="flex rounded-lg border border-border overflow-hidden text-sm">
             {(["kanban", "schedule", "gantt"] as const).map(v => (
               <button key={v} onClick={() => setView(v)}
                 className="px-3 py-1.5 font-medium transition-colors"
                 style={view === v
                   ? { backgroundColor: "#101010", color: "#fff" }
-                  : { backgroundColor: "#fff", color: "#6b7280" }}>
+                  : { backgroundColor: "var(--surface)", color: "#6b7280" }}>
                 {v === "kanban" ? "🗂 Kanban" : v === "schedule" ? "📅 Schedule" : "📊 Gantt"}
               </button>
             ))}
@@ -254,16 +254,16 @@ export default function TimelineClient({ projects, stagesByProject }: Props) {
 
           {/* Foreman filter */}
           <select value={filterForeman} onChange={e => setFilterForeman(e.target.value)}
-            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none">
+            className="px-3 py-1.5 text-sm border border-border-strong rounded-lg focus:outline-none">
             {foremen.map(f => <option key={f} value={f}>{f === "all" ? "All Foremen" : f}</option>)}
           </select>
 
           {/* Minor Projects toggle */}
-          <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+          <label className="flex items-center gap-2 text-sm text-muted cursor-pointer select-none">
             <div className="relative w-9 h-5 rounded-full transition-colors"
               style={showPipeline ? { backgroundColor: "#00BAD6" } : { backgroundColor: "#d1d5db" }}
               onClick={() => setShowPipeline(p => !p)}>
-              <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${showPipeline ? "translate-x-4" : ""}`} />
+              <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-surface rounded-full shadow transition-transform ${showPipeline ? "translate-x-4" : ""}`} />
             </div>
             Minor Projects
           </label>
@@ -276,13 +276,13 @@ export default function TimelineClient({ projects, stagesByProject }: Props) {
           {dragMsg && (
             <div className="sticky top-[52px] z-20 flex justify-center">
               <span className={`text-xs px-3 py-1 rounded-full shadow-md ${
-                dragMsg.startsWith("✅") ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                dragMsg.startsWith("✅") ? "bg-success-bg text-success" : "bg-danger-bg text-danger"
               }`}>
                 {dragMsg}
               </span>
             </div>
           )}
-          <p className="text-xs text-gray-400 italic">💡 Drag cards between columns to change their stage</p>
+          <p className="text-xs text-subtle italic">💡 Drag cards between columns to change their stage</p>
           <div className="flex gap-4 overflow-x-auto pb-4">
             {STAGES.map(stage => {
               const cards = grouped[stage.key] ?? [];
@@ -313,10 +313,10 @@ export default function TimelineClient({ projects, stagesByProject }: Props) {
                     </span>
                   </div>
                   <div
-                    className={`flex flex-col gap-2 min-h-[60px] rounded-xl transition-colors ${isTarget ? "bg-blue-50/40" : ""}`}
+                    className={`flex flex-col gap-2 min-h-[60px] rounded-xl transition-colors ${isTarget ? "bg-info-bg/40" : ""}`}
                     style={isTarget ? { outline: `2px dashed ${stage.color}`, outlineOffset: "-4px" } : {}}>
                     {cards.length === 0 && (
-                      <div className="text-center text-xs text-gray-300 py-6 border border-dashed border-gray-200 rounded-xl">
+                      <div className="text-center text-xs text-subtle py-6 border border-dashed border-border rounded-xl">
                         {isTarget ? `Drop to move here →` : "No projects"}
                       </div>
                     )}
@@ -350,12 +350,12 @@ export default function TimelineClient({ projects, stagesByProject }: Props) {
 
       {/* ── Schedule view ── */}
       {view === "schedule" && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200 text-[11px] uppercase tracking-wider text-gray-500 font-semibold">
-                  <th className="px-4 py-3 text-left sticky left-0 bg-gray-50">Project</th>
+                <tr className="bg-surface-2 border-b border-border text-[11px] uppercase tracking-wider text-muted font-semibold">
+                  <th className="px-4 py-3 text-left sticky left-0 bg-surface-2">Project</th>
                   <th className="px-4 py-3 text-left">Foreman</th>
                   <th className="px-4 py-3 text-left">Stage</th>
                   <th className="px-4 py-3 text-center">Status</th>
@@ -365,10 +365,10 @@ export default function TimelineClient({ projects, stagesByProject }: Props) {
                   <th className="px-4 py-3 text-center w-20"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-border">
                 {scheduleRows.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="text-center py-10 text-gray-400 text-sm">No stage data available</td>
+                    <td colSpan={8} className="text-center py-10 text-subtle text-sm">No stage data available</td>
                   </tr>
                 )}
                 {scheduleRows.map((row, i) => {
@@ -376,20 +376,20 @@ export default function TimelineClient({ projects, stagesByProject }: Props) {
                   const isEdit  = editingRow === rowKey;
                   const cfg     = stageConfig(row.stage);
                   const ss      = statusStyle(isEdit ? editDraft?.status : row.status);
-                  const inputCls = "w-full px-2 py-1 text-xs border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white";
+                  const inputCls = "w-full px-2 py-1 text-xs border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-400 bg-surface";
 
                   return (
-                    <tr key={i} className={`group transition-colors ${isEdit ? "bg-blue-50" : "hover:bg-gray-50"}`}>
+                    <tr key={i} className={`group transition-colors ${isEdit ? "bg-info-bg" : "hover:bg-surface-2"}`}>
                       {/* Project — read-only */}
-                      <td className="px-4 py-2.5 font-medium text-gray-900 sticky left-0 bg-inherit whitespace-nowrap">
+                      <td className="px-4 py-2.5 font-medium text-text sticky left-0 bg-inherit whitespace-nowrap">
                         {row.project.name}
                         {row.project.is_pipeline
-                          ? <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-400 font-normal">Minor</span>
+                          ? <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-surface-2 text-subtle font-normal">Minor</span>
                           : null}
                       </td>
 
                       {/* Foreman — read-only */}
-                      <td className="px-4 py-2.5 text-gray-500 whitespace-nowrap">{row.project.foreman}</td>
+                      <td className="px-4 py-2.5 text-muted whitespace-nowrap">{row.project.foreman}</td>
 
                       {/* Stage — read-only (it's the row identifier) */}
                       <td className="px-4 py-2.5 whitespace-nowrap">
@@ -425,7 +425,7 @@ export default function TimelineClient({ projects, stagesByProject }: Props) {
                             onChange={e => setEditDraft((d: any) => ({ ...d, start_date: e.target.value || null }))}
                             className={inputCls} />
                         ) : (
-                          <span className="text-gray-600 font-mono text-xs">{fmtDate(row.start_date)}</span>
+                          <span className="text-muted font-mono text-xs">{fmtDate(row.start_date)}</span>
                         )}
                       </td>
 
@@ -436,12 +436,12 @@ export default function TimelineClient({ projects, stagesByProject }: Props) {
                             onChange={e => setEditDraft((d: any) => ({ ...d, end_date: e.target.value || null }))}
                             className={inputCls} />
                         ) : (
-                          <span className="text-gray-600 font-mono text-xs">{fmtDate(row.end_date)}</span>
+                          <span className="text-muted font-mono text-xs">{fmtDate(row.end_date)}</span>
                         )}
                       </td>
 
                       {/* Notes */}
-                      <td className="px-4 py-2.5 text-gray-400 text-xs max-w-xs">
+                      <td className="px-4 py-2.5 text-subtle text-xs max-w-xs">
                         {isEdit ? (
                           <input type="text" value={editDraft.notes ?? ""}
                             onChange={e => setEditDraft((d: any) => ({ ...d, notes: e.target.value }))}
@@ -464,20 +464,20 @@ export default function TimelineClient({ projects, stagesByProject }: Props) {
                             </button>
                             <button
                               onClick={cancelEdit}
-                              className="px-2.5 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+                              className="px-2.5 py-1 text-xs bg-surface-2 hover:bg-surface-3 rounded transition-colors">
                               ✕
                             </button>
                           </div>
                         ) : (
                           <div className="flex items-center justify-center gap-1">
                             {saveMsg?.key === rowKey && saveMsg && (
-                              <span className={`text-xs font-medium ${saveMsg.ok ? "text-green-600" : "text-red-500"}`}>
+                              <span className={`text-xs font-medium ${saveMsg.ok ? "text-success" : "text-danger"}`}>
                                 {saveMsg.text}
                               </span>
                             )}
                             <button
                               onClick={() => startEdit(row)}
-                              className="w-6 h-6 flex items-center justify-center rounded text-gray-300 hover:text-gray-600 hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100"
+                              className="w-6 h-6 flex items-center justify-center rounded text-subtle hover:text-muted hover:bg-surface-2 transition-colors opacity-0 group-hover:opacity-100"
                               title="Edit row">
                               ✎
                             </button>
@@ -496,7 +496,7 @@ export default function TimelineClient({ projects, stagesByProject }: Props) {
       {/* ── Gantt view ── */}
       {view === "gantt" && (
         <>
-          <div className="md:hidden bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800">
+          <div className="md:hidden bg-warning-bg border border-amber-200 rounded-xl p-4 text-xs text-warning">
             📱 The Gantt chart is designed for wider screens. For the best view, open this page on a laptop/desktop — or rotate your phone to landscape.
           </div>
           <GanttView visible={visible} stagesByProject={localStages} />
@@ -542,7 +542,7 @@ function GanttView({ visible, stagesByProject }: {
 
   if (allDatedStages.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm py-20 text-center text-gray-400 text-sm">
+      <div className="bg-surface rounded-xl border border-border shadow-sm py-20 text-center text-subtle text-sm">
         No stage dates to display. Add start/end dates to project stages first.
       </div>
     );
@@ -619,28 +619,28 @@ function GanttView({ visible, stagesByProject }: {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-4 px-4 py-2.5 border-b border-gray-100 bg-gray-50">
+      <div className="flex flex-wrap items-center gap-4 px-4 py-2.5 border-b border-border bg-surface-2">
         {Object.entries(STAGE_BAR_COLOR).map(([stage, c]) => (
           <div key={stage} className="flex items-center gap-1.5 text-xs">
             <div className="w-3.5 h-3.5 rounded" style={{ backgroundColor: c.solid }} />
-            <span className="text-gray-600 font-medium">{stage}</span>
+            <span className="text-muted font-medium">{stage}</span>
           </div>
         ))}
-        <div className="h-4 w-px bg-gray-300 mx-1" />
-        <div className="flex items-center gap-3 text-xs text-gray-500">
+        <div className="h-4 w-px bg-surface-3 mx-1" />
+        <div className="flex items-center gap-3 text-xs text-muted">
           <span className="flex items-center gap-1.5">
-            <div className="w-3.5 h-3.5 rounded border-2 border-gray-400 bg-white" />
+            <div className="w-3.5 h-3.5 rounded border-2 border-border-strong bg-surface" />
             Pending
           </span>
           <span className="flex items-center gap-1.5">
-            <div className="w-3.5 h-3.5 rounded bg-gray-400" style={{ backgroundImage: "linear-gradient(135deg, rgba(0,0,0,0.15) 25%, transparent 25%, transparent 50%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.15) 75%, transparent 75%)", backgroundSize: "6px 6px" }} />
+            <div className="w-3.5 h-3.5 rounded bg-subtle" style={{ backgroundImage: "linear-gradient(135deg, rgba(0,0,0,0.15) 25%, transparent 25%, transparent 50%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.15) 75%, transparent 75%)", backgroundSize: "6px 6px" }} />
             Complete
           </span>
         </div>
-        <div className="h-4 w-px bg-gray-300 mx-1" />
-        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+        <div className="h-4 w-px bg-surface-3 mx-1" />
+        <div className="flex items-center gap-1.5 text-xs text-muted">
           <div className="w-0.5 h-4 bg-red-500" />
           <span>Today</span>
         </div>
@@ -666,8 +666,8 @@ function GanttView({ visible, stagesByProject }: {
           </div>
 
           {/* ── Month sub-header ── */}
-          <div className="flex sticky z-10 border-b border-gray-300" style={{ top: YEAR_H, height: MONTH_H }}>
-            <div className="shrink-0 border-r border-gray-300 bg-slate-100"
+          <div className="flex sticky z-10 border-b border-border-strong" style={{ top: YEAR_H, height: MONTH_H }}>
+            <div className="shrink-0 border-r border-border-strong bg-slate-100"
               style={{ width: LABEL_W, minWidth: LABEL_W }} />
             <div className="relative bg-slate-50" style={{ width: chartW }}>
               {/* Quarter shading strip */}
@@ -682,7 +682,7 @@ function GanttView({ visible, stagesByProject }: {
                       ? "1px solid #94a3b8"
                       : "1px solid #e2e8f0",
                   }}>
-                  <span className="text-gray-600 text-[10px] font-semibold tracking-wide">{m.label}</span>
+                  <span className="text-muted text-[10px] font-semibold tracking-wide">{m.label}</span>
                 </div>
               ))}
             </div>
@@ -694,12 +694,12 @@ function GanttView({ visible, stagesByProject }: {
             return (
               <div key={foreman}>
                 {/* Foreman group header */}
-                <div className="flex items-stretch border-b border-gray-200 sticky z-[5]" style={{ backgroundColor: "#e0f2fe" }}>
+                <div className="flex items-stretch border-b border-border sticky z-[5]" style={{ backgroundColor: "#e0f2fe" }}>
                   <div className="shrink-0 px-4 py-1.5 font-bold text-xs uppercase tracking-wider border-r border-blue-200 flex items-center gap-2"
                     style={{ width: LABEL_W, minWidth: LABEL_W, color: "#0369a1" }}>
                     <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "#0369a1" }} />
                     {foreman}
-                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-white text-blue-600 ml-auto">
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-surface text-info ml-auto">
                       {fProjects.length}
                     </span>
                   </div>
@@ -728,19 +728,19 @@ function GanttView({ visible, stagesByProject }: {
 
                   return (
                     <div key={p.id}
-                      className="flex items-stretch border-b border-gray-100 hover:bg-blue-50/20 transition-colors group"
+                      className="flex items-stretch border-b border-border hover:bg-info-bg/20 transition-colors group"
                       style={{ height: ROW_H, backgroundColor: rowBg }}>
 
                       {/* Label */}
-                      <div className="shrink-0 px-3 py-1.5 border-r border-gray-100 overflow-hidden flex flex-col justify-center"
+                      <div className="shrink-0 px-3 py-1.5 border-r border-border overflow-hidden flex flex-col justify-center"
                         style={{ width: LABEL_W, minWidth: LABEL_W }}>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-semibold text-gray-800 truncate leading-tight">{p.name}</span>
+                          <span className="text-xs font-semibold text-text truncate leading-tight">{p.name}</span>
                           {p.is_pipeline === 1 && (
-                            <span className="text-[9px] px-1 py-0.5 rounded bg-gray-100 text-gray-500 shrink-0 font-medium">Minor</span>
+                            <span className="text-[9px] px-1 py-0.5 rounded bg-surface-2 text-muted shrink-0 font-medium">Minor</span>
                           )}
                         </div>
-                        <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-gray-400">
+                        <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-subtle">
                           <span className="px-1 py-0.5 rounded font-medium text-white"
                             style={{ backgroundColor: STAGE_BAR_COLOR[p.stage]?.solid ?? "#94a3b8", fontSize: "9px" }}>
                             {p.stage}
@@ -809,7 +809,7 @@ function GanttView({ visible, stagesByProject }: {
 
                               {/* Progress fill (only for in-progress current stage) */}
                               {isCurrent && progress > 0 && progress < 1 && !isPending && (
-                                <div className="absolute top-0 bottom-0 left-0 bg-white/30"
+                                <div className="absolute top-0 bottom-0 left-0 bg-surface/30"
                                   style={{ width: `${progress * 100}%` }} />
                               )}
 
@@ -827,7 +827,7 @@ function GanttView({ visible, stagesByProject }: {
 
                               {/* Current-stage indicator dot */}
                               {isCurrent && !isPending && (
-                                <span className="absolute right-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-white animate-pulse z-10" />
+                                <span className="absolute right-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-surface animate-pulse z-10" />
                               )}
                             </div>
                           );
@@ -871,29 +871,29 @@ function ProjectCard({ project: p, stages, stageColor, stageBg, stageBorder }: {
     .sort((a, b) => (stageOrder[a.stage] ?? 9) - (stageOrder[b.stage] ?? 9))[0];
 
   return (
-    <div className={`bg-white rounded-xl border shadow-sm transition-shadow hover:shadow-md ${p.is_pipeline ? "opacity-80" : ""}`}
+    <div className={`bg-surface rounded-xl border shadow-sm transition-shadow hover:shadow-md ${p.is_pipeline ? "opacity-80" : ""}`}
       style={{ borderColor: stageBorder }}>
       <div className="px-3 pt-3 pb-2">
         <div className="flex items-start justify-between gap-2">
-          <p className="text-sm font-semibold text-gray-900 leading-tight">{p.name}</p>
+          <p className="text-sm font-semibold text-text leading-tight">{p.name}</p>
           {p.is_pipeline === 1 && (
-            <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 whitespace-nowrap shrink-0">Minor</span>
+            <span className="text-xs px-1.5 py-0.5 rounded bg-surface-2 text-muted whitespace-nowrap shrink-0">Minor</span>
           )}
         </div>
 
         <div className="flex items-center gap-2 mt-1">
           <span className="text-xs px-2 py-0.5 rounded-full font-medium text-white"
             style={{ backgroundColor: stageColor }}>{p.foreman}</span>
-          {p.region && <span className="text-xs text-gray-400 truncate">{p.region}</span>}
+          {p.region && <span className="text-xs text-subtle truncate">{p.region}</span>}
         </div>
 
         {!p.is_pipeline && (
           <div className="mt-2 space-y-1">
-            <div className="flex justify-between text-xs text-gray-500">
+            <div className="flex justify-between text-xs text-muted">
               <span>Project {fmtPct(completion)}</span>
               <span>Stage {fmtPct(stageCompl)}</span>
             </div>
-            <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+            <div className="w-full bg-surface-2 rounded-full h-1.5 overflow-hidden">
               <div className="h-1.5 rounded-full transition-all"
                 style={{ width: `${completion * 100}%`, backgroundColor: progressColor(completion) }} />
             </div>
@@ -902,29 +902,29 @@ function ProjectCard({ project: p, stages, stageColor, stageBg, stageBorder }: {
 
         {currentStage && (currentStage.start_date || currentStage.end_date) && (
           <div className="mt-2 flex items-center justify-between text-xs">
-            <span className="text-gray-400">{currentStage.stage}</span>
-            <span className="font-mono text-gray-600">
+            <span className="text-subtle">{currentStage.stage}</span>
+            <span className="font-mono text-muted">
               {fmtDate(currentStage.start_date)} → {fmtDate(currentStage.end_date)}
             </span>
           </div>
         )}
 
         {p.contract_value > 0 && (
-          <p className="text-xs font-mono text-gray-500 mt-1.5">{fmt$(p.contract_value)}</p>
+          <p className="text-xs font-mono text-muted mt-1.5">{fmt$(p.contract_value)}</p>
         )}
       </div>
 
       <button onClick={() => setExpanded(e => !e)}
-        className="w-full text-xs text-gray-400 hover:text-gray-600 py-1.5 border-t transition-colors"
+        className="w-full text-xs text-subtle hover:text-muted py-1.5 border-t transition-colors"
         style={{ borderColor: stageBorder }}>
         {expanded ? "▲ Less" : "▼ More"}
       </button>
 
       {expanded && (
-        <div className="px-3 pb-3 pt-1 space-y-1.5 text-xs text-gray-600">
+        <div className="px-3 pb-3 pt-1 space-y-1.5 text-xs text-muted">
           {p.builder  && <div>🏗️ <span className="font-medium">{p.builder}</span></div>}
           {p.contacts && <div>👤 {p.contacts}{p.phone ? ` · ${p.phone}` : ""}</div>}
-          {p.project_notes && <div className="italic text-gray-400">{p.project_notes}</div>}
+          {p.project_notes && <div className="italic text-subtle">{p.project_notes}</div>}
 
           {stages.length > 0 && (
             <div className="mt-1.5 space-y-1 border-t pt-1.5" style={{ borderColor: stageBorder }}>
@@ -932,12 +932,12 @@ function ProjectCard({ project: p, stages, stageColor, stageBg, stageBorder }: {
                 const ss = statusStyle(s.status);
                 return (
                   <div key={i} className="flex items-center gap-2">
-                    <span className="w-20 shrink-0 text-gray-400">{s.stage}</span>
+                    <span className="w-20 shrink-0 text-subtle">{s.stage}</span>
                     <span className="text-xs px-1.5 py-0.5 rounded-full font-medium shrink-0"
                       style={{ backgroundColor: ss.bg, color: ss.color, border: `1px solid ${ss.border}` }}>
                       {s.status}
                     </span>
-                    <span className="font-mono text-gray-500 truncate">
+                    <span className="font-mono text-muted truncate">
                       {s.start_date ? fmtDate(s.start_date) : ""}{s.end_date ? ` → ${fmtDate(s.end_date)}` : ""}
                     </span>
                   </div>

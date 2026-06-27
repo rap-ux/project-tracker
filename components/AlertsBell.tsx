@@ -81,52 +81,52 @@ export default function AlertsBell() {
       </button>
 
       {open && (
-        <div className="fixed sm:absolute right-2 sm:right-0 top-[52px] sm:top-full sm:mt-2 left-2 sm:left-auto sm:w-[420px] max-h-[calc(100vh-80px)] sm:max-h-[540px] bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50 flex flex-col">
-          <div className="px-4 py-3 border-b flex items-center justify-between bg-gray-50">
+        <div className="fixed sm:absolute right-2 sm:right-0 top-[52px] sm:top-full sm:mt-2 left-2 sm:left-auto sm:w-[420px] max-h-[calc(100vh-80px)] sm:max-h-[540px] bg-surface rounded-xl shadow-2xl border border-border overflow-hidden z-50 flex flex-col">
+          <div className="px-4 py-3 border-b flex items-center justify-between bg-surface-2">
             <div>
-              <p className="text-sm font-bold text-gray-800">Alerts</p>
-              <p className="text-xs text-gray-400">
+              <p className="text-sm font-bold text-text">Alerts</p>
+              <p className="text-xs text-subtle">
                 {count === 0 ? "Nothing needs attention ✅" :
                  criticalCount > 0 ? `${criticalCount} critical · ${count - criticalCount} warnings` :
                  `${count} item${count === 1 ? "" : "s"}`}
               </p>
             </div>
             <button onClick={fetchAlerts} disabled={loading}
-              className="text-xs px-2 py-1 rounded border border-gray-200 text-gray-600 hover:bg-white disabled:opacity-50">
+              className="text-xs px-2 py-1 rounded border border-border text-muted hover:bg-surface disabled:opacity-50">
               {loading ? "…" : "↻"}
             </button>
           </div>
 
           <div className="overflow-y-auto flex-1">
             {alerts === null || loading ? (
-              <p className="text-xs text-gray-400 py-10 text-center">Loading…</p>
+              <p className="text-xs text-subtle py-10 text-center">Loading…</p>
             ) : alerts.length === 0 ? (
               <div className="py-10 text-center">
                 <p className="text-2xl mb-2">✅</p>
-                <p className="text-sm font-medium text-gray-600">All clear</p>
-                <p className="text-xs text-gray-400 mt-1">No active alerts</p>
+                <p className="text-sm font-medium text-muted">All clear</p>
+                <p className="text-xs text-subtle mt-1">No active alerts</p>
               </div>
             ) : (
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-border">
                 {alerts.map(a => {
                   const bg =
-                    a.severity === "critical" ? "border-l-4 border-red-500 bg-red-50/40" :
-                    a.severity === "warning"  ? "border-l-4 border-amber-500 bg-amber-50/40" :
-                                                "border-l-4 border-blue-500 bg-blue-50/40";
+                    a.severity === "critical" ? "border-l-4 border-red-500 bg-danger-bg/40" :
+                    a.severity === "warning"  ? "border-l-4 border-amber-500 bg-warning-bg/40" :
+                                                "border-l-4 border-blue-500 bg-info-bg/40";
                   const icon =
                     a.severity === "critical" ? "🚨" :
                     a.severity === "warning"  ? "⚠️" : "ℹ️";
                   const inner = (
-                    <div className={`px-4 py-3 hover:bg-gray-50 transition-colors ${bg}`}>
+                    <div className={`px-4 py-3 hover:bg-surface-2 transition-colors ${bg}`}>
                       <div className="flex items-start gap-2">
                         <span className="text-base leading-none mt-0.5">{icon}</span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-gray-800">{a.title}</p>
-                          <p className="text-[11px] text-gray-500 mt-0.5">{a.detail}</p>
+                          <p className="text-xs font-semibold text-text">{a.title}</p>
+                          <p className="text-[11px] text-muted mt-0.5">{a.detail}</p>
                         </div>
                         <button onClick={e => dismiss(a.key, e)}
                           title="Dismiss"
-                          className="shrink-0 text-gray-300 hover:text-gray-600 text-base leading-none">×</button>
+                          className="shrink-0 text-subtle hover:text-muted text-base leading-none">×</button>
                       </div>
                     </div>
                   );

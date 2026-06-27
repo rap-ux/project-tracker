@@ -44,7 +44,7 @@ export default async function UploadsPage() {
   ).all() as { id: number; name: string }[];
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-surface-2">
       <Navbar userName={session.user?.name ?? "Admin"} role={role} userEmail={session.user?.email ?? undefined} userTitle={(session.user as any)?.title ?? undefined} />
       <UploadsClient
         batches={batches}

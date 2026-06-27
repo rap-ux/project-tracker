@@ -62,8 +62,8 @@ export default function InputsClient({ inputs, role }: Props) {
     <main className="flex-1 max-w-screen-xl mx-auto w-full px-4 py-6 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Project Inputs</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Financial assumptions and planned stage-hour totals per project. These are the totals we&apos;re aiming for, not progress-to-date.</p>
+          <h1 className="text-xl font-bold text-text">Project Inputs</h1>
+          <p className="text-sm text-muted mt-0.5">Financial assumptions and planned stage-hour totals per project. These are the totals we&apos;re aiming for, not progress-to-date.</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           <button
@@ -71,19 +71,19 @@ export default function InputsClient({ inputs, role }: Props) {
             className="text-xs px-3 py-1.5 rounded-full border font-medium transition-all"
             style={showPipeline
               ? { backgroundColor: "#101010", borderColor: "#101010", color: "#fff" }
-              : { backgroundColor: "#fff", borderColor: "#d1d5db", color: "#9ca3af" }}>
+              : { backgroundColor: "var(--surface)", borderColor: "#d1d5db", color: "#9ca3af" }}>
             {showPipeline ? "Minor Projects: On" : "Minor Projects: Off"}
           </button>
-          {msg && <p className="text-sm text-gray-700 bg-white border rounded-lg px-4 py-2 shadow-sm">{msg}</p>}
+          {msg && <p className="text-sm text-text bg-surface border rounded-lg px-4 py-2 shadow-sm">{msg}</p>}
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200 text-[11px] uppercase tracking-wider text-gray-500 font-semibold">
-                <th className="px-4 py-3 text-left sticky left-0 bg-gray-50 z-10">Project</th>
+              <tr className="bg-surface-2 border-b border-border text-[11px] uppercase tracking-wider text-muted font-semibold">
+                <th className="px-4 py-3 text-left sticky left-0 bg-surface-2 z-10">Project</th>
                 <th className="px-4 py-3 text-left">Foreman</th>
                 <th className="px-4 py-3 text-right">Contract Value</th>
                 <th className="px-4 py-3 text-center">Gross Margin</th>
@@ -96,19 +96,19 @@ export default function InputsClient({ inputs, role }: Props) {
                 {isAdmin && <th className="px-4 py-3 text-center">Actions</th>}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-border">
               {visibleRows.map((row: any) => {
                 const isEditing = editing === row.id;
                 const d = isEditing ? draft : row;
 
                 return (
-                  <tr key={row.id} className={`hover:bg-gray-50 transition-colors ${isEditing ? "bg-blue-50" : ""} ${row.is_pipeline ? "opacity-75" : ""}`}>
-                    <td className="px-4 py-3 font-medium text-gray-900 sticky left-0 bg-inherit">
+                  <tr key={row.id} className={`hover:bg-surface-2 transition-colors ${isEditing ? "bg-info-bg" : ""} ${row.is_pipeline ? "opacity-75" : ""}`}>
+                    <td className="px-4 py-3 font-medium text-text sticky left-0 bg-inherit">
                       <span>{row.name}</span>
-                      {row.is_pipeline ? <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-400 font-normal">Minor</span> : null}
+                      {row.is_pipeline ? <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-surface-2 text-subtle font-normal">Minor</span> : null}
                     </td>
-                    <td className="px-4 py-3 text-gray-500">{row.foreman}</td>
-                    <td className="px-4 py-3 text-right font-mono text-gray-700">
+                    <td className="px-4 py-3 text-muted">{row.foreman}</td>
+                    <td className="px-4 py-3 text-right font-mono text-text">
                       {"$" + (row.contract_value ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}
                     </td>
 
@@ -122,7 +122,7 @@ export default function InputsClient({ inputs, role }: Props) {
                             className="w-20 px-2 py-1 text-xs text-center border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
                           />
                         ) : (
-                          <span className="text-gray-700">
+                          <span className="text-text">
                             {f.pct ? fmtPct(d[f.key]) : f.key.includes("rate") || f.key.includes("wage") ? fmt$(d[f.key]) : d[f.key]?.toLocaleString()}
                           </span>
                         )}
@@ -138,13 +138,13 @@ export default function InputsClient({ inputs, role }: Props) {
                               {saving ? "…" : "Save"}
                             </button>
                             <button onClick={() => setEditing(null)}
-                              className="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+                              className="text-xs px-3 py-1 bg-surface-2 hover:bg-surface-3 rounded transition-colors">
                               Cancel
                             </button>
                           </div>
                         ) : (
                           <button onClick={() => startEdit(row)}
-                            className="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+                            className="text-xs px-3 py-1 bg-surface-2 hover:bg-surface-3 rounded transition-colors">
                             Edit
                           </button>
                         )}
@@ -158,7 +158,7 @@ export default function InputsClient({ inputs, role }: Props) {
         </div>
       </div>
 
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-subtle">
         * Check column = Materials Share + Wages Share. Gross Margin = 1 − Check.
         Hourly Rate drives estimated hours budgets. Changes here affect KPI calculations.
       </p>

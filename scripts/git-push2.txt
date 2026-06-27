@@ -1,0 +1,6 @@
+warning: in the working copy of 'app/api/setup-users/route.ts', LF will be replaced by CRLF the next time Git touches it
+[main cd496bf] Add one-time user setup endpoint
+ 1 file changed, 36 insertions(+)
+ create mode 100644 app/api/setup-users/route.ts
+To https://github.com/rap-ux/project-tracker.git
+   32debfa..cd496bf  main -> main

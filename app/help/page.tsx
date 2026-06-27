@@ -17,11 +17,11 @@ export default async function HelpPage() {
     <>
       <Navbar userName={userName} role={role} userEmail={userEmail} userTitle={userTitle} />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 text-gray-800">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 text-text">
         {/* ── Header ─────────────────────────────────────────────────────────── */}
         <header className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Switchboard Help &amp; Guide</h1>
-          <p className="text-sm text-gray-500 mt-2">
+          <h1 className="text-3xl font-bold text-text">Switchboard Help &amp; Guide</h1>
+          <p className="text-sm text-muted mt-2">
             New here? Start with the quick-start. Stuck on a term? Check the glossary.
             Need to do something specific? Jump to the how-to&apos;s.
           </p>
@@ -36,7 +36,7 @@ export default async function HelpPage() {
               ["features",    "Feature Index"],
             ].map(([id, label]) => (
               <a key={id} href={`#${id}`}
-                 className="px-3 py-1.5 rounded-full border border-gray-200 bg-white text-gray-700 hover:border-cyan-400 hover:text-cyan-700 transition-colors">
+                 className="px-3 py-1.5 rounded-full border border-border bg-surface text-text hover:border-cyan-400 hover:text-accent transition-colors">
                 {label}
               </a>
             ))}
@@ -45,7 +45,7 @@ export default async function HelpPage() {
 
         {/* ── Overview ─────────────────────────────────────────────────────── */}
         <section id="overview" className="mb-10 scroll-mt-20">
-          <h2 className="text-xl font-bold text-gray-900 mb-3">What is Switchboard?</h2>
+          <h2 className="text-xl font-bold text-text mb-3">What is Switchboard?</h2>
           <p className="leading-relaxed">
             Switchboard is Totally Wired Electric&apos;s project tracking and operations
             dashboard. It brings project schedules, financials, hours tracking, foreman
@@ -57,8 +57,8 @@ export default async function HelpPage() {
 
         {/* ── Quick Start ──────────────────────────────────────────────────── */}
         <section id="quick-start" className="mb-10 scroll-mt-20">
-          <h2 className="text-xl font-bold text-gray-900 mb-3">First-time quick start</h2>
-          <p className="text-sm text-gray-600 mb-4">Five steps to get oriented in under two minutes.</p>
+          <h2 className="text-xl font-bold text-text mb-3">First-time quick start</h2>
+          <p className="text-sm text-muted mb-4">Five steps to get oriented in under two minutes.</p>
           <ol className="space-y-3">
             {[
               ["Land on the Home page.", "The top panel — “What needs your attention” — shows any flagged projects. The middle row gives four KPIs across the whole portfolio."],
@@ -71,7 +71,7 @@ export default async function HelpPage() {
                 <span className="shrink-0 w-7 h-7 rounded-full bg-cyan-500 text-white text-sm font-bold flex items-center justify-center">{i + 1}</span>
                 <div>
                   <p className="font-semibold">{title}</p>
-                  <p className="text-sm text-gray-600">{body}</p>
+                  <p className="text-sm text-muted">{body}</p>
                 </div>
               </li>
             ))}
@@ -80,10 +80,10 @@ export default async function HelpPage() {
 
         {/* ── Glossary ─────────────────────────────────────────────────────── */}
         <section id="glossary" className="mb-10 scroll-mt-20">
-          <h2 className="text-xl font-bold text-gray-900 mb-3">Glossary</h2>
-          <div className="overflow-hidden border border-gray-200 rounded-xl">
+          <h2 className="text-xl font-bold text-text mb-3">Glossary</h2>
+          <div className="overflow-hidden border border-border rounded-xl">
             <table className="w-full text-sm">
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-border">
                 {[
                   ["Tracked Project", "A signed-contract project. Counts toward all KPIs."],
                   ["Minor Project", "Pre-contract or small job. Tracked separately on the Minor Projects toggle."],
@@ -105,9 +105,9 @@ export default async function HelpPage() {
                   ["QBO", "QuickBooks Online — the source of truth for materials and hours. Imported via the Uploads page."],
                   ["Bonus tier", "Beat (under budget by >10%) / Met (within 10%) / Over (over budget) / Locked (in progress)."],
                 ].map(([term, def]) => (
-                  <tr key={term} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-semibold text-gray-900 whitespace-nowrap align-top w-56">{term}</td>
-                    <td className="px-4 py-3 text-gray-700">{def}</td>
+                  <tr key={term} className="hover:bg-surface-2">
+                    <td className="px-4 py-3 font-semibold text-text whitespace-nowrap align-top w-56">{term}</td>
+                    <td className="px-4 py-3 text-text">{def}</td>
                   </tr>
                 ))}
               </tbody>
@@ -117,7 +117,7 @@ export default async function HelpPage() {
 
         {/* ── How-to's ─────────────────────────────────────────────────────── */}
         <section id="how-tos" className="mb-10 scroll-mt-20">
-          <h2 className="text-xl font-bold text-gray-900 mb-3">How-to&apos;s</h2>
+          <h2 className="text-xl font-bold text-text mb-3">How-to&apos;s</h2>
           <div className="space-y-5">
             {[
               ["Add a new project", "Dashboard → “+ New Project” → fill in name, foreman, stage, contract value, and dates → Save. To add a Minor / pipeline project, choose “Minor” as the type."],
@@ -132,8 +132,8 @@ export default async function HelpPage() {
               ["Dismiss an alert", "Click the bell icon in the top nav → dismiss any alert you’ve handled. Dismissals are per-user."],
             ].map(([title, body]) => (
               <div key={title} className="border-l-4 border-cyan-400 pl-4">
-                <h3 className="font-semibold text-gray-900">{title}</h3>
-                <p className="text-sm text-gray-700 mt-1">{body}</p>
+                <h3 className="font-semibold text-text">{title}</h3>
+                <p className="text-sm text-text mt-1">{body}</p>
               </div>
             ))}
           </div>
@@ -141,8 +141,8 @@ export default async function HelpPage() {
 
         {/* ── Feature Index ────────────────────────────────────────────────── */}
         <section id="features" className="mb-10 scroll-mt-20">
-          <h2 className="text-xl font-bold text-gray-900 mb-3">Full feature index</h2>
-          <p className="text-sm text-gray-600 mb-5">
+          <h2 className="text-xl font-bold text-text mb-3">Full feature index</h2>
+          <p className="text-sm text-muted mb-5">
             Everything Switchboard can do, organized by page. The italicized line under each page tells you where to click.
           </p>
 
@@ -304,10 +304,10 @@ export default async function HelpPage() {
                 ],
               },
             ] as const).map(g => (
-              <div key={g.heading} className="border border-gray-200 rounded-xl p-5 bg-white">
-                <h3 className="font-bold text-gray-900">{g.heading}</h3>
-                <p className="text-xs italic text-gray-500 mt-1 mb-3">Where to find it: {g.where}</p>
-                <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700">
+              <div key={g.heading} className="border border-border rounded-xl p-5 bg-surface">
+                <h3 className="font-bold text-text">{g.heading}</h3>
+                <p className="text-xs italic text-muted mt-1 mb-3">Where to find it: {g.where}</p>
+                <ul className="list-disc pl-5 space-y-1 text-sm text-text">
                   {g.items.map((it, i) => <li key={i}>{it}</li>)}
                 </ul>
               </div>
@@ -315,7 +315,7 @@ export default async function HelpPage() {
           </div>
         </section>
 
-        <footer className="mt-12 pt-6 border-t border-gray-200 text-xs text-gray-400">
+        <footer className="mt-12 pt-6 border-t border-border text-xs text-subtle">
           Need something not covered here? Tell Rafael — Switchboard ships updates several times a week.
         </footer>
       </main>

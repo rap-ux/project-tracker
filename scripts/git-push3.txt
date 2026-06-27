@@ -1,0 +1,10 @@
+warning: in the working copy of 'components/TimelineClient.tsx', LF will be replaced by CRLF the next time Git touches it
+[main a163fc8] Fix is_pipeline=0 rendering as text 0 in Gantt and Kanban
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+To https://github.com/rap-ux/project-tracker.git
+ ! [rejected]        main -> main (non-fast-forward)
+error: failed to push some refs to 'https://github.com/rap-ux/project-tracker.git'
+hint: Updates were rejected because the tip of your current branch is behind
+hint: its remote counterpart. If you want to integrate the remote changes,
+hint: use 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.

@@ -60,15 +60,15 @@ export default async function ForemanPage() {
   const totalContractValue = projects.reduce((s, p) => s + (p.contract_value  || 0), 0);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-surface-2">
       <Navbar userName={session.user?.name ?? "Foreman"} role="foreman" userEmail={session.user?.email ?? undefined} userTitle={(session.user as any)?.title ?? undefined} />
 
       <main className="flex-1 max-w-screen-lg mx-auto w-full px-4 py-6 space-y-6">
 
         {/* ── Greeting ── */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Hi, {session.user?.name} 👋</h1>
-          <p className="text-gray-500 text-sm mt-1">Here's how your projects are tracking as of today.</p>
+          <h1 className="text-2xl font-bold text-text">Hi, {session.user?.name} 👋</h1>
+          <p className="text-muted text-sm mt-1">Here's how your projects are tracking as of today.</p>
         </div>
 
         {/* ── Bonus Summary Card ── */}
@@ -93,9 +93,9 @@ export default async function ForemanPage() {
           </div>
 
           {/* Progress bar */}
-          <div className="mt-5 w-full bg-white/20 rounded-full h-3 overflow-hidden">
+          <div className="mt-5 w-full bg-surface/20 rounded-full h-3 overflow-hidden">
             <div
-              className="h-3 rounded-full bg-white transition-all"
+              className="h-3 rounded-full bg-surface transition-all"
               style={{ width: totals.maxPossibleBonus > 0 ? `${(totals.totalBonus / totals.maxPossibleBonus) * 100}%` : "0%" }}
             />
           </div>
@@ -104,34 +104,34 @@ export default async function ForemanPage() {
           <div className="mt-4 grid grid-cols-4 gap-3 text-center">
             <div><p className="text-xl font-bold">{totals.jobsBeat}</p><p className="text-xs text-white/70">Beat Budget</p></div>
             <div><p className="text-xl font-bold">{totals.jobsMet}</p><p className="text-xs text-white/70">Met Budget</p></div>
-            <div><p className="text-xl font-bold text-red-300">{totals.jobsMissed}</p><p className="text-xs text-white/70">Over Budget</p></div>
+            <div><p className="text-xl font-bold text-danger">{totals.jobsMissed}</p><p className="text-xs text-white/70">Over Budget</p></div>
             <div><p className="text-xl font-bold text-white/50">{totals.jobsLocked ?? 0}</p><p className="text-xs text-white/70">🔒 In Progress</p></div>
           </div>
           <p className="mt-3 text-xs text-white/40 text-center">Counts are per stage — each project has a Rough and Finish stage bonus</p>
         </div>
 
         {/* ── Bonus Tier Reference ── */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-          <h3 className="text-sm font-bold text-gray-700 mb-3">Bonus Structure by Project Value</h3>
+        <div className="bg-surface rounded-xl border border-border shadow-sm p-4">
+          <h3 className="text-sm font-bold text-text mb-3">Bonus Structure by Project Value</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-gray-500 border-b">
+                <tr className="text-muted border-b">
                   <th className="text-left py-1.5 pr-4 font-medium">Project Value</th>
-                  <th className="text-center py-1.5 px-3 font-medium bg-yellow-50">Base Bonus<br/><span className="font-normal">(Budget Met ±10%)</span></th>
-                  <th className="text-center py-1.5 px-3 font-medium bg-yellow-50">Extra Bonus<br/><span className="font-normal">(Beat &gt;10%)</span></th>
+                  <th className="text-center py-1.5 px-3 font-medium bg-warning-bg">Base Bonus<br/><span className="font-normal">(Budget Met ±10%)</span></th>
+                  <th className="text-center py-1.5 px-3 font-medium bg-warning-bg">Extra Bonus<br/><span className="font-normal">(Beat &gt;10%)</span></th>
                   <th className="text-center py-1.5 px-3 font-medium">Max Total</th>
-                  <th className="text-left py-1.5 pl-3 font-medium text-gray-400">Paid When</th>
+                  <th className="text-left py-1.5 pl-3 font-medium text-subtle">Paid When</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-border">
                 {BONUS_TIERS.map(t => (
-                  <tr key={t.label} className="hover:bg-gray-50">
-                    <td className="py-1.5 pr-4 font-medium text-gray-700">{t.label}</td>
-                    <td className="py-1.5 px-3 text-center font-bold text-yellow-700 bg-yellow-50">{fmt$(t.meet)}</td>
-                    <td className="py-1.5 px-3 text-center font-bold text-yellow-700 bg-yellow-50">{fmt$(t.beat)}</td>
-                    <td className="py-1.5 px-3 text-center font-semibold text-gray-800">{fmt$(t.max)}</td>
-                    <td className="py-1.5 pl-3 text-gray-400">Per stage at 100%</td>
+                  <tr key={t.label} className="hover:bg-surface-2">
+                    <td className="py-1.5 pr-4 font-medium text-text">{t.label}</td>
+                    <td className="py-1.5 px-3 text-center font-bold text-warning bg-warning-bg">{fmt$(t.meet)}</td>
+                    <td className="py-1.5 px-3 text-center font-bold text-warning bg-warning-bg">{fmt$(t.beat)}</td>
+                    <td className="py-1.5 px-3 text-center font-semibold text-text">{fmt$(t.max)}</td>
+                    <td className="py-1.5 pl-3 text-subtle">Per stage at 100%</td>
                   </tr>
                 ))}
               </tbody>
@@ -146,16 +146,16 @@ export default async function ForemanPage() {
             { label: "Contract Value", value: fmt$(totalContractValue), note: "combined"                      },
             { label: "In Progress",    value: String(projects.filter(p => p.project_completion < 1).length)   },
           ].map(s => (
-            <div key={s.label} className="bg-white rounded-xl border p-4 shadow-sm">
-              <p className="text-xs text-gray-500 uppercase tracking-wide">{s.label}</p>
+            <div key={s.label} className="bg-surface rounded-xl border p-4 shadow-sm">
+              <p className="text-xs text-muted uppercase tracking-wide">{s.label}</p>
               <p className="text-xl font-bold mt-1">{s.value}</p>
-              {s.note && <p className="text-xs text-gray-400">{s.note}</p>}
+              {s.note && <p className="text-xs text-subtle">{s.note}</p>}
             </div>
           ))}
         </div>
 
         {/* ── Per-project cards ── */}
-        <h2 className="text-lg font-bold text-gray-800">Your Projects</h2>
+        <h2 className="text-lg font-bold text-text">Your Projects</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {enriched.map((p: any) => (
@@ -164,7 +164,7 @@ export default async function ForemanPage() {
         </div>
 
         {projects.length === 0 && (
-          <div className="text-center py-16 text-gray-400">
+          <div className="text-center py-16 text-subtle">
             <p className="text-4xl mb-4">📋</p>
             <p>No projects assigned yet.</p>
           </div>

@@ -205,15 +205,15 @@ export default function ForecastClient({ rows, role }: Props) {
       {/* ── Header ── */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Revenue Forecasting (Accrual)</h1>
-          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+          <h1 className="text-xl font-bold text-text">Revenue Forecasting (Accrual)</h1>
+          <p className="text-xs sm:text-sm text-muted mt-0.5">
             Dates from Timeline · 10 / 25 / 25 / 30 / 10% milestone split
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs text-gray-400 font-medium mr-0.5">Foreman:</span>
+            <span className="text-xs text-subtle font-medium mr-0.5">Foreman:</span>
             {allForemen.map(f => {
               const active = !hiddenForemen.has(f);
               return (
@@ -221,7 +221,7 @@ export default function ForecastClient({ rows, role }: Props) {
                   className="text-xs px-3 py-1 rounded-full border font-medium transition-all"
                   style={active
                     ? { backgroundColor: "#00BAD6", borderColor: "#00BAD6", color: "#fff" }
-                    : { backgroundColor: "#fff", borderColor: "#d1d5db", color: "#9ca3af" }}>
+                    : { backgroundColor: "var(--surface)", borderColor: "#d1d5db", color: "#9ca3af" }}>
                   {f}
                 </button>
               );
@@ -230,7 +230,7 @@ export default function ForecastClient({ rows, role }: Props) {
 
           {/* Per Nicole: this used to be a toggle but it didn't move anything in
               the data we have, so it's now a static informative pill. */}
-          <span className="text-xs px-3 py-1 rounded-full border border-gray-200 bg-gray-50 text-gray-500 font-medium">
+          <span className="text-xs px-3 py-1 rounded-full border border-border bg-surface-2 text-muted font-medium">
             Minor projects not included
           </span>
 
@@ -251,11 +251,11 @@ export default function ForecastClient({ rows, role }: Props) {
               ]);
               downloadCSV(`forecast-cashflow-${new Date().toISOString().slice(0, 10)}.csv`, csv);
             }}
-            className="text-xs px-3 py-1 rounded-full border border-gray-300 bg-white font-medium text-gray-700 hover:bg-gray-50">
+            className="text-xs px-3 py-1 rounded-full border border-border-strong bg-surface font-medium text-text hover:bg-surface-2">
             ⬇ CSV
           </button>
 
-          {msg && <p className="text-sm text-gray-700 bg-white border rounded-lg px-4 py-2 shadow-sm">{msg}</p>}
+          {msg && <p className="text-sm text-text bg-surface border rounded-lg px-4 py-2 shadow-sm">{msg}</p>}
         </div>
       </div>
 
@@ -272,17 +272,17 @@ export default function ForecastClient({ rows, role }: Props) {
           { label: "Tracked Remaining Unbilled", value: fmt$(activeRemainingTotal), sub: "contract − invoiced · secondary health-check", muted: true },
           { label: "Tracked Projects",           value: String(activeData.length) },
         ] as Array<{ label: string; value: string; sub?: string; hi?: string; prominent?: boolean; muted?: boolean }>).map(card => (
-          <div key={card.label} className={`bg-white rounded-xl border shadow-sm px-4 py-3 ${
+          <div key={card.label} className={`bg-surface rounded-xl border shadow-sm px-4 py-3 ${
             card.prominent ? "border-cyan-200 ring-1 ring-cyan-100" :
-            card.muted     ? "border-gray-150 bg-gray-50/40"        :
-                             "border-gray-200"
+            card.muted     ? "border-border bg-surface-2/40"        :
+                             "border-border"
           }`}>
-            <p className={`text-[10px] font-semibold uppercase tracking-wide ${card.muted ? "text-gray-400" : "text-gray-500"}`}>{card.label}</p>
+            <p className={`text-[10px] font-semibold uppercase tracking-wide ${card.muted ? "text-subtle" : "text-muted"}`}>{card.label}</p>
             <p className={`font-bold mt-0.5 ${card.prominent ? "text-2xl" : card.muted ? "text-base" : "text-xl"}`}
                style={card.muted ? { color: "#6b7280" } : card.hi ? { color: card.hi } : { color: "#111827" }}>
               {card.value}
             </p>
-            {card.sub && <p className={`text-[10px] mt-0.5 ${card.muted ? "text-gray-400/80" : "text-gray-400"}`}>{card.sub}</p>}
+            {card.sub && <p className={`text-[10px] mt-0.5 ${card.muted ? "text-subtle/80" : "text-subtle"}`}>{card.sub}</p>}
           </div>
         ))}
       </div>
@@ -290,14 +290,14 @@ export default function ForecastClient({ rows, role }: Props) {
       {/* ── Reconciliation banner ── */}
       {pastTotal > 0 && (
         <div className={`rounded-xl p-3 text-xs flex items-center gap-3 ${
-          Math.abs(reconcileDiff) < 5000 ? "bg-green-50 border border-green-200"
-          : reconcileDiff > 0            ? "bg-blue-50 border border-blue-200"
-                                         : "bg-yellow-50 border border-yellow-200"
+          Math.abs(reconcileDiff) < 5000 ? "bg-success-bg border border-green-200"
+          : reconcileDiff > 0            ? "bg-info-bg border border-blue-200"
+                                         : "bg-warning-bg border border-yellow-200"
         }`}>
           <span className="text-base">
             {Math.abs(reconcileDiff) < 5000 ? "✅" : reconcileDiff > 0 ? "ℹ️" : "⚠️"}
           </span>
-          <span className="text-gray-700">
+          <span className="text-text">
             <strong>Reconciliation:</strong>{" "}
             {Math.abs(reconcileDiff) < 5000
               ? <>Past milestones forecast ({fmt$(pastTotal)}) closely matches actual invoiced ({fmt$(actualInvoiced)}) — projections are on track.</>
@@ -391,18 +391,18 @@ export default function ForecastClient({ rows, role }: Props) {
         };
 
         return (
-        <div className="bg-white rounded-2xl border border-gray-200/70 shadow-sm p-6 space-y-4">
+        <div className="bg-surface rounded-2xl border border-border/70 shadow-sm p-6 space-y-4">
           <div className="flex items-start justify-between flex-wrap gap-3">
             <div>
-              <h2 className="text-base font-semibold text-gray-900 tracking-tight">Projected Cash Flow</h2>
-              <p className="text-xs text-gray-500 mt-1">
+              <h2 className="text-base font-semibold text-text tracking-tight">Projected Cash Flow</h2>
+              <p className="text-xs text-muted mt-1">
                 {chartView === "flow"        && "How much cash lands each month. Faint line = running total, for reference only."}
                 {chartView === "heatmap"     && "Months as a grid — color intensity = cash amount"}
                 {chartView === "composition" && "Monthly bars broken down by which project contributes"}
               </p>
             </div>
             {/* View switcher */}
-            <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-xs bg-gray-50">
+            <div className="inline-flex rounded-lg border border-border overflow-hidden text-xs bg-surface-2">
               {([
                 { key: "flow",        label: "Flow + Total", icon: "📈" },
                 { key: "heatmap",     label: "Heatmap",      icon: "🔥" },
@@ -412,7 +412,7 @@ export default function ForecastClient({ rows, role }: Props) {
                   className={`px-3 py-1.5 font-medium transition-colors ${
                     chartView === v.key
                       ? "text-white"
-                      : "text-gray-600 hover:bg-white hover:text-gray-900"
+                      : "text-muted hover:bg-surface hover:text-text"
                   }`}
                   style={chartView === v.key ? { backgroundColor: "#00BAD6" } : {}}>
                   <span className="mr-1">{v.icon}</span>{v.label}
@@ -424,43 +424,43 @@ export default function ForecastClient({ rows, role }: Props) {
           {/* Summary ribbon */}
           <div className="flex flex-wrap gap-4 text-xs">
             <div>
-              <div className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">Total forecast</div>
-              <div className="text-lg font-bold text-gray-900 tabular-nums">{fmt$(totalForecast)}</div>
+              <div className="text-[10px] uppercase tracking-wide text-subtle font-medium">Total forecast</div>
+              <div className="text-lg font-bold text-text tabular-nums">{fmt$(totalForecast)}</div>
             </div>
             <div>
-              <div className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">Peak month</div>
+              <div className="text-[10px] uppercase tracking-wide text-subtle font-medium">Peak month</div>
               <div className="text-lg font-bold tabular-nums" style={{ color: "#00BAD6" }}>{fmt$(maxMonth)}</div>
             </div>
             {nowIdx >= 0 && (
               <div>
-                <div className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">Banked thru this month</div>
-                <div className="text-lg font-bold text-amber-600 tabular-nums">{fmt$(cumByMonth[todayKey] ?? 0)}</div>
+                <div className="text-[10px] uppercase tracking-wide text-subtle font-medium">Banked thru this month</div>
+                <div className="text-lg font-bold text-warning tabular-nums">{fmt$(cumByMonth[todayKey] ?? 0)}</div>
               </div>
             )}
           </div>
 
           {/* View-specific legend */}
-          <div className="flex items-center gap-4 text-xs text-gray-600">
+          <div className="flex items-center gap-4 text-xs text-muted">
             {chartView === "flow" && (
               <>
                 <div className="flex items-center gap-1.5">
                   <div className="w-3 h-2 rounded-sm" style={{ background: "linear-gradient(180deg, rgba(0,186,214,0.55), rgba(0,186,214,0.08))" }} />
-                  <span className="font-medium text-gray-700">Cash per month</span>
+                  <span className="font-medium text-text">Cash per month</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <div className="w-4 h-[2px] rounded-full bg-gray-300" /><span className="text-gray-400">Running total (reference)</span>
+                  <div className="w-4 h-[2px] rounded-full bg-surface-3" /><span className="text-subtle">Running total (reference)</span>
                 </div>
               </>
             )}
             {chartView === "heatmap" && (
               <div className="flex items-center gap-2">
-                <span className="text-gray-400">Less</span>
-                <div className="flex h-3 rounded overflow-hidden border border-gray-200">
+                <span className="text-subtle">Less</span>
+                <div className="flex h-3 rounded overflow-hidden border border-border">
                   {[0.1, 0.25, 0.5, 0.75, 1].map(t => (
                     <div key={t} className="w-5" style={{ backgroundColor: `hsl(189, 100%, ${96 - t * 56}%)` }} />
                   ))}
                 </div>
-                <span className="text-gray-400">More</span>
+                <span className="text-subtle">More</span>
               </div>
             )}
             {chartView === "composition" && allProjectNames.length > 0 && (
@@ -472,7 +472,7 @@ export default function ForecastClient({ rows, role }: Props) {
                   </div>
                 ))}
                 {allProjectNames.length > 8 && (
-                  <span className="text-gray-400">+{allProjectNames.length - 8} more</span>
+                  <span className="text-subtle">+{allProjectNames.length - 8} more</span>
                 )}
               </div>
             )}
@@ -482,13 +482,13 @@ export default function ForecastClient({ rows, role }: Props) {
           {chartView === "flow" && (
           <div className="relative overflow-x-auto
                           [&::-webkit-scrollbar]:h-3
-                          [&::-webkit-scrollbar-track]:bg-gray-100
+                          [&::-webkit-scrollbar-track]:bg-surface-2
                           [&::-webkit-scrollbar-track]:rounded-full
-                          [&::-webkit-scrollbar-thumb]:bg-gray-400
+                          [&::-webkit-scrollbar-thumb]:bg-subtle
                           [&::-webkit-scrollbar-thumb]:rounded-full
                           [&::-webkit-scrollbar-thumb]:border-2
-                          [&::-webkit-scrollbar-thumb]:border-gray-100
-                          hover:[&::-webkit-scrollbar-thumb]:bg-gray-500">
+                          [&::-webkit-scrollbar-thumb]:border-border
+                          hover:[&::-webkit-scrollbar-thumb]:bg-subtle">
             <svg width={svgW} height={CHART_H} className="block">
               <defs>
                 <linearGradient id="cf-area" x1="0" x2="0" y1="0" y2="1">
@@ -599,23 +599,23 @@ export default function ForecastClient({ rows, role }: Props) {
           <div className="space-y-2">
             <div className="overflow-x-auto
                             [&::-webkit-scrollbar]:h-3
-                            [&::-webkit-scrollbar-track]:bg-gray-100
+                            [&::-webkit-scrollbar-track]:bg-surface-2
                             [&::-webkit-scrollbar-track]:rounded-full
-                            [&::-webkit-scrollbar-thumb]:bg-gray-400
+                            [&::-webkit-scrollbar-thumb]:bg-subtle
                             [&::-webkit-scrollbar-thumb]:rounded-full">
               <table className="border-separate" style={{ borderSpacing: "6px" }}>
                 <thead>
                   <tr>
-                    <th className="text-[10px] font-medium text-gray-400 text-right pr-2"></th>
+                    <th className="text-[10px] font-medium text-subtle text-right pr-2"></th>
                     {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map(m => (
-                      <th key={m} className="text-[10px] font-medium text-gray-500 w-14">{m}</th>
+                      <th key={m} className="text-[10px] font-medium text-muted w-14">{m}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {years.map(y => (
                     <tr key={y}>
-                      <td className="text-xs font-semibold text-gray-700 pr-2 text-right">{y}</td>
+                      <td className="text-xs font-semibold text-text pr-2 text-right">{y}</td>
                       {Array.from({ length: 12 }, (_, mi) => {
                         const mk = `${y}-${String(mi + 1).padStart(2, "0")}`;
                         const val = totalByMonth[mk] ?? 0;
@@ -638,14 +638,14 @@ export default function ForecastClient({ rows, role }: Props) {
                               {exists ? (
                                 <>
                                   <span className={`text-[10px] font-semibold tabular-nums ${
-                                    val / heatmapMax > 0.5 ? "text-white" : "text-gray-700"
+                                    val / heatmapMax > 0.5 ? "text-white" : "text-text"
                                   }`}>
                                     {val >= 1000 ? `$${Math.round(val/1000)}k` : fmt$(val)}
                                   </span>
-                                  {isNow && <span className="text-[8px] text-amber-700 font-bold tracking-wide">NOW</span>}
+                                  {isNow && <span className="text-[8px] text-warning font-bold tracking-wide">NOW</span>}
                                 </>
                               ) : (
-                                <span className="text-[10px] text-gray-300">—</span>
+                                <span className="text-[10px] text-subtle">—</span>
                               )}
                             </div>
                           </td>
@@ -656,7 +656,7 @@ export default function ForecastClient({ rows, role }: Props) {
                 </tbody>
               </table>
             </div>
-            <p className="text-[10px] text-gray-400 text-center">Rows = years · Columns = months · Darker = bigger inflow</p>
+            <p className="text-[10px] text-subtle text-center">Rows = years · Columns = months · Darker = bigger inflow</p>
           </div>
           )}
 
@@ -676,13 +676,13 @@ export default function ForecastClient({ rows, role }: Props) {
             return (
               <div className="relative overflow-x-auto
                               [&::-webkit-scrollbar]:h-3
-                              [&::-webkit-scrollbar-track]:bg-gray-100
+                              [&::-webkit-scrollbar-track]:bg-surface-2
                               [&::-webkit-scrollbar-track]:rounded-full
-                              [&::-webkit-scrollbar-thumb]:bg-gray-400
+                              [&::-webkit-scrollbar-thumb]:bg-subtle
                               [&::-webkit-scrollbar-thumb]:rounded-full
                               [&::-webkit-scrollbar-thumb]:border-2
-                              [&::-webkit-scrollbar-thumb]:border-gray-100
-                              hover:[&::-webkit-scrollbar-thumb]:bg-gray-500">
+                              [&::-webkit-scrollbar-thumb]:border-border
+                              hover:[&::-webkit-scrollbar-thumb]:bg-subtle">
                 <svg width={sW} height={CH} className="block">
                   {/* Gridlines */}
                   {[0, 0.25, 0.5, 0.75, 1].map((f, i) => (
@@ -782,32 +782,32 @@ export default function ForecastClient({ rows, role }: Props) {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-left text-gray-500 border-b">
+                <tr className="text-left text-muted border-b">
                   <th className="pb-1 font-medium">Month</th>
                   <th className="pb-1 font-medium text-right">Total</th>
                   <th className="pb-1 font-medium text-center">When</th>
                   <th className="pb-1 pl-4 font-medium">Breakdown</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-border">
                 {monthKeys.map(mk => {
                   const isMonthPast = mk < toYYYYMM(TODAY);
                   return (
-                    <tr key={mk} className="hover:bg-gray-50">
-                      <td className="py-1.5 font-medium text-gray-700">{monthLabel(mk)}</td>
-                      <td className="py-1.5 text-right font-mono font-semibold text-gray-800">{fmt$(totalByMonth[mk])}</td>
+                    <tr key={mk} className="hover:bg-surface-2">
+                      <td className="py-1.5 font-medium text-text">{monthLabel(mk)}</td>
+                      <td className="py-1.5 text-right font-mono font-semibold text-text">{fmt$(totalByMonth[mk])}</td>
                       <td className="py-1.5 text-center">
                         <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                          isMonthPast ? "bg-gray-100 text-gray-500" : "bg-cyan-50 text-cyan-700"
+                          isMonthPast ? "bg-surface-2 text-muted" : "bg-accent-soft text-accent"
                         }`}>
                           {isMonthPast ? "Past" : "Upcoming"}
                         </span>
                       </td>
-                      <td className="py-1.5 pl-4 text-gray-500">
+                      <td className="py-1.5 pl-4 text-muted">
                         {byMonth[mk].map((p, i) => (
                           <span key={i} className="mr-3">
                             <span className="font-medium">{p.projectName}</span>
-                            <span className="text-gray-400"> ({p.milestone} · {fmt$(p.amount)})</span>
+                            <span className="text-subtle"> ({p.milestone} · {fmt$(p.amount)})</span>
                           </span>
                         ))}
                       </td>
@@ -820,28 +820,28 @@ export default function ForecastClient({ rows, role }: Props) {
         </div>
         );
       })() : (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 text-sm text-blue-800">
+        <div className="bg-info-bg border border-blue-200 rounded-xl p-5 text-sm text-info">
           📅 No milestone dates available. Add stage start/end dates on the <strong>Timeline</strong> page — they'll flow here automatically.
         </div>
       )}
 
       {/* ── Active Milestone Table ── */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="px-5 py-3 border-b bg-gray-50 flex items-center justify-between">
+      <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
+        <div className="px-5 py-3 border-b bg-surface-2 flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-gray-800">Tracked Projects — Milestone Dates</h2>
-            <p className="text-xs text-gray-400 mt-0.5">
-              Dates marked <span className="font-semibold text-cyan-600">T</span> are inherited from Timeline ·{" "}
-              <span className="font-semibold text-amber-600">M</span> means manually overridden here
+            <h2 className="text-sm font-semibold text-text">Tracked Projects — Milestone Dates</h2>
+            <p className="text-xs text-subtle mt-0.5">
+              Dates marked <span className="font-semibold text-accent">T</span> are inherited from Timeline ·{" "}
+              <span className="font-semibold text-warning">M</span> means manually overridden here
             </p>
           </div>
-          <p className="text-xs text-gray-400">Cash received = milestone date + {RECEIPT_DELAY_DAYS} days</p>
+          <p className="text-xs text-subtle">Cash received = milestone date + {RECEIPT_DELAY_DAYS} days</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200 text-[11px] uppercase tracking-wider text-gray-500 font-semibold">
-                <th className="px-4 py-3 text-left sticky left-0 bg-gray-50 z-10">Project</th>
+              <tr className="bg-surface-2 border-b border-border text-[11px] uppercase tracking-wider text-muted font-semibold">
+                <th className="px-4 py-3 text-left sticky left-0 bg-surface-2 z-10">Project</th>
                 <th className="px-4 py-3 text-left">Foreman</th>
                 <th className="px-4 py-3 text-center">Dates Set</th>
                 <th className="px-4 py-3 text-right">Contract</th>
@@ -856,9 +856,9 @@ export default function ForecastClient({ rows, role }: Props) {
                 {isAdmin && <th className="px-4 py-3 text-center">Override</th>}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-border">
               {activeData.length === 0 && (
-                <tr><td colSpan={isAdmin ? 11 : 10} className="px-4 py-10 text-center text-gray-400 text-sm">No tracked projects match filters.</td></tr>
+                <tr><td colSpan={isAdmin ? 11 : 10} className="px-4 py-10 text-center text-subtle text-sm">No tracked projects match filters.</td></tr>
               )}
               {activeData.map((row: any) => {
                 const isEditing = editing === row.id;
@@ -868,33 +868,33 @@ export default function ForecastClient({ rows, role }: Props) {
                 const invoicedPct = row.contract_value > 0 ? (row.total_invoiced ?? 0) / row.contract_value : 0;
 
                 return (
-                  <tr key={row.id} className={`hover:bg-gray-50 transition-colors ${isEditing ? "bg-blue-50" : ""}`}>
-                    <td className="px-4 py-3 font-medium text-gray-900 sticky left-0 bg-inherit">
+                  <tr key={row.id} className={`hover:bg-surface-2 transition-colors ${isEditing ? "bg-info-bg" : ""}`}>
+                    <td className="px-4 py-3 font-medium text-text sticky left-0 bg-inherit">
                       <div>{row.name}</div>
-                      {row.stage && <div className="text-[10px] text-gray-400 font-normal">{row.stage} · {((row.stage_completion ?? 0) * 100).toFixed(0)}%</div>}
+                      {row.stage && <div className="text-[10px] text-subtle font-normal">{row.stage} · {((row.stage_completion ?? 0) * 100).toFixed(0)}%</div>}
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{row.foreman}</td>
+                    <td className="px-4 py-3 text-muted text-xs">{row.foreman}</td>
                     <td className="px-4 py-3 text-center">
                       <div className="inline-flex items-center gap-1">
-                        <span className="text-xs font-bold text-gray-700">{filled}/5</span>
+                        <span className="text-xs font-bold text-text">{filled}/5</span>
                         {inherited > 0 && (
-                          <span className="text-[9px] px-1 py-0.5 rounded bg-cyan-50 text-cyan-700 font-semibold"
+                          <span className="text-[9px] px-1 py-0.5 rounded bg-accent-soft text-accent font-semibold"
                             title={`${inherited} dates inherited from Timeline`}>
                             T{inherited}
                           </span>
                         )}
                         {filled - inherited > 0 && (
-                          <span className="text-[9px] px-1 py-0.5 rounded bg-amber-50 text-amber-700 font-semibold"
+                          <span className="text-[9px] px-1 py-0.5 rounded bg-warning-bg text-warning font-semibold"
                             title={`${filled - inherited} dates manually overridden`}>
                             M{filled - inherited}
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right font-mono text-gray-700">{fmt$(row.contract_value)}</td>
-                    <td className="px-4 py-3 text-right text-gray-600">
+                    <td className="px-4 py-3 text-right font-mono text-text">{fmt$(row.contract_value)}</td>
+                    <td className="px-4 py-3 text-right text-muted">
                       <div className="font-mono text-xs">{fmt$(row.total_invoiced ?? 0)}</div>
-                      <div className="text-[10px] text-gray-400">{(invoicedPct * 100).toFixed(0)}% billed</div>
+                      <div className="text-[10px] text-subtle">{(invoicedPct * 100).toFixed(0)}% billed</div>
                     </td>
 
                     {MILESTONES.map(m => {
@@ -923,7 +923,7 @@ export default function ForecastClient({ rows, role }: Props) {
                                     if (e.target.value !== "") changeField(`${m.key}_amount`, "");
                                   }}
                                   title={`Override %. Default ${(m.pct * 100).toFixed(0)}%. Clears the $ override.`}
-                                  className="w-1/2 text-[10px] px-1 py-0.5 border border-amber-200 rounded bg-amber-50/50 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                  className="w-1/2 text-[10px] px-1 py-0.5 border border-amber-200 rounded bg-warning-bg/50 focus:outline-none focus:ring-1 focus:ring-amber-400"
                                 />
                                 <input
                                   type="number" step="0.01" placeholder="$"
@@ -933,33 +933,33 @@ export default function ForecastClient({ rows, role }: Props) {
                                     if (e.target.value !== "") changeField(`${m.key}_pct`, "");
                                   }}
                                   title="Override actual $ amount. Clears the % override."
-                                  className="w-1/2 text-[10px] px-1 py-0.5 border border-amber-200 rounded bg-amber-50/50 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                  className="w-1/2 text-[10px] px-1 py-0.5 border border-amber-200 rounded bg-warning-bg/50 focus:outline-none focus:ring-1 focus:ring-amber-400"
                                 />
                               </div>
-                              {source === "timeline" && <span className="text-[9px] text-cyan-600">← Timeline</span>}
+                              {source === "timeline" && <span className="text-[9px] text-accent">← Timeline</span>}
                             </div>
                           ) : dateVal ? (
                             <div className="flex flex-col items-center">
                               <div className="flex items-center gap-1">
-                                <span className={`text-xs ${isDatePast ? "text-gray-500" : "text-gray-800 font-medium"}`}>{dateVal}</span>
+                                <span className={`text-xs ${isDatePast ? "text-muted" : "text-text font-medium"}`}>{dateVal}</span>
                                 {source === "timeline" && (
-                                  <span className="text-[9px] px-1 rounded bg-cyan-50 text-cyan-700 font-bold" title="Inherited from Timeline">T</span>
+                                  <span className="text-[9px] px-1 rounded bg-accent-soft text-accent font-bold" title="Inherited from Timeline">T</span>
                                 )}
                                 {source === "override" && (
-                                  <span className="text-[9px] px-1 rounded bg-amber-50 text-amber-700 font-bold" title="Manually overridden">M</span>
+                                  <span className="text-[9px] px-1 rounded bg-warning-bg text-warning font-bold" title="Manually overridden">M</span>
                                 )}
                               </div>
-                              <span className={`text-[10px] font-mono ${isDatePast ? "text-green-600" : "text-gray-400"}`}>
+                              <span className={`text-[10px] font-mono ${isDatePast ? "text-success" : "text-subtle"}`}>
                                 {fmt$(payAmt)}{isDatePast ? " ✓" : ""}
                               </span>
                               {amtSource !== "default" && (
-                                <span className="text-[9px] text-amber-600 font-semibold" title={amtSource === "amount" ? "Custom $ override" : "Custom % override"}>
+                                <span className="text-[9px] text-warning font-semibold" title={amtSource === "amount" ? "Custom $ override" : "Custom % override"}>
                                   {amtSource === "amount" ? "$-override" : `${Number(d[`${m.key}_pct`]).toFixed(1)}%`}
                                 </span>
                               )}
                             </div>
                           ) : (
-                            <span className="text-xs text-gray-300">—</span>
+                            <span className="text-xs text-subtle">—</span>
                           )}
                         </td>
                       );
@@ -974,7 +974,7 @@ export default function ForecastClient({ rows, role }: Props) {
                           className="w-24 text-xs px-1.5 py-1 border border-blue-300 rounded text-right focus:outline-none focus:ring-1 focus:ring-blue-400"
                         />
                       ) : (
-                        <span className="text-xs font-mono text-gray-700">{fmt$(d.remaining_value)}</span>
+                        <span className="text-xs font-mono text-text">{fmt$(d.remaining_value)}</span>
                       )}
                     </td>
 
@@ -987,14 +987,14 @@ export default function ForecastClient({ rows, role }: Props) {
                               {saving ? "…" : "Save"}
                             </button>
                             <button onClick={() => setEditing(null)}
-                              className="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+                              className="text-xs px-3 py-1 bg-surface-2 hover:bg-surface-3 rounded transition-colors">
                               Cancel
                             </button>
                           </div>
                         ) : (
                           <button onClick={() => startEdit(row)}
                             title="Override a milestone date or remaining value"
-                            className="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+                            className="text-xs px-3 py-1 bg-surface-2 hover:bg-surface-3 rounded transition-colors">
                             Override
                           </button>
                         )}
@@ -1008,25 +1008,25 @@ export default function ForecastClient({ rows, role }: Props) {
             {/* Totals footer */}
             {activeData.length > 0 && (
               <tfoot>
-                <tr className="text-xs font-semibold border-t-2 border-gray-300" style={{ backgroundColor: "#f0fdfe" }}>
-                  <td className="px-4 py-3 sticky left-0 font-bold" style={{ backgroundColor: "#f0fdfe", color: "#00BAD6" }}>
+                <tr className="text-xs font-semibold border-t-2 border-border-strong" style={{ backgroundColor: "var(--accent-soft)" }}>
+                  <td className="px-4 py-3 sticky left-0 font-bold" style={{ backgroundColor: "var(--accent-soft)", color: "#00BAD6" }}>
                     Totals ({activeData.length})
                   </td>
                   <td className="px-4 py-3" />
                   <td className="px-4 py-3" />
-                  <td className="px-4 py-3 text-right font-mono text-gray-900">{fmt$(activeContractTotal)}</td>
-                  <td className="px-4 py-3 text-right font-mono text-gray-900">{fmt$(actualInvoiced)}</td>
+                  <td className="px-4 py-3 text-right font-mono text-text">{fmt$(activeContractTotal)}</td>
+                  <td className="px-4 py-3 text-right font-mono text-text">{fmt$(actualInvoiced)}</td>
                   {MILESTONES.map(m => {
                     const milestoneTotal = activeData.reduce((s, r) => {
                       return s + (r[m.key] ? resolveMilestoneAmount(r, m.key, m.pct).amount : 0);
                     }, 0);
                     return (
-                      <td key={m.key} className="px-3 py-3 text-center font-mono text-gray-900">
-                        {milestoneTotal > 0 ? fmt$(milestoneTotal) : <span className="text-gray-300">—</span>}
+                      <td key={m.key} className="px-3 py-3 text-center font-mono text-text">
+                        {milestoneTotal > 0 ? fmt$(milestoneTotal) : <span className="text-subtle">—</span>}
                       </td>
                     );
                   })}
-                  <td className="px-4 py-3 text-right font-mono text-gray-900">{fmt$(activeRemainingTotal)}</td>
+                  <td className="px-4 py-3 text-right font-mono text-text">{fmt$(activeRemainingTotal)}</td>
                   {isAdmin && <td className="px-4 py-3" />}
                 </tr>
               </tfoot>
@@ -1037,10 +1037,10 @@ export default function ForecastClient({ rows, role }: Props) {
 
       {/* ── Minor Projects (separate section — no milestone math) ── */}
       {includeMinor && minorData.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="px-5 py-3 border-b bg-gray-50">
-            <h2 className="text-sm font-semibold text-gray-800">Minor Projects — Remaining to Bill</h2>
-            <p className="text-xs text-gray-400 mt-0.5">
+        <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
+          <div className="px-5 py-3 border-b bg-surface-2">
+            <h2 className="text-sm font-semibold text-text">Minor Projects — Remaining to Bill</h2>
+            <p className="text-xs text-subtle mt-0.5">
               Milestone split doesn't apply to small jobs. Showing contract vs. invoiced only.
             </p>
           </div>
@@ -1057,18 +1057,18 @@ export default function ForecastClient({ rows, role }: Props) {
                   <th className="px-4 py-2.5 text-left">Notes</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-border">
                 {minorData.map(p => {
                   const remaining = (p.contract_value ?? 0) - (p.total_invoiced ?? 0);
                   return (
-                    <tr key={p.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-2.5 font-medium text-gray-900">{p.name}</td>
-                      <td className="px-4 py-2.5 text-gray-500 text-xs">{p.foreman}</td>
-                      <td className="px-4 py-2.5 text-xs text-gray-500">{p.stage}</td>
-                      <td className="px-4 py-2.5 text-right font-mono text-gray-700">{fmt$(p.contract_value)}</td>
-                      <td className="px-4 py-2.5 text-right font-mono text-gray-600">{fmt$(p.total_invoiced)}</td>
-                      <td className="px-4 py-2.5 text-right font-mono font-semibold text-gray-900">{fmt$(remaining)}</td>
-                      <td className="px-4 py-2.5 text-xs text-gray-400 italic max-w-[240px] truncate" title={p.payment_notes ?? ""}>
+                    <tr key={p.id} className="hover:bg-surface-2">
+                      <td className="px-4 py-2.5 font-medium text-text">{p.name}</td>
+                      <td className="px-4 py-2.5 text-muted text-xs">{p.foreman}</td>
+                      <td className="px-4 py-2.5 text-xs text-muted">{p.stage}</td>
+                      <td className="px-4 py-2.5 text-right font-mono text-text">{fmt$(p.contract_value)}</td>
+                      <td className="px-4 py-2.5 text-right font-mono text-muted">{fmt$(p.total_invoiced)}</td>
+                      <td className="px-4 py-2.5 text-right font-mono font-semibold text-text">{fmt$(remaining)}</td>
+                      <td className="px-4 py-2.5 text-xs text-subtle italic max-w-[240px] truncate" title={p.payment_notes ?? ""}>
                         {p.payment_notes || "—"}
                       </td>
                     </tr>
@@ -1076,12 +1076,12 @@ export default function ForecastClient({ rows, role }: Props) {
                 })}
               </tbody>
               <tfoot>
-                <tr className="text-xs font-semibold border-t-2 border-gray-300 bg-gray-50">
+                <tr className="text-xs font-semibold border-t-2 border-border-strong bg-surface-2">
                   <td className="px-4 py-2.5">Minor Totals ({minorData.length})</td>
                   <td colSpan={2}></td>
-                  <td className="px-4 py-2.5 text-right font-mono text-gray-900">{fmt$(minorContractTotal)}</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-gray-700">{fmt$(minorInvoicedTotal)}</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-gray-900">{fmt$(minorRemainingTotal)}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-text">{fmt$(minorContractTotal)}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-text">{fmt$(minorInvoicedTotal)}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-text">{fmt$(minorRemainingTotal)}</td>
                   <td></td>
                 </tr>
               </tfoot>
@@ -1091,7 +1091,7 @@ export default function ForecastClient({ rows, role }: Props) {
       )}
 
       {/* Legend */}
-      <div className="text-xs text-gray-400 space-y-1">
+      <div className="text-xs text-subtle space-y-1">
         <p>* Milestone split: Underground Start 10% · Rough Start 25% · Rough Completion 25% · Finish Start 30% · Completion 10%</p>
         <p>* Default dates come from Timeline's stage start/end. Click "Override" to set a custom milestone date, %, or $ amount. Priority: $ override → % override → default %.</p>
         <p>* Minor projects are excluded from milestone math — their remaining bill is simply contract − invoiced.</p>

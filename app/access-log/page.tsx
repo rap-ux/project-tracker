@@ -100,23 +100,23 @@ export default async function AccessLogPage() {
     <>
       <Navbar userName={userName} role={role} userEmail={userEmail} userTitle={userTitle} />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 text-gray-800">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 text-text">
         <header className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Access Log</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-text">Access Log</h1>
+          <p className="text-sm text-muted mt-1">
             Each row is a session start — when a user opened the app fresh or returned after &gt;5 minutes idle.
             Showing the most recent 200 (of {total.toLocaleString()} total).
           </p>
         </header>
 
         {rows.length === 0 ? (
-          <div className="text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-4 py-8 text-center">
+          <div className="text-sm text-muted bg-surface-2 border border-border rounded-lg px-4 py-8 text-center">
             No access events recorded yet. New sessions will appear here as users sign in.
           </div>
         ) : (
-          <div className="overflow-x-auto border border-gray-200 rounded-lg bg-white">
+          <div className="overflow-x-auto border border-border rounded-lg bg-surface">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <thead className="bg-surface-2 text-xs font-semibold text-muted uppercase tracking-wide">
                 <tr>
                   <th className="px-4 py-2 text-left">When</th>
                   <th className="px-4 py-2 text-left">User</th>
@@ -130,25 +130,25 @@ export default async function AccessLogPage() {
                 {rows.map(r => {
                   const w = fmtWhen(r.occurred_at);
                   return (
-                    <tr key={r.id} className="border-t border-gray-100 hover:bg-gray-50">
+                    <tr key={r.id} className="border-t border-border hover:bg-surface-2">
                       <td className="px-4 py-2 whitespace-nowrap">
                         <span title={w.abs}>{w.rel}</span>
-                        <div className="text-xs text-gray-400">{w.abs}</div>
+                        <div className="text-xs text-subtle">{w.abs}</div>
                       </td>
                       <td className="px-4 py-2">
-                        <div className="font-medium text-gray-900">{r.user_name ?? "(unknown)"}</div>
-                        <div className="text-xs text-gray-500">
+                        <div className="font-medium text-text">{r.user_name ?? "(unknown)"}</div>
+                        <div className="text-xs text-muted">
                           {r.user_email ?? "—"}{r.user_role ? ` · ${r.user_role}` : ""}
                         </div>
                       </td>
                       <td className="px-4 py-2 whitespace-nowrap">{fmtLocation(r)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap font-mono text-xs text-gray-600">
+                      <td className="px-4 py-2 whitespace-nowrap font-mono text-xs text-muted">
                         {r.ip_address ?? "—"}
                       </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-xs text-gray-600">
+                      <td className="px-4 py-2 whitespace-nowrap text-xs text-muted">
                         {shortDevice(r.user_agent)}
                       </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-xs text-gray-500 font-mono">
+                      <td className="px-4 py-2 whitespace-nowrap text-xs text-muted font-mono">
                         {r.page ?? "—"}
                       </td>
                     </tr>

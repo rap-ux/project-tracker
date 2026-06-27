@@ -476,7 +476,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
             <div key={p.id} className="bg-surface rounded-xl border border-border shadow-sm p-4 space-y-2">
               <div className="flex items-start justify-between gap-2">
                 <p className="text-sm font-bold text-text">{p.name}</p>
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700">
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-info-bg text-info">
                   {p.stage}
                 </span>
               </div>
@@ -530,10 +530,10 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                     <td className="px-4 py-3">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                         p.stage === "Finish"            ? "bg-purple-100 text-purple-700" :
-                        p.stage === "Extras"            ? "bg-amber-100   text-amber-700"  :
+                        p.stage === "Extras"            ? "bg-warning-bg   text-warning"  :
                         p.stage === "Contracting Phase" ? "bg-surface-2    text-muted"   :
-                        p.stage === "Underground"       ? "bg-orange-100  text-orange-700" :
-                                                          "bg-blue-100    text-blue-700"
+                        p.stage === "Underground"       ? "bg-warning-bg  text-warning" :
+                                                          "bg-info-bg    text-info"
                       }`}>{p.stage}</span>
                     </td>
                     <td className="px-4 py-3 text-xs text-muted">{p.region ?? "—"}</td>
@@ -576,7 +576,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                           <button onClick={() => { setEditProject(p); setDraftStage(p.stage ?? "Rough"); setDraftStagePct(Math.round((p.stage_completion ?? 0) * 100)); }}
                             className="text-xs px-2 py-1 bg-surface-2 hover:bg-surface-3 rounded transition-colors">Edit</button>
                           <button onClick={() => handleDelete(p.id)}
-                            className="text-xs px-2 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded transition-colors">Del</button>
+                            className="text-xs px-2 py-1 bg-danger-bg hover:bg-danger-bg text-danger rounded transition-colors">Del</button>
                         </div>
                       </td>
                     )}
@@ -605,9 +605,9 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
             const overMat  = matPct > 1;
             const overHrs  = inc.projectStatus.key === "critical" || inc.projectStatus.key === "at-risk";
             const statusBg =
-              inc.projectStatus.key === "critical" ? "bg-red-50 border-red-200" :
-              inc.projectStatus.key === "at-risk"  ? "bg-orange-50 border-orange-200" :
-              inc.projectStatus.key === "watch"    ? "bg-yellow-50 border-yellow-200" :
+              inc.projectStatus.key === "critical" ? "bg-danger-bg border-red-200" :
+              inc.projectStatus.key === "at-risk"  ? "bg-warning-bg border-orange-200" :
+              inc.projectStatus.key === "watch"    ? "bg-warning-bg border-yellow-200" :
                                                       "bg-surface border-border";
             return (
               <div key={p.id} className={`rounded-xl border shadow-sm p-4 space-y-3 ${statusBg}`}>
@@ -618,11 +618,11 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                     <p className="text-xs text-muted mt-0.5">{p.foreman} · {p.stage}</p>
                   </div>
                   <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap ${
-                    inc.projectStatus.color === "red"    ? "bg-red-100 text-red-700"    :
-                    inc.projectStatus.color === "orange" ? "bg-orange-100 text-orange-700" :
-                    inc.projectStatus.color === "yellow" ? "bg-yellow-100 text-yellow-700" :
-                    inc.projectStatus.color === "blue"   ? "bg-blue-100 text-blue-700"   :
-                    inc.projectStatus.color === "green"  ? "bg-green-100 text-green-700" :
+                    inc.projectStatus.color === "red"    ? "bg-danger-bg text-danger"    :
+                    inc.projectStatus.color === "orange" ? "bg-warning-bg text-warning" :
+                    inc.projectStatus.color === "yellow" ? "bg-warning-bg text-warning" :
+                    inc.projectStatus.color === "blue"   ? "bg-info-bg text-info"   :
+                    inc.projectStatus.color === "green"  ? "bg-success-bg text-success" :
                                                           "bg-surface-2 text-muted"
                   }`}>
                     {inc.projectStatus.emoji} {inc.projectStatus.label}
@@ -656,14 +656,14 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                   <div>
                     <div className="flex justify-between text-[10px] mb-0.5">
                       <span className="text-muted">Materials</span>
-                      <span className={`font-semibold ${overMat ? "text-red-600" : "text-text"}`}>{fmtPct(matPct)}</span>
+                      <span className={`font-semibold ${overMat ? "text-danger" : "text-text"}`}>{fmtPct(matPct)}</span>
                     </div>
                     <ProgressBar value={p.effectiveMaterials} max={p.est_materials_budget} color={overMat ? "red" : matPct > 0.8 ? "yellow" : "green"} />
                   </div>
                   <div>
                     <div className="flex justify-between text-[10px] mb-0.5">
                       <span className="text-muted">Hours</span>
-                      <span className={`font-semibold ${overHrs ? "text-red-600" : "text-text"}`}>{p.effectiveHours.toLocaleString()} / {p.goal_hours.toLocaleString()}</span>
+                      <span className={`font-semibold ${overHrs ? "text-danger" : "text-text"}`}>{p.effectiveHours.toLocaleString()} / {p.goal_hours.toLocaleString()}</span>
                     </div>
                     <ProgressBar value={p.effectiveHours} max={p.goal_hours} color={overHrs ? "red" : "green"} />
                   </div>
@@ -704,7 +704,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                     {isAdmin && (
                       <button
                         onClick={() => { setEditProject(p); setDraftStage(p.stage ?? "Rough"); setDraftStagePct(Math.round((p.stage_completion ?? 0) * 100)); }}
-                        className="text-xs px-2.5 py-1 bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 rounded transition-colors">
+                        className="text-xs px-2.5 py-1 bg-info-bg border border-blue-200 text-info hover:bg-info-bg rounded transition-colors">
                         ✏️ Edit
                       </button>
                     )}
@@ -748,11 +748,11 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                 const inc       = p.incentive;
                 const overHrs   = inc.projectStatus.key === "critical" || inc.projectStatus.key === "at-risk";
                 const statusColors: Record<string, string> = {
-                  green:  "text-green-700 bg-green-50  border border-green-200",
-                  blue:   "text-blue-700  bg-blue-50   border border-blue-200",
-                  yellow: "text-yellow-700 bg-yellow-50 border border-yellow-200",
-                  orange: "text-orange-700 bg-orange-50 border border-orange-200",
-                  red:    "text-red-700   bg-red-50    border border-red-200",
+                  green:  "text-success bg-success-bg  border border-green-200",
+                  blue:   "text-info  bg-info-bg   border border-blue-200",
+                  yellow: "text-warning bg-warning-bg border border-yellow-200",
+                  orange: "text-warning bg-warning-bg border border-orange-200",
+                  red:    "text-danger   bg-danger-bg    border border-red-200",
                   gray:   "text-muted  bg-surface-2   border border-border",
                 };
 
@@ -781,7 +781,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                       <div className="flex items-center gap-2 mt-1 text-xs text-muted">
                         <span>{p.foreman}</span>
                         <span className="text-subtle">·</span>
-                        <span className={`px-1.5 py-px rounded font-medium text-[11px] ${p.stage === "Finish" ? "bg-purple-50 text-purple-600" : p.stage === "Extras" ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600"}`}>
+                        <span className={`px-1.5 py-px rounded font-medium text-[11px] ${p.stage === "Finish" ? "bg-purple-50 text-purple-600" : p.stage === "Extras" ? "bg-success-bg text-success" : "bg-info-bg text-info"}`}>
                           {p.stage}
                         </span>
                         {p.basecamp_link && (
@@ -801,7 +801,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                           const rt = relativeTime(p.updated_at);
                           return (
                             <span title={rt.title}
-                              className={`text-[10px] ${rt.stale ? "text-amber-600" : "text-subtle"}`}>
+                              className={`text-[10px] ${rt.stale ? "text-warning" : "text-subtle"}`}>
                               {rt.stale ? "⚠ " : ""}{rt.label}
                             </span>
                           );
@@ -825,7 +825,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                     {/* Hours — spent vs goal */}
                     <td className="px-4 py-3.5 min-w-[130px]">
                       <div className="flex items-baseline justify-between mb-1">
-                        <span className={`text-sm font-bold ${overHrs ? "text-red-600" : "text-text"}`}>
+                        <span className={`text-sm font-bold ${overHrs ? "text-danger" : "text-text"}`}>
                           {p.effectiveHours.toLocaleString()}
                         </span>
                         <span className="text-[10px] text-subtle">of {p.goal_hours.toLocaleString()} hrs</span>
@@ -835,7 +835,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                     {/* Materials — burn vs budget */}
                     <td className="px-4 py-3.5 min-w-[130px]">
                       <div className="flex items-baseline justify-between mb-1">
-                        <span className={`text-sm font-bold ${overMat ? "text-red-600" : "text-text"}`}>{fmtPct(matPct)}</span>
+                        <span className={`text-sm font-bold ${overMat ? "text-danger" : "text-text"}`}>{fmtPct(matPct)}</span>
                         <span className="text-[10px] text-subtle">{fmt$(p.effectiveMaterials)}</span>
                       </div>
                       <ProgressBar value={p.effectiveMaterials} max={p.est_materials_budget} color={overMat ? "red" : matPct > 0.8 ? "yellow" : "green"} />
@@ -855,7 +855,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                           <button
                             onClick={() => { setEditProject(p); setDraftStage(p.stage ?? "Rough"); setDraftStagePct(Math.round((p.stage_completion ?? 0) * 100)); }}
                             title="Edit project"
-                            className="w-8 h-8 flex items-center justify-center rounded-lg text-subtle hover:bg-cyan-50 hover:text-cyan-600 transition-colors">
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-subtle hover:bg-accent-soft hover:text-accent transition-colors">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
                             </svg>
@@ -913,12 +913,12 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                               );
                               const good = sb.variance >= 0;
                               const bgCls =
-                                sb.status === "beat" ? "bg-green-50 border-green-200" :
-                                sb.status === "meet" ? "bg-blue-50  border-blue-200"  :
-                                                      "bg-red-50   border-red-200";
+                                sb.status === "beat" ? "bg-success-bg border-green-200" :
+                                sb.status === "meet" ? "bg-info-bg  border-blue-200"  :
+                                                      "bg-danger-bg   border-red-200";
                               const txtCls =
-                                sb.status === "beat" ? "text-green-700" :
-                                sb.status === "meet" ? "text-blue-700"  : "text-red-700";
+                                sb.status === "beat" ? "text-success" :
+                                sb.status === "meet" ? "text-info"  : "text-danger";
                               return (
                                 <div key={label} className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs border ${bgCls}`}>
                                   <span className={`font-bold ${txtCls}`}>{label}</span>
@@ -950,9 +950,9 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                                 {stages.map((s: any, i: number) => {
                                   const isCurrent = s.stage === p.stage;
                                   const statusColor =
-                                    s.status === "Complete"    ? { bg: "#f0fdf4", color: "#16a34a", border: "#bbf7d0" } :
-                                    s.status === "In Progress" ? { bg: "#f0fdfe", color: "#00BAD6", border: "#a5f3fc" } :
-                                                                 { bg: "#f9fafb", color: "#9ca3af", border: "#e5e7eb" };
+                                    s.status === "Complete"    ? { bg: "var(--success-bg)", color: "#16a34a", border: "#bbf7d0" } :
+                                    s.status === "In Progress" ? { bg: "var(--accent-soft)", color: "#00BAD6", border: "#a5f3fc" } :
+                                                                 { bg: "var(--surface-2)", color: "#9ca3af", border: "#e5e7eb" };
                                   return (
                                     <div key={i}
                                       className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs"
@@ -1021,9 +1021,9 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                                   {[
                                     { label: "Est. Total Cost",  value: fmt$(estCost),   sub: `Mat + ${wage}/hr × est hrs` },
                                     { label: "Est. Profit",      value: fmt$(estProfit), sub: `${fmtPct(estMargin)} margin`,
-                                      hi: estMargin > 0.35 ? "text-green-700" : estMargin > 0.15 ? "text-yellow-700" : "text-red-700" },
+                                      hi: estMargin > 0.35 ? "text-success" : estMargin > 0.15 ? "text-warning" : "text-danger" },
                                     { label: "Actual Cost So Far", value: fmt$(actCost), sub: `${fmtPct(burnPct)} of budget`,
-                                      hi: overBudget ? "text-red-700" : burnPct > 0.85 ? "text-yellow-700" : "text-text" },
+                                      hi: overBudget ? "text-danger" : burnPct > 0.85 ? "text-warning" : "text-text" },
                                     { label: "Labor Cost (actual)", value: fmt$((p.effectiveHours ?? 0) * wage),
                                       sub: `${(p.effectiveHours ?? 0).toLocaleString()} hrs × $${wage}` },
                                   ].map(c => (
@@ -1081,7 +1081,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                             <div className="flex justify-end border-t border-border pt-2">
                               <button
                                 onClick={() => handleDelete(p.id)}
-                                className="text-[11px] px-2.5 py-1 rounded-md text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                                className="text-[11px] px-2.5 py-1 rounded-md text-danger hover:text-danger hover:bg-danger-bg transition-colors">
                                 Delete project…
                               </button>
                             </div>
@@ -1347,7 +1347,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
               {/* Contract value — the whole point */}
               <div>
                 <label className="block text-sm font-semibold text-text mb-1">
-                  Contract Value <span className="text-red-500">*</span>
+                  Contract Value <span className="text-danger">*</span>
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-subtle font-medium">$</span>
@@ -1397,7 +1397,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
 
               {/* Summary callout */}
               <div className="rounded-lg px-4 py-3 text-xs text-muted space-y-0.5"
-                style={{ backgroundColor: "#f0fdfe", border: "1px solid #a5f3fc" }}>
+                style={{ backgroundColor: "var(--accent-soft)", border: "1px solid #a5f3fc" }}>
                 <p className="font-semibold" style={{ color: "#00BAD6" }}>What happens on activation:</p>
                 <p>• Moves to Tracked projects and counts toward KPIs</p>
                 <p>• Appears in Forecast &amp; Inputs pages</p>

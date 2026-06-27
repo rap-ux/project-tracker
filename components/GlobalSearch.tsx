@@ -28,7 +28,7 @@ function highlight(text: string, q: string): React.ReactNode {
   return (
     <>
       {text.slice(0, i)}
-      <mark className="bg-yellow-200 px-0.5 rounded-sm">{text.slice(i, i + q.length)}</mark>
+      <mark className="bg-warning-bg px-0.5 rounded-sm">{text.slice(i, i + q.length)}</mark>
       {text.slice(i + q.length)}
     </>
   );
@@ -128,7 +128,7 @@ export default function GlobalSearch() {
       <button
         onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 10); }}
         title="Search (⌘K / Ctrl+K)"
-        className="flex items-center justify-center p-2 rounded-md border border-white/10 hover:border-white/30 hover:bg-white/10 transition-colors"
+        className="flex items-center justify-center p-2 rounded-md border border-white/10 hover:border-white/30 hover:bg-surface/10 transition-colors"
         style={{ color: "rgba(235,241,245,0.85)" }}
         aria-label="Search">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -140,7 +140,7 @@ export default function GlobalSearch() {
       {open && (
         <>
           <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setOpen(false)} />
-          <div className="fixed left-1/2 -translate-x-1/2 top-[60px] w-[95vw] max-w-2xl bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
+          <div className="fixed left-1/2 -translate-x-1/2 top-[60px] w-[95vw] max-w-2xl bg-surface rounded-xl shadow-2xl border border-border z-50 overflow-hidden">
             <div className="flex items-center gap-3 px-4 py-3 border-b">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -153,22 +153,22 @@ export default function GlobalSearch() {
                 placeholder="Search projects, builders, contacts, comments, change orders…"
                 className="flex-1 text-sm outline-none placeholder-gray-400"
               />
-              {loading && <span className="text-xs text-gray-400">…</span>}
-              <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-gray-200 text-gray-400">Esc</kbd>
+              {loading && <span className="text-xs text-subtle">…</span>}
+              <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-border text-subtle">Esc</kbd>
             </div>
 
             <div className="max-h-[60vh] overflow-y-auto">
               {!query.trim() && (
-                <div className="px-4 py-6 text-center text-xs text-gray-400">
+                <div className="px-4 py-6 text-center text-xs text-subtle">
                   <p className="mb-1">Start typing to search…</p>
                   <p className="text-[10px]">Projects · Clients · Builders · Contacts · Phone · Notes · Comments · Change Orders</p>
                 </div>
               )}
 
               {query.trim() && results && results.totalCount === 0 && !loading && (
-                <div className="px-4 py-10 text-center text-sm text-gray-400">
+                <div className="px-4 py-10 text-center text-sm text-subtle">
                   <p className="text-2xl mb-2">🔍</p>
-                  No matches for "<span className="font-semibold text-gray-600">{query}</span>"
+                  No matches for "<span className="font-semibold text-muted">{query}</span>"
                 </div>
               )}
 
@@ -186,8 +186,8 @@ export default function GlobalSearch() {
                     title={highlight(p.name, query)}
                     sub={
                       <>
-                        <span className="text-gray-500">{p.foreman}</span>
-                        <span className="text-gray-300 mx-1.5">·</span>
+                        <span className="text-muted">{p.foreman}</span>
+                        <span className="text-subtle mx-1.5">·</span>
                         <span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{
                           backgroundColor:
                             p.stage === "Finish" ? "#f5f3ff" :
@@ -198,8 +198,8 @@ export default function GlobalSearch() {
                             p.stage === "Rough" ? "#2563eb" :
                             p.stage === "Underground" ? "#ea580c" : "#6b7280",
                         }}>{p.stage}</span>
-                        {p.builder && (<><span className="text-gray-300 mx-1.5">·</span><span className="text-gray-500">{highlight(p.builder, query)}</span></>)}
-                        {p.region && (<><span className="text-gray-300 mx-1.5">·</span><span className="text-gray-400 text-xs">📍 {highlight(p.region, query)}</span></>)}
+                        {p.builder && (<><span className="text-subtle mx-1.5">·</span><span className="text-muted">{highlight(p.builder, query)}</span></>)}
+                        {p.region && (<><span className="text-subtle mx-1.5">·</span><span className="text-subtle text-xs">📍 {highlight(p.region, query)}</span></>)}
                       </>
                     }
                     badge={p.is_pipeline ? "Minor" : undefined}
@@ -223,11 +223,11 @@ export default function GlobalSearch() {
                     title={highlight(co.description, query)}
                     sub={
                       <>
-                        <span className="font-medium text-gray-700">{co.project_name}</span>
-                        <span className="text-gray-300 mx-1.5">·</span>
-                        <span className="text-gray-500">{co.status}</span>
-                        <span className="text-gray-300 mx-1.5">·</span>
-                        <span className="font-mono text-gray-600">{fmt$(co.amount)}</span>
+                        <span className="font-medium text-text">{co.project_name}</span>
+                        <span className="text-subtle mx-1.5">·</span>
+                        <span className="text-muted">{co.status}</span>
+                        <span className="text-subtle mx-1.5">·</span>
+                        <span className="font-mono text-muted">{fmt$(co.amount)}</span>
                       </>
                     }
                     onClick={() => go(flat[idx])}
@@ -250,9 +250,9 @@ export default function GlobalSearch() {
                     title={highlight(c.body.length > 70 ? c.body.slice(0, 67) + "…" : c.body, query)}
                     sub={
                       <>
-                        <span className="font-medium text-gray-700">{c.user_name}</span>
-                        <span className="text-gray-300 mx-1.5">on</span>
-                        <span className="text-gray-500">{c.project_name}</span>
+                        <span className="font-medium text-text">{c.user_name}</span>
+                        <span className="text-subtle mx-1.5">on</span>
+                        <span className="text-muted">{c.project_name}</span>
                       </>
                     }
                     onClick={() => go(flat[idx])}
@@ -262,10 +262,10 @@ export default function GlobalSearch() {
               })}
             </div>
 
-            <div className="px-4 py-2 border-t bg-gray-50 flex items-center gap-4 text-[10px] text-gray-400">
-              <span><kbd className="px-1 py-0.5 rounded border border-gray-300 bg-white font-mono">↑↓</kbd> navigate</span>
-              <span><kbd className="px-1 py-0.5 rounded border border-gray-300 bg-white font-mono">Enter</kbd> open</span>
-              <span><kbd className="px-1 py-0.5 rounded border border-gray-300 bg-white font-mono">Esc</kbd> close</span>
+            <div className="px-4 py-2 border-t bg-surface-2 flex items-center gap-4 text-[10px] text-subtle">
+              <span><kbd className="px-1 py-0.5 rounded border border-border-strong bg-surface font-mono">↑↓</kbd> navigate</span>
+              <span><kbd className="px-1 py-0.5 rounded border border-border-strong bg-surface font-mono">Enter</kbd> open</span>
+              <span><kbd className="px-1 py-0.5 rounded border border-border-strong bg-surface font-mono">Esc</kbd> close</span>
             </div>
           </div>
         </>
@@ -276,7 +276,7 @@ export default function GlobalSearch() {
 
 function SectionHeader({ label }: { label: string }) {
   return (
-    <div className="px-4 py-1.5 bg-gray-50 text-[10px] font-semibold text-gray-400 uppercase tracking-wider border-t border-gray-100 first:border-t-0">
+    <div className="px-4 py-1.5 bg-surface-2 text-[10px] font-semibold text-subtle uppercase tracking-wider border-t border-border first:border-t-0">
       {label}
     </div>
   );
@@ -299,11 +299,11 @@ function ResultRow({ active, icon, title, sub, badge, onClick, onHover }: {
       style={{ backgroundColor: active ? "#f0fdfe" : "transparent" }}>
       <span className="text-base shrink-0">{icon}</span>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-gray-800 truncate">{title}</p>
-        <p className="text-xs text-gray-500 truncate mt-0.5">{sub}</p>
+        <p className="text-sm font-semibold text-text truncate">{title}</p>
+        <p className="text-xs text-muted truncate mt-0.5">{sub}</p>
       </div>
       {badge && (
-        <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-medium">{badge}</span>
+        <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-surface-2 text-muted font-medium">{badge}</span>
       )}
       {active && (
         <span className="shrink-0 text-xs" style={{ color: "#00BAD6" }}>↵</span>

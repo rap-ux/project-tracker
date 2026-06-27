@@ -36,7 +36,7 @@ export default async function AnalyticsPage() {
   for (const s of completionStages) finishDateByProject[s.project_id] = s.end_date;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-surface-2">
       <Navbar userName={session.user?.name ?? "Admin"} role={role} userEmail={session.user?.email ?? undefined} userTitle={(session.user as any)?.title ?? undefined} />
       <AnalyticsClient projects={projects} finishDateByProject={finishDateByProject} />
     </div>

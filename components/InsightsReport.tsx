@@ -163,10 +163,10 @@ function buildPlainText(
 // ── Sub-components ────────────────────────────────────────────────────────────
 function KpiCard({ label, value, sub, highlight }: { label: string; value: string; sub?: string; highlight?: boolean }) {
   return (
-    <div className={`rounded-lg p-3 border ${highlight ? "bg-blue-50 border-blue-200" : "bg-gray-50 border-gray-200"}`}>
-      <p className="text-xs text-gray-500 mb-0.5">{label}</p>
-      <p className={`text-xl font-bold ${highlight ? "text-blue-900" : "text-gray-900"}`}>{value}</p>
-      {sub && <p className="text-xs text-gray-500 mt-0.5">{sub}</p>}
+    <div className={`rounded-lg p-3 border ${highlight ? "bg-info-bg border-blue-200" : "bg-surface-2 border-border"}`}>
+      <p className="text-xs text-muted mb-0.5">{label}</p>
+      <p className={`text-xl font-bold ${highlight ? "text-info" : "text-text"}`}>{value}</p>
+      {sub && <p className="text-xs text-muted mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -190,7 +190,7 @@ function PerfRow({ p, type }: { p: ProjectData; type: "pos" | "watch" }) {
       }`;
 
   return (
-    <div className="flex gap-2 text-sm text-gray-800 leading-snug">
+    <div className="flex gap-2 text-sm text-text leading-snug">
       <span>{type === "pos" ? "🟢" : "🟡"}</span>
       <span>{msg}</span>
     </div>
@@ -215,7 +215,7 @@ function ProjectTable({ projects }: { projects: ProjectData[] }) {
   ];
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-200 print:overflow-visible">
+    <div className="overflow-x-auto rounded-lg border border-border print:overflow-visible">
       <table className="w-full text-xs border-collapse">
         <thead>
           <tr className="bg-gray-700 text-white">
@@ -232,33 +232,33 @@ function ProjectTable({ projects }: { projects: ProjectData[] }) {
             const overHrs  = p.variancePct < -0.1;
             const aheadHrs = p.variancePct > 0.1;
             return (
-              <tr key={p.id} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                <td className="px-2 py-2 font-medium text-gray-900">{p.name}</td>
-                <td className="px-2 py-2 text-gray-700">{p.stage}<br /><span className="text-gray-400">{Math.round(p.stage_completion * 100)}% / proj {Math.round(p.project_completion * 100)}%</span></td>
-                <td className="px-2 py-2 text-gray-700">{fmt$(p.contract_value)}</td>
-                <td className="px-2 py-2 text-gray-700">{fmt$(p.total_invoiced)}<br /><span className="text-gray-400">{fmtPct(p.invoicedPct)}</span></td>
-                <td className="px-2 py-2 text-gray-700">{fmt$(p.est_materials_budget)}</td>
-                <td className={`px-2 py-2 font-medium ${overMat ? "text-red-700" : "text-gray-700"}`}>
+              <tr key={p.id} className={i % 2 === 0 ? "bg-surface" : "bg-surface-2"}>
+                <td className="px-2 py-2 font-medium text-text">{p.name}</td>
+                <td className="px-2 py-2 text-text">{p.stage}<br /><span className="text-subtle">{Math.round(p.stage_completion * 100)}% / proj {Math.round(p.project_completion * 100)}%</span></td>
+                <td className="px-2 py-2 text-text">{fmt$(p.contract_value)}</td>
+                <td className="px-2 py-2 text-text">{fmt$(p.total_invoiced)}<br /><span className="text-subtle">{fmtPct(p.invoicedPct)}</span></td>
+                <td className="px-2 py-2 text-text">{fmt$(p.est_materials_budget)}</td>
+                <td className={`px-2 py-2 font-medium ${overMat ? "text-danger" : "text-text"}`}>
                   {fmt$(p.effectiveMaterials)}<br />
-                  <span className={overMat ? "text-red-500" : "text-gray-400"}>{fmtPct(p.materialsPct)}</span>
+                  <span className={overMat ? "text-danger" : "text-subtle"}>{fmtPct(p.materialsPct)}</span>
                 </td>
-                <td className={`px-2 py-2 ${p.materialsRemaining < 0 ? "text-red-700 font-medium" : "text-gray-700"}`}>
+                <td className={`px-2 py-2 ${p.materialsRemaining < 0 ? "text-danger font-medium" : "text-text"}`}>
                   {fmt$(p.materialsRemaining)}
                 </td>
-                <td className="px-2 py-2 text-gray-700">{fmtHrs(p.est_total_hours)}</td>
-                <td className="px-2 py-2 text-gray-700">
+                <td className="px-2 py-2 text-text">{fmtHrs(p.est_total_hours)}</td>
+                <td className="px-2 py-2 text-text">
                   {fmtHrs(p.effectiveHours)}<br />
-                  <span className="text-gray-400">{fmtPct(p.hoursTobudgetPct)}</span>
+                  <span className="text-subtle">{fmtPct(p.hoursTobudgetPct)}</span>
                 </td>
-                <td className="px-2 py-2 text-gray-700">{fmtHrs(p.goal_hours)}</td>
-                <td className={`px-2 py-2 font-semibold ${overHrs ? "text-red-700" : aheadHrs ? "text-green-700" : "text-gray-700"}`}>
+                <td className="px-2 py-2 text-text">{fmtHrs(p.goal_hours)}</td>
+                <td className={`px-2 py-2 font-semibold ${overHrs ? "text-danger" : aheadHrs ? "text-success" : "text-text"}`}>
                   {fmtVariance(p.varianceHours)} hrs<br />
-                  <span className="font-normal text-gray-400">{fmtPct(Math.abs(p.variancePct))} {p.variancePct >= 0 ? "↓" : "↑"}</span>
+                  <span className="font-normal text-subtle">{fmtPct(Math.abs(p.variancePct))} {p.variancePct >= 0 ? "↓" : "↑"}</span>
                 </td>
-                <td className="px-2 py-2 text-gray-700">
+                <td className="px-2 py-2 text-text">
                   {fmtHrs(p.rough_hours_allowed)} / {fmtHrs(p.rough_hours_actual)}
                 </td>
-                <td className="px-2 py-2 text-gray-700">
+                <td className="px-2 py-2 text-text">
                   {fmtHrs(p.finish_hours_allowed)} / {fmtHrs(p.finish_hours_actual)}
                 </td>
               </tr>
@@ -282,7 +282,7 @@ function StageDistribution({ projects }: { projects: ProjectData[] }) {
   ];
 
   return (
-    <ul className="list-disc pl-5 space-y-0.5 text-sm text-gray-800">
+    <ul className="list-disc pl-5 space-y-0.5 text-sm text-text">
       {groups.map(g => {
         const count = projects.filter(g.filter).length;
         const names = projects.filter(g.filter).map(p => p.name);
@@ -291,7 +291,7 @@ function StageDistribution({ projects }: { projects: ProjectData[] }) {
           <li key={g.label}>
             <strong>{count}</strong> project{count !== 1 ? "s" : ""} — {g.label}
             {count <= 4 && names.length > 0 && (
-              <span className="text-gray-500"> ({names.join(", ")})</span>
+              <span className="text-muted"> ({names.join(", ")})</span>
             )}
           </li>
         );
@@ -357,18 +357,18 @@ export default function InsightsReport({ projects, portfolio, generatedAt, userN
   return (
     <>
       {/* ── Toolbar ── */}
-      <div className="print:hidden sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm px-6 py-3 flex items-center justify-between gap-4">
+      <div className="print:hidden sticky top-0 z-10 bg-surface border-b border-border shadow-sm px-6 py-3 flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-base font-bold text-gray-900">Weekly Profitability & Labor Efficiency Report</h1>
-          <p className="text-xs text-gray-500">Week of {week} · {dateStr}</p>
+          <h1 className="text-base font-bold text-text">Weekly Profitability & Labor Efficiency Report</h1>
+          <p className="text-xs text-muted">Week of {week} · {dateStr}</p>
         </div>
         <div className="flex gap-3 shrink-0">
           <button
             onClick={handleCopy}
             className={`px-4 py-2 rounded-lg text-sm font-semibold border transition-colors ${
-              copyStatus === "copied" ? "bg-green-50 border-green-300 text-green-700" :
-              copyStatus === "error"  ? "bg-red-50 border-red-300 text-red-700" :
-              "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+              copyStatus === "copied" ? "bg-success-bg border-green-300 text-success" :
+              copyStatus === "error"  ? "bg-danger-bg border-red-300 text-danger" :
+              "bg-surface border-border-strong text-text hover:bg-surface-2"
             }`}
           >
             {copyStatus === "copied" ? "✓ Copied!" : copyStatus === "error" ? "✗ Copy failed" : "📋 Copy for Email"}
@@ -383,25 +383,25 @@ export default function InsightsReport({ projects, portfolio, generatedAt, userN
       </div>
 
       {/* ── Report ── */}
-      <div ref={reportRef} className="max-w-6xl mx-auto w-full px-8 py-8 bg-white my-6 rounded-xl shadow-sm print:shadow-none print:my-0 print:rounded-none print:px-8">
+      <div ref={reportRef} className="max-w-6xl mx-auto w-full px-8 py-8 bg-surface my-6 rounded-xl shadow-sm print:shadow-none print:my-0 print:rounded-none print:px-8">
 
         {/* Header */}
         <div className="mb-6 pb-4 border-b-2 border-gray-900">
-          <h1 className="text-2xl font-bold text-gray-900">Weekly Profitability & Labor Efficiency Update (Week of {week})</h1>
-          <p className="text-gray-500 text-sm mt-1">{dateStr}</p>
+          <h1 className="text-2xl font-bold text-text">Weekly Profitability & Labor Efficiency Update (Week of {week})</h1>
+          <p className="text-muted text-sm mt-1">{dateStr}</p>
         </div>
 
         {/* Key Insights */}
         <section className="mb-6">
-          <h2 className="text-base font-bold text-gray-900 mb-2">Key Insights</h2>
+          <h2 className="text-base font-bold text-text mb-2">Key Insights</h2>
           <ul className="list-disc pl-5 space-y-1">
-            {insights.map((line, i) => <li key={i} className="text-sm text-gray-800">{line}</li>)}
+            {insights.map((line, i) => <li key={i} className="text-sm text-text">{line}</li>)}
           </ul>
         </section>
 
         {/* Overall Snapshot */}
         <section className="mb-6">
-          <h2 className="text-base font-bold text-gray-900 mb-3">Overall Snapshot</h2>
+          <h2 className="text-base font-bold text-text mb-3">Overall Snapshot</h2>
 
           {/* KPI cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
@@ -411,8 +411,8 @@ export default function InsightsReport({ projects, portfolio, generatedAt, userN
             <KpiCard label="Total Hours Logged"    value={fmtHrs(portfolio.totalActualHours) + " hrs"} sub={`of ${fmtHrs(portfolio.totalEstHours)} estimated`} />
           </div>
 
-          <p className="text-sm font-semibold text-gray-700 mb-1">Portfolio Labor Health</p>
-          <ul className="list-disc pl-5 space-y-0.5 text-sm text-gray-800">
+          <p className="text-sm font-semibold text-text mb-1">Portfolio Labor Health</p>
+          <ul className="list-disc pl-5 space-y-0.5 text-sm text-text">
             <li>{portfolio.totalProjects} projects tracked</li>
             <li>~{underPct}% of assessable projects currently pacing within allowed labor hours ({portfolio.underBudgetCount} projects)</li>
             <li>~{100 - underPct}% of assessable projects currently over allowed labor hours ({portfolio.overBudgetCount} projects)</li>
@@ -426,7 +426,7 @@ export default function InsightsReport({ projects, portfolio, generatedAt, userN
         {/* Positive Performance */}
         {posProjects.length > 0 && (
           <section className="mb-6">
-            <h2 className="text-base font-bold text-gray-900 mb-2">Positive Performance</h2>
+            <h2 className="text-base font-bold text-text mb-2">Positive Performance</h2>
             <div className="space-y-2">
               {posProjects.map(p => <PerfRow key={p.id} p={p} type="pos" />)}
             </div>
@@ -436,7 +436,7 @@ export default function InsightsReport({ projects, portfolio, generatedAt, userN
         {/* Watch Items */}
         {watchProjects.length > 0 && (
           <section className="mb-6">
-            <h2 className="text-base font-bold text-gray-900 mb-2">Watch Items</h2>
+            <h2 className="text-base font-bold text-text mb-2">Watch Items</h2>
             <div className="space-y-2">
               {watchProjects.map(p => <PerfRow key={p.id} p={p} type="watch" />)}
             </div>
@@ -446,8 +446,8 @@ export default function InsightsReport({ projects, portfolio, generatedAt, userN
         {/* Early Stage */}
         {earlyProjects.length > 0 && (
           <section className="mb-6">
-            <h2 className="text-base font-bold text-gray-900 mb-2">Early Stage</h2>
-            <div className="flex gap-2 text-sm text-gray-800">
+            <h2 className="text-base font-bold text-text mb-2">Early Stage</h2>
+            <div className="flex gap-2 text-sm text-text">
               <span>🟢</span>
               <span>{earlyProjects.map(p => p.name).join(", ")} — All in early rough stage — too early to assess. Will monitor as crews progress.</span>
             </div>
@@ -456,29 +456,29 @@ export default function InsightsReport({ projects, portfolio, generatedAt, userN
 
         {/* Stage Distribution */}
         <section className="mb-6">
-          <h2 className="text-base font-bold text-gray-900 mb-2">Stage Distribution</h2>
+          <h2 className="text-base font-bold text-text mb-2">Stage Distribution</h2>
           <StageDistribution projects={projects} />
         </section>
 
         {/* Materials */}
         <section className="mb-6">
-          <h2 className="text-base font-bold text-gray-900 mb-2">Materials</h2>
-          <p className="text-sm text-gray-800">{buildMaterialsNarrative(projects)}</p>
+          <h2 className="text-base font-bold text-text mb-2">Materials</h2>
+          <p className="text-sm text-text">{buildMaterialsNarrative(projects)}</p>
         </section>
 
         {/* Project Snapshots */}
         <section className="mb-6">
-          <h2 className="text-base font-bold text-gray-900 mb-4">Project Snapshots</h2>
+          <h2 className="text-base font-bold text-text mb-4">Project Snapshots</h2>
           {[...byForeman.entries()].map(([foreman, fps]) => (
             <div key={foreman} className="mb-6 print:break-inside-avoid">
-              <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">{foreman} Projects</p>
+              <p className="text-sm font-semibold text-muted uppercase tracking-wide mb-2">{foreman} Projects</p>
               <ProjectTable projects={fps} />
             </div>
           ))}
         </section>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 pt-4 text-sm text-gray-700">
+        <div className="border-t border-border pt-4 text-sm text-text">
           <p>Best,</p>
           <p className="mt-1 font-medium">{userName.split(" ")[0] || "Rap"}</p>
         </div>

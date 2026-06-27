@@ -136,21 +136,21 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Analytics</h1>
-          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+          <h1 className="text-xl font-bold text-text">Analytics</h1>
+          <p className="text-xs sm:text-sm text-muted mt-0.5">
             Margin trends, per-foreman performance, and per-builder profitability
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {/* Past-Rough filter — hides early-stage projects whose margins look
               inflated because cash is in but materials/labor not yet spent. */}
-          <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm" title="Filter projects that have completed Rough stage (project_completion ≥ 70%)">
+          <div className="flex rounded-lg border border-border overflow-hidden text-sm" title="Filter projects that have completed Rough stage (project_completion ≥ 70%)">
             <button
               onClick={() => setPastRoughOnly(false)}
               className="px-3 py-1.5 font-medium transition-colors"
               style={!pastRoughOnly
                 ? { backgroundColor: "#101010", color: "#fff" }
-                : { backgroundColor: "#fff", color: "#6b7280" }}>
+                : { backgroundColor: "var(--surface)", color: "#6b7280" }}>
               All ({projects.length})
             </button>
             <button
@@ -158,12 +158,12 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
               className="px-3 py-1.5 font-medium transition-colors"
               style={pastRoughOnly
                 ? { backgroundColor: "#101010", color: "#fff" }
-                : { backgroundColor: "#fff", color: "#6b7280" }}>
+                : { backgroundColor: "var(--surface)", color: "#6b7280" }}>
               Past Rough ({pastRoughCount})
             </button>
           </div>
 
-          <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm">
+          <div className="flex rounded-lg border border-border overflow-hidden text-sm">
             {([
               { v: "margin",  label: "📊 Margin Trend" },
               { v: "foreman", label: "👷 Foreman"       },
@@ -173,7 +173,7 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
                 className="px-3 py-1.5 font-medium transition-colors"
                 style={view === o.v
                   ? { backgroundColor: "#101010", color: "#fff" }
-                  : { backgroundColor: "#fff", color: "#6b7280" }}>
+                  : { backgroundColor: "var(--surface)", color: "#6b7280" }}>
                 {o.label}
               </button>
             ))}
@@ -193,9 +193,9 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
             <Kpi label="Projects Analyzed"  value={String(trendRows.length)} />
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-3">
+          <div className="bg-surface rounded-xl border border-border shadow-sm p-5 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold text-gray-800">
+              <h2 className="text-sm font-semibold text-text">
                 {marginChartView === "bar" && "Margin by Project"}
                 {marginChartView === "pie" && "Portfolio Cost Structure"}
               </h2>
@@ -210,7 +210,7 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
                   </>}
                 </div>
                 {/* View switcher */}
-                <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-xs bg-gray-50">
+                <div className="inline-flex rounded-lg border border-border overflow-hidden text-xs bg-surface-2">
                   {([
                     { key: "bar", label: "Bar", icon: "📊" },
                     { key: "pie", label: "Pie", icon: "🥧" },
@@ -219,7 +219,7 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
                       className={`px-2.5 py-1 font-medium transition-colors ${
                         marginChartView === v.key
                           ? "text-white"
-                          : "text-gray-600 hover:bg-white hover:text-gray-900"
+                          : "text-muted hover:bg-surface hover:text-text"
                       }`}
                       style={marginChartView === v.key ? { backgroundColor: "#00BAD6" } : {}}>
                       <span className="mr-1">{v.icon}</span>{v.label}
@@ -230,7 +230,7 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
             </div>
 
             {trendRows.length === 0 ? (
-              <p className="text-xs text-gray-400 py-10 text-center">
+              <p className="text-xs text-subtle py-10 text-center">
                 Not enough data yet. Projects with contract values and dates will appear here.
               </p>
             ) : (
@@ -413,27 +413,27 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
                       </text>
                     </svg>
                     <div className="flex-1 w-full space-y-2">
-                      <div className="text-[10px] uppercase tracking-wide text-gray-400 font-semibold mb-2">
+                      <div className="text-[10px] uppercase tracking-wide text-subtle font-semibold mb-2">
                         Where every contract dollar goes
                       </div>
                       {slices0.map(s => {
                         const pct = sum > 0 ? (s.value / sum * 100) : 0;
                         return (
-                          <div key={s.key} className="border border-gray-100 rounded-lg p-3 bg-gray-50/50">
+                          <div key={s.key} className="border border-border rounded-lg p-3 bg-surface-2/50">
                             <div className="flex items-center justify-between gap-2 mb-1.5">
                               <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: s.color }} />
-                                <span className="text-sm font-semibold text-gray-700">{s.label}</span>
+                                <span className="text-sm font-semibold text-text">{s.label}</span>
                               </div>
-                              <span className="text-sm font-bold tabular-nums text-gray-900">
+                              <span className="text-sm font-bold tabular-nums text-text">
                                 {fmt$(s.value)}
-                                <span className="text-gray-400 font-medium ml-2 text-xs">
+                                <span className="text-subtle font-medium ml-2 text-xs">
                                   {pct.toFixed(1)}%
                                 </span>
                               </span>
                             </div>
                             {/* Progress bar */}
-                            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-1.5 bg-surface-2 rounded-full overflow-hidden">
                               <div className="h-full rounded-full transition-all"
                                 style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: s.color }} />
                             </div>
@@ -441,12 +441,12 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
                         );
                       })}
                       {!inOverrun && totalMargin > 0 && (
-                        <div className="text-[11px] text-gray-500 pt-1">
-                          Across <strong className="text-gray-700">{trendRows.length}</strong> project{trendRows.length === 1 ? "" : "s"}, we keep <strong className="text-green-600">{((totalMargin / totalContract) * 100).toFixed(1)}%</strong> as margin on <strong className="text-gray-700">{fmt$(totalContract)}</strong> of contracts.
+                        <div className="text-[11px] text-muted pt-1">
+                          Across <strong className="text-text">{trendRows.length}</strong> project{trendRows.length === 1 ? "" : "s"}, we keep <strong className="text-success">{((totalMargin / totalContract) * 100).toFixed(1)}%</strong> as margin on <strong className="text-text">{fmt$(totalContract)}</strong> of contracts.
                         </div>
                       )}
                       {inOverrun && (
-                        <div className="text-[11px] text-red-600 bg-red-50 border border-red-100 rounded p-2 mt-2">
+                        <div className="text-[11px] text-danger bg-danger-bg border border-red-100 rounded p-2 mt-2">
                           ⚠ Portfolio-wide costs exceed contracts by <strong>{fmt$(Math.abs(totalMargin))}</strong>. Review high-burn projects on the table below.
                         </div>
                       )}
@@ -456,21 +456,21 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
               })()}
               </>
             )}
-            <p className="text-[10px] text-gray-400">
+            <p className="text-[10px] text-subtle">
               {marginChartView === "bar"  && "Bar color = margin band · Dashed line across each bar = estimate · Faded/outlined bars = in-progress"}
               {marginChartView === "pie"  && "Portfolio-wide: every dollar of contract value broken into Materials, Labor, and retained Margin"}
             </p>
           </div>
 
           {/* Project-by-project margin table */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-4 py-2.5 bg-gray-50 border-b">
-              <h2 className="text-sm font-semibold text-gray-800">Per-Project Margins</h2>
+          <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
+            <div className="px-4 py-2.5 bg-surface-2 border-b">
+              <h2 className="text-sm font-semibold text-text">Per-Project Margins</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200 text-[11px] uppercase tracking-wider text-gray-500 font-semibold">
+                  <tr className="bg-surface-2 border-b border-border text-[11px] uppercase tracking-wider text-muted font-semibold">
                     <th className="px-4 py-2 text-left">Project</th>
                     <th className="px-4 py-2 text-left">Foreman</th>
                     <th className="px-4 py-2 text-right">Contract</th>
@@ -481,23 +481,23 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
                     <th className="px-4 py-2 text-right">Δ (vs est)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-border">
                   {marginRows.map(r => {
                     const delta = r.m.actualPct - r.m.estPct;
                     return (
-                      <tr key={r.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-2 font-medium text-gray-900">{r.name}</td>
-                        <td className="px-4 py-2 text-gray-600 text-xs">{r.foreman}</td>
-                        <td className="px-4 py-2 text-right font-mono text-gray-700">{fmt$(r.contract_value)}</td>
-                        <td className="px-4 py-2 text-right font-mono text-gray-600">{fmt$(r.m.est)}</td>
-                        <td className="px-4 py-2 text-right text-xs text-gray-500">{fmtPct(r.m.estPct)}</td>
-                        <td className={`px-4 py-2 text-right font-mono font-semibold ${r.m.actual >= 0 ? "text-green-700" : "text-red-600"}`}>
+                      <tr key={r.id} className="hover:bg-surface-2">
+                        <td className="px-4 py-2 font-medium text-text">{r.name}</td>
+                        <td className="px-4 py-2 text-muted text-xs">{r.foreman}</td>
+                        <td className="px-4 py-2 text-right font-mono text-text">{fmt$(r.contract_value)}</td>
+                        <td className="px-4 py-2 text-right font-mono text-muted">{fmt$(r.m.est)}</td>
+                        <td className="px-4 py-2 text-right text-xs text-muted">{fmtPct(r.m.estPct)}</td>
+                        <td className={`px-4 py-2 text-right font-mono font-semibold ${r.m.actual >= 0 ? "text-success" : "text-danger"}`}>
                           {fmt$(r.m.actual)}
                         </td>
-                        <td className={`px-4 py-2 text-right text-xs font-semibold ${r.m.actualPct >= 0 ? "text-green-700" : "text-red-600"}`}>
+                        <td className={`px-4 py-2 text-right text-xs font-semibold ${r.m.actualPct >= 0 ? "text-success" : "text-danger"}`}>
                           {fmtPct(r.m.actualPct)}
                         </td>
-                        <td className={`px-4 py-2 text-right text-xs font-medium ${delta >= 0 ? "text-green-700" : "text-red-600"}`}>
+                        <td className={`px-4 py-2 text-right text-xs font-medium ${delta >= 0 ? "text-success" : "text-danger"}`}>
                           {delta >= 0 ? "+" : ""}{fmtPct(delta)}
                         </td>
                       </tr>
@@ -512,15 +512,15 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
 
       {/* ── Foreman aggregates ── */}
       {view === "foreman" && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="px-4 py-2.5 bg-gray-50 border-b">
-            <h2 className="text-sm font-semibold text-gray-800">Per-Foreman Performance</h2>
-            <p className="text-xs text-gray-400">Aggregates across all tracked projects</p>
+        <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
+          <div className="px-4 py-2.5 bg-surface-2 border-b">
+            <h2 className="text-sm font-semibold text-text">Per-Foreman Performance</h2>
+            <p className="text-xs text-subtle">Aggregates across all tracked projects</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200 text-[11px] uppercase tracking-wider text-gray-500 font-semibold">
+                <tr className="bg-surface-2 border-b border-border text-[11px] uppercase tracking-wider text-muted font-semibold">
                   <th className="px-4 py-2 text-left">Foreman</th>
                   <th className="px-4 py-2 text-center">Projects</th>
                   <th className="px-4 py-2 text-right">Total Contract</th>
@@ -529,15 +529,15 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
                   <th className="px-4 py-2 text-right">Avg Hours Variance</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-border">
                 {foremanAgg.map(f => (
-                  <tr key={f.foreman} className="hover:bg-gray-50">
-                    <td className="px-4 py-2 font-semibold text-gray-800">{f.foreman}</td>
-                    <td className="px-4 py-2 text-center text-gray-600">{f.projects}</td>
-                    <td className="px-4 py-2 text-right font-mono text-gray-700">{fmt$(f.contract)}</td>
-                    <td className={`px-4 py-2 text-right font-mono font-semibold ${f.margin$ >= 0 ? "text-green-700" : "text-red-600"}`}>{fmt$(f.margin$)}</td>
-                    <td className={`px-4 py-2 text-right text-xs font-semibold ${f.marginPct >= 0 ? "text-green-700" : "text-red-600"}`}>{fmtPct(f.marginPct)}</td>
-                    <td className={`px-4 py-2 text-right text-xs font-semibold ${f.hoursVarPct <= 0 ? "text-green-700" : "text-red-600"}`}>
+                  <tr key={f.foreman} className="hover:bg-surface-2">
+                    <td className="px-4 py-2 font-semibold text-text">{f.foreman}</td>
+                    <td className="px-4 py-2 text-center text-muted">{f.projects}</td>
+                    <td className="px-4 py-2 text-right font-mono text-text">{fmt$(f.contract)}</td>
+                    <td className={`px-4 py-2 text-right font-mono font-semibold ${f.margin$ >= 0 ? "text-success" : "text-danger"}`}>{fmt$(f.margin$)}</td>
+                    <td className={`px-4 py-2 text-right text-xs font-semibold ${f.marginPct >= 0 ? "text-success" : "text-danger"}`}>{fmtPct(f.marginPct)}</td>
+                    <td className={`px-4 py-2 text-right text-xs font-semibold ${f.hoursVarPct <= 0 ? "text-success" : "text-danger"}`}>
                       {f.hoursVarPct > 0 ? "+" : ""}{fmtPct(f.hoursVarPct)}
                     </td>
                   </tr>
@@ -550,15 +550,15 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
 
       {/* ── Builder aggregates ── */}
       {view === "builder" && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="px-4 py-2.5 bg-gray-50 border-b">
-            <h2 className="text-sm font-semibold text-gray-800">Per-Builder Profitability</h2>
-            <p className="text-xs text-gray-400">Sorted by total contract value</p>
+        <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
+          <div className="px-4 py-2.5 bg-surface-2 border-b">
+            <h2 className="text-sm font-semibold text-text">Per-Builder Profitability</h2>
+            <p className="text-xs text-subtle">Sorted by total contract value</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200 text-[11px] uppercase tracking-wider text-gray-500 font-semibold">
+                <tr className="bg-surface-2 border-b border-border text-[11px] uppercase tracking-wider text-muted font-semibold">
                   <th className="px-4 py-2 text-left">Builder / GC</th>
                   <th className="px-4 py-2 text-center">Projects</th>
                   <th className="px-4 py-2 text-right">Total Contract</th>
@@ -566,14 +566,14 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
                   <th className="px-4 py-2 text-right">Avg Margin %</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-border">
                 {builderAgg.map(b => (
-                  <tr key={b.builder} className="hover:bg-gray-50">
-                    <td className="px-4 py-2 font-semibold text-gray-800">{b.builder}</td>
-                    <td className="px-4 py-2 text-center text-gray-600">{b.projects}</td>
-                    <td className="px-4 py-2 text-right font-mono text-gray-700">{fmt$(b.contract)}</td>
-                    <td className={`px-4 py-2 text-right font-mono font-semibold ${b.margin$ >= 0 ? "text-green-700" : "text-red-600"}`}>{fmt$(b.margin$)}</td>
-                    <td className={`px-4 py-2 text-right text-xs font-semibold ${b.marginPct >= 0 ? "text-green-700" : "text-red-600"}`}>{fmtPct(b.marginPct)}</td>
+                  <tr key={b.builder} className="hover:bg-surface-2">
+                    <td className="px-4 py-2 font-semibold text-text">{b.builder}</td>
+                    <td className="px-4 py-2 text-center text-muted">{b.projects}</td>
+                    <td className="px-4 py-2 text-right font-mono text-text">{fmt$(b.contract)}</td>
+                    <td className={`px-4 py-2 text-right font-mono font-semibold ${b.margin$ >= 0 ? "text-success" : "text-danger"}`}>{fmt$(b.margin$)}</td>
+                    <td className={`px-4 py-2 text-right text-xs font-semibold ${b.marginPct >= 0 ? "text-success" : "text-danger"}`}>{fmtPct(b.marginPct)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -588,10 +588,10 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
 
 function Kpi({ label, value, sub, hi }: { label: string; value: string; sub?: string; hi?: string }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3">
-      <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">{label}</p>
+    <div className="bg-surface rounded-xl border border-border shadow-sm px-4 py-3">
+      <p className="text-[10px] text-muted font-semibold uppercase tracking-wide">{label}</p>
       <p className="text-xl font-bold mt-0.5" style={hi ? { color: hi } : { color: "#111827" }}>{value}</p>
-      {sub && <p className="text-[10px] text-gray-400 mt-0.5">{sub}</p>}
+      {sub && <p className="text-[10px] text-subtle mt-0.5">{sub}</p>}
     </div>
   );
 }

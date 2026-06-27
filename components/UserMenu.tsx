@@ -56,7 +56,7 @@ export default function UserMenu({ userName, role, userEmail }: Props) {
       <button
         onClick={() => setOpen(v => !v)}
         title={userEmail ?? userName}
-        className="flex items-center gap-2 px-1.5 sm:px-2 py-1 rounded-md hover:bg-white/10 transition-colors">
+        className="flex items-center gap-2 px-1.5 sm:px-2 py-1 rounded-md hover:bg-surface/10 transition-colors">
         <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
           style={{ backgroundColor: "#00BAD6" }}>
           {initials}
@@ -71,21 +71,21 @@ export default function UserMenu({ userName, role, userEmail }: Props) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50">
+        <div className="absolute right-0 top-full mt-2 w-64 bg-surface rounded-xl shadow-2xl border border-border overflow-hidden z-50">
           {/* User info */}
-          <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+          <div className="px-4 py-3 border-b border-border bg-surface-2">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
                 style={{ backgroundColor: "#00BAD6" }}>
                 {initials}
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">{userName}</p>
+                <p className="text-sm font-semibold text-text truncate">{userName}</p>
                 {userEmail && (
-                  <p className="text-[11px] text-gray-500 truncate">{userEmail}</p>
+                  <p className="text-[11px] text-muted truncate">{userEmail}</p>
                 )}
                 <span className="inline-block mt-0.5 text-[10px] px-1.5 py-0.5 rounded font-medium capitalize"
-                  style={{ backgroundColor: "#f0fdfe", color: "#00BAD6" }}>
+                  style={{ backgroundColor: "var(--accent-soft)", color: "#00BAD6" }}>
                   {role}
                 </span>
               </div>
@@ -96,7 +96,7 @@ export default function UserMenu({ userName, role, userEmail }: Props) {
           <div className="py-1">
             <button
               onClick={switchAccount}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text hover:bg-surface-2 transition-colors">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M17 1l4 4-4 4"/>
                 <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
@@ -105,13 +105,13 @@ export default function UserMenu({ userName, role, userEmail }: Props) {
               </svg>
               <div className="text-left flex-1">
                 <p className="font-medium">Switch account</p>
-                <p className="text-[11px] text-gray-400">Sign in as a different user</p>
+                <p className="text-[11px] text-subtle">Sign in as a different user</p>
               </div>
             </button>
 
             <button
               onClick={doSignOut}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-danger hover:bg-danger-bg transition-colors">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
                 <polyline points="16 17 21 12 16 7"/>
@@ -119,7 +119,7 @@ export default function UserMenu({ userName, role, userEmail }: Props) {
               </svg>
               <div className="text-left flex-1">
                 <p className="font-medium">Sign out</p>
-                <p className="text-[11px] text-red-400">End your session</p>
+                <p className="text-[11px] text-danger">End your session</p>
               </div>
             </button>
           </div>

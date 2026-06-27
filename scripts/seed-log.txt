@@ -1,0 +1,7 @@
+✅ owner   — rap@totallywiredelectric.com
+✅ owner   — cole@totallywiredelectric.com
+✅ owner   — nicole@totallywiredelectric.com
+✅ foreman — dean@twe.com
+✅ foreman — taimez@twe.com
+
+All users seeded successfully.
