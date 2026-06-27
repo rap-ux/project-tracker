@@ -162,6 +162,11 @@ export default async function Home() {
     ? Math.floor((Date.now() - new Date(latestUpload.uploaded_at.replace(" ", "T") + "Z").getTime()) / 86400000)
     : null;
 
+  // ── Pending sheet/upload changes awaiting review ───────────────────────────
+  const pendingSync = db.prepare(
+    "SELECT COALESCE(SUM(change_count),0) AS changes, COUNT(*) AS batches FROM import_batches WHERE status = 'pending'"
+  ).get() as { changes: number; batches: number };
+
   const data = {
     userName,
     totals: {
@@ -175,6 +180,8 @@ export default async function Home() {
       avgMatBurn,
       avgHoursVsGoal,
       qboDays,
+      pendingChanges: pendingSync.changes,
+      pendingBatches: pendingSync.batches,
     },
     flaggedList: flagged.slice(0, 5).map(p => ({
       id:       p.id,
@@ -194,7 +201,7 @@ export default async function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-bg theme-fade">
       <Navbar userName={session.user?.name ?? "Admin"} role={role} userEmail={session.user?.email ?? undefined} userTitle={(session.user as any)?.title ?? undefined} />
       <HomeClient data={data} />
     </div>
