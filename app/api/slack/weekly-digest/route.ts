@@ -12,7 +12,11 @@ const fmt$k = (n: number) => Math.abs(n) >= 1000 ? "$" + Math.round(n / 1000) + 
 
 // Weekly Slack digest mirroring the /report page. Trigger Mondays via a
 // scheduler hitting ?secret=<BACKUP_SECRET>, or open it as an owner in-browser.
-export async function POST(req: NextRequest) {
+// Accepts GET and POST so cron services work with their default GET method.
+export async function GET(req: NextRequest)  { return handle(req); }
+export async function POST(req: NextRequest) { return handle(req); }
+
+async function handle(req: NextRequest) {
   const provided = req.nextUrl.searchParams.get("secret");
   const expected = process.env.BACKUP_SECRET;
   const secretOk = !!expected && provided === expected;
