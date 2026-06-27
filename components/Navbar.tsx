@@ -51,16 +51,17 @@ function NavIcon({ name, size = 16 }: { name: IconKey; size?: number }) {
   }
 }
 
-const OWNER_LINKS: Array<{ href: string; label: string; icon: IconKey; superOnly?: boolean; ownerOnly?: boolean }> = [
-  { href: "/",          label: "Home",      icon: "home"      },
-  { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
-  { href: "/inputs",    label: "Inputs",    icon: "inputs"    },
-  { href: "/forecast",  label: "Forecast",  icon: "forecast"  },
-  { href: "/timeline",  label: "Timeline",  icon: "timeline"  },
-  { href: "/analytics", label: "Analytics", icon: "analytics" },
-  { href: "/bonuses",   label: "Bonuses",   icon: "bonuses"   },
-  { href: "/clients",   label: "Clients",   icon: "clients"   },
+// `primary` links sit directly in the bar; the rest collapse under "More".
+const OWNER_LINKS: Array<{ href: string; label: string; icon: IconKey; superOnly?: boolean; ownerOnly?: boolean; primary?: boolean }> = [
+  { href: "/",          label: "Home",      icon: "home",      primary: true },
+  { href: "/dashboard", label: "Projects",  icon: "dashboard", primary: true },
+  { href: "/forecast",  label: "Forecast",  icon: "forecast",  primary: true },
+  { href: "/bonuses",   label: "Bonuses",   icon: "bonuses",   primary: true },
   { href: "/uploads",   label: "Uploads",   icon: "uploads"   },
+  { href: "/analytics", label: "Analytics", icon: "analytics" },
+  { href: "/timeline",  label: "Timeline",  icon: "timeline"  },
+  { href: "/inputs",    label: "Inputs",    icon: "inputs"    },
+  { href: "/clients",   label: "Clients",   icon: "clients"   },
   { href: "/help",      label: "Help",      icon: "help"      },
   { href: "/report",     label: "Report",     icon: "report", superOnly: true },
   { href: "/access-log", label: "Access Log", icon: "log",    ownerOnly: true },
@@ -79,6 +80,7 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
   const path    = usePathname();
   const isOwner = role === "owner" || role === "admin";
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [moreOpen,   setMoreOpen]   = useState(false);
   const emailOverride = userEmail && EMAIL_TITLE_OVERRIDES[userEmail];
   const displayRole   = emailOverride || (userTitle && userTitle.trim()) || role;
   const isSuperAdmin  = !!userEmail && SUPER_ADMIN_EMAILS.includes(userEmail);
@@ -86,6 +88,9 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
        (!l.superOnly || isSuperAdmin)
     && (!l.ownerOnly || role === "owner")
   );
+  const primaryLinks   = visibleLinks.filter(l => l.primary);
+  const secondaryLinks = visibleLinks.filter(l => !l.primary);
+  const moreActive     = secondaryLinks.some(l => l.href === path);
 
   return (
     <nav
@@ -105,36 +110,53 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
           </div>
         </Link>
 
-        {/* ── Desktop Nav links ── */}
+        {/* ── Desktop Nav links (primary + More) ── */}
         {isOwner && (
-          <div className="hidden min-[1400px]:flex items-center">
-            {visibleLinks.map(l => {
+          <div className="hidden lg:flex items-center gap-1">
+            {primaryLinks.map(l => {
               const active = path === l.href;
               return (
                 <Link key={l.href} href={l.href}
-                  className={`group relative flex flex-col items-center gap-0.5 px-2.5 xl:px-3 pt-2 pb-2 transition-all duration-200 whitespace-nowrap ${
-                    active
-                      ? "text-[#00BAD6]"
-                      : "text-white/55 hover:text-white/95 hover:bg-surface/[0.06]"
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                    active ? "text-[#00BAD6] bg-white/[0.07]" : "text-white/60 hover:text-white hover:bg-white/[0.06]"
                   }`}>
-                  <span className="transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-110">
-                    <NavIcon name={l.icon} size={18} />
-                  </span>
-                  <span className="text-[10px] font-medium tracking-wide uppercase transition-transform duration-200 ease-out group-hover:-translate-y-0.5">
-                    {l.label}
-                  </span>
-                  {/* Active-page underline (solid cyan) */}
-                  {active && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full" style={{ backgroundColor: "#00BAD6" }} />
-                  )}
-                  {/* Hover preview underline — grows from center on inactive links */}
-                  {!active && (
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-0 rounded-t-full transition-all duration-200 ease-out group-hover:w-4/5"
-                      style={{ backgroundColor: "rgba(0, 186, 214, 0.55)" }} />
-                  )}
+                  <NavIcon name={l.icon} size={16} />
+                  {l.label}
                 </Link>
               );
             })}
+
+            {secondaryLinks.length > 0 && (
+              <div className="relative"
+                onMouseLeave={() => setMoreOpen(false)}>
+                <button
+                  onClick={() => setMoreOpen(v => !v)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    moreActive || moreOpen ? "text-white bg-white/[0.07]" : "text-white/60 hover:text-white hover:bg-white/[0.06]"
+                  }`}>
+                  More
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                    className={`transition-transform ${moreOpen ? "rotate-180" : ""}`}><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+                {moreOpen && (
+                  <div className="absolute left-0 top-full mt-1 w-52 rounded-xl border border-white/10 shadow-xl py-1.5 z-50"
+                    style={{ backgroundColor: "#17191d" }}>
+                    {secondaryLinks.map(l => {
+                      const active = path === l.href;
+                      return (
+                        <Link key={l.href} href={l.href} onClick={() => setMoreOpen(false)}
+                          className={`flex items-center gap-3 px-3.5 py-2 text-sm transition-colors ${
+                            active ? "text-[#00BAD6]" : "text-white/70 hover:text-white hover:bg-white/[0.06]"
+                          }`}>
+                          <NavIcon name={l.icon} size={16} />
+                          {l.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -155,7 +177,7 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
         {/* Mobile hamburger */}
         <button
           onClick={() => setMobileOpen(v => !v)}
-          className="min-[1400px]:hidden p-2 rounded-md hover:bg-surface/10 transition-colors"
+          className="lg:hidden p-2 rounded-md hover:bg-surface/10 transition-colors"
           aria-label="Open menu">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#EBF1F5" }}>
             {mobileOpen ? (
@@ -179,12 +201,12 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/60 z-40 min-[1400px]:hidden"
+            className="fixed inset-0 bg-black/60 z-40 lg:hidden"
             style={{ top: "52px" }}
             onClick={() => setMobileOpen(false)} />
           {/* Drawer */}
           <div
-            className="fixed left-0 right-0 z-50 min-[1400px]:hidden shadow-xl border-t border-white/10"
+            className="fixed left-0 right-0 z-50 lg:hidden shadow-xl border-t border-white/10"
             style={{ top: "52px", backgroundColor: "#101010" }}>
             <div className="flex flex-col px-4 py-3 gap-0.5">
               {/* User info row on mobile */}
