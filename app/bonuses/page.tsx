@@ -5,6 +5,7 @@ import db              from "@/lib/db";
 import Navbar          from "@/components/Navbar";
 import BonusesClient   from "@/components/BonusesClient";
 import { calcIncentive, getBonusTier } from "@/lib/incentive";
+import { getLastSync } from "@/lib/lastSync";
 
 export default async function BonusesPage() {
   const session = await auth();
@@ -49,7 +50,7 @@ export default async function BonusesPage() {
   return (
     <div className="min-h-screen flex flex-col bg-surface-2">
       <Navbar userName={session.user?.name ?? "Admin"} role={role} userEmail={session.user?.email ?? undefined} userTitle={(session.user as any)?.title ?? undefined} />
-      <BonusesClient projects={projects} />
+      <BonusesClient projects={projects} lastSync={getLastSync()} />
     </div>
   );
 }

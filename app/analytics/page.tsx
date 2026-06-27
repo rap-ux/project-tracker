@@ -4,6 +4,7 @@ import { auth }      from "@/auth";
 import db            from "@/lib/db";
 import Navbar        from "@/components/Navbar";
 import AnalyticsClient from "@/components/AnalyticsClient";
+import { getLastSync } from "@/lib/lastSync";
 
 export default async function AnalyticsPage() {
   const session = await auth();
@@ -38,7 +39,7 @@ export default async function AnalyticsPage() {
   return (
     <div className="min-h-screen flex flex-col bg-surface-2">
       <Navbar userName={session.user?.name ?? "Admin"} role={role} userEmail={session.user?.email ?? undefined} userTitle={(session.user as any)?.title ?? undefined} />
-      <AnalyticsClient projects={projects} finishDateByProject={finishDateByProject} />
+      <AnalyticsClient projects={projects} finishDateByProject={finishDateByProject} lastSync={getLastSync()} />
     </div>
   );
 }

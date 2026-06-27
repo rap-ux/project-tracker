@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import FreshnessStamp from "./FreshnessStamp";
 
 const fmt$   = (n: number) => "$" + (n ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
 const fmtPct = (n: number) => ((n ?? 0) * 100).toFixed(1) + "%";
@@ -40,8 +41,8 @@ function marginForProject(p: Project): { est: number; actual: number; estPct: nu
   return { est, actual, estPct, actualPct };
 }
 
-export default function AnalyticsClient({ projects, finishDateByProject }: {
-  projects: Project[]; finishDateByProject: Record<number, string>;
+export default function AnalyticsClient({ projects, finishDateByProject, lastSync }: {
+  projects: Project[]; finishDateByProject: Record<number, string>; lastSync?: string | null;
 }) {
   const [view, setView] = useState<"margin" | "foreman" | "builder">("margin");
   const [marginChartView, setMarginChartView] = useState<"bar" | "pie">("bar");
@@ -136,7 +137,10 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-text">Analytics</h1>
+          <div className="flex items-baseline gap-3 flex-wrap">
+            <h1 className="text-xl font-bold text-text">Analytics</h1>
+            <FreshnessStamp ts={lastSync ?? null} />
+          </div>
           <p className="text-xs sm:text-sm text-muted mt-0.5">
             Margin trends, per-foreman performance, and per-builder profitability
           </p>
@@ -446,7 +450,7 @@ export default function AnalyticsClient({ projects, finishDateByProject }: {
                         </div>
                       )}
                       {inOverrun && (
-                        <div className="text-[11px] text-danger bg-danger-bg border border-red-100 rounded p-2 mt-2">
+                        <div className="text-[11px] text-danger bg-danger-bg border border-border rounded p-2 mt-2">
                           ⚠ Portfolio-wide costs exceed contracts by <strong>{fmt$(Math.abs(totalMargin))}</strong>. Review high-burn projects on the table below.
                         </div>
                       )}

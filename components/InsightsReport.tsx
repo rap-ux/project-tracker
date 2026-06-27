@@ -163,7 +163,7 @@ function buildPlainText(
 // ── Sub-components ────────────────────────────────────────────────────────────
 function KpiCard({ label, value, sub, highlight }: { label: string; value: string; sub?: string; highlight?: boolean }) {
   return (
-    <div className={`rounded-lg p-3 border ${highlight ? "bg-info-bg border-blue-200" : "bg-surface-2 border-border"}`}>
+    <div className={`rounded-lg p-3 border ${highlight ? "bg-info-bg border-border" : "bg-surface-2 border-border"}`}>
       <p className="text-xs text-muted mb-0.5">{label}</p>
       <p className={`text-xl font-bold ${highlight ? "text-info" : "text-text"}`}>{value}</p>
       {sub && <p className="text-xs text-muted mt-0.5">{sub}</p>}

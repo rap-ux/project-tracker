@@ -268,8 +268,8 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
       {msg && (
         <div className={`px-4 py-3 rounded-lg text-sm font-medium border ${
           msg.ok
-            ? "bg-success-bg border-green-200 text-success"
-            : "bg-danger-bg   border-red-200   text-danger"
+            ? "bg-success-bg border-border text-success"
+            : "bg-danger-bg   border-border   text-danger"
         }`}>
           {msg.text}
         </div>

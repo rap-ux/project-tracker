@@ -629,9 +629,9 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
             const overMat  = matPct > 1;
             const overHrs  = inc.projectStatus.key === "critical" || inc.projectStatus.key === "at-risk";
             const statusBg =
-              inc.projectStatus.key === "critical" ? "bg-danger-bg border-red-200" :
-              inc.projectStatus.key === "at-risk"  ? "bg-warning-bg border-orange-200" :
-              inc.projectStatus.key === "watch"    ? "bg-warning-bg border-yellow-200" :
+              inc.projectStatus.key === "critical" ? "bg-danger-bg border-border" :
+              inc.projectStatus.key === "at-risk"  ? "bg-warning-bg border-border" :
+              inc.projectStatus.key === "watch"    ? "bg-warning-bg border-border" :
                                                       "bg-surface border-border";
             return (
               <div key={p.id} className={`rounded-xl border shadow-sm p-4 space-y-3 ${statusBg}`}>
@@ -728,7 +728,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                     {isAdmin && (
                       <button
                         onClick={() => { setEditProject(p); setDraftStage(p.stage ?? "Rough"); setDraftStagePct(Math.round((p.stage_completion ?? 0) * 100)); }}
-                        className="text-xs px-2.5 py-1 bg-info-bg border border-blue-200 text-info hover:bg-info-bg rounded transition-colors">
+                        className="text-xs px-2.5 py-1 bg-info-bg border border-border text-info hover:bg-info-bg rounded transition-colors">
                         ✏️ Edit
                       </button>
                     )}
@@ -772,11 +772,11 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                 const inc       = p.incentive;
                 const overHrs   = inc.projectStatus.key === "critical" || inc.projectStatus.key === "at-risk";
                 const statusColors: Record<string, string> = {
-                  green:  "text-success bg-success-bg  border border-green-200",
-                  blue:   "text-info  bg-info-bg   border border-blue-200",
-                  yellow: "text-warning bg-warning-bg border border-yellow-200",
-                  orange: "text-warning bg-warning-bg border border-orange-200",
-                  red:    "text-danger   bg-danger-bg    border border-red-200",
+                  green:  "text-success bg-success-bg  border border-border",
+                  blue:   "text-info  bg-info-bg   border border-border",
+                  yellow: "text-warning bg-warning-bg border border-border",
+                  orange: "text-warning bg-warning-bg border border-border",
+                  red:    "text-danger   bg-danger-bg    border border-border",
                   gray:   "text-muted  bg-surface-2   border border-border",
                 };
 
@@ -938,9 +938,9 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                               );
                               const good = sb.variance >= 0;
                               const bgCls =
-                                sb.status === "beat" ? "bg-success-bg border-green-200" :
-                                sb.status === "meet" ? "bg-info-bg  border-blue-200"  :
-                                                      "bg-danger-bg   border-red-200";
+                                sb.status === "beat" ? "bg-success-bg border-border" :
+                                sb.status === "meet" ? "bg-info-bg  border-border"  :
+                                                      "bg-danger-bg   border-border";
                               const txtCls =
                                 sb.status === "beat" ? "text-success" :
                                 sb.status === "meet" ? "text-info"  : "text-danger";

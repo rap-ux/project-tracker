@@ -8,11 +8,11 @@ const fmtPct = (n: number) => ((n ?? 0) * 100).toFixed(1) + "%";
 const STAGE_OPTIONS = ["Contracting Phase", "Underground", "Rough", "Finish", "Extras"];
 
 const STATUS_STYLES: Record<string, string> = {
-  critical:  "bg-danger-bg text-danger border-red-200",
-  "at-risk": "bg-warning-bg text-warning border-orange-200",
-  watch:     "bg-warning-bg text-warning border-yellow-200",
-  "on-track":"bg-info-bg text-info border-blue-200",
-  ahead:     "bg-success-bg text-success border-green-200",
+  critical:  "bg-danger-bg text-danger border-border",
+  "at-risk": "bg-warning-bg text-warning border-border",
+  watch:     "bg-warning-bg text-warning border-border",
+  "on-track":"bg-info-bg text-info border-border",
+  ahead:     "bg-success-bg text-success border-border",
   gray:      "bg-surface-2 text-muted border-border",
 };
 
@@ -194,9 +194,9 @@ export default function ForemanProjectCard({ project: initial }: { project: Proj
             const varHrs = Math.abs(sb.variance).toFixed(0);
             return (
               <div key={label} className={`rounded-lg px-2.5 py-2 flex items-center justify-between gap-2 ${
-                sb.status === "beat" ? "bg-success-bg border border-green-200" :
-                sb.status === "meet" ? "bg-info-bg  border border-blue-200"  :
-                                      "bg-danger-bg   border border-red-200"
+                sb.status === "beat" ? "bg-success-bg border border-border" :
+                sb.status === "meet" ? "bg-info-bg  border border-border"  :
+                                      "bg-danger-bg   border border-border"
               }`}>
                 <div>
                   <span className="font-semibold text-text">{label} — </span>

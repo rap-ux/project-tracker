@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import FreshnessStamp from "./FreshnessStamp";
 
 const fmt$   = (n: number) => "$" + (n ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
 const fmtPct = (n: number) => ((n ?? 0) * 100).toFixed(1) + "%";
@@ -34,16 +35,16 @@ interface Project {
 
 function stageStatusStyle(status: string): { bg: string; text: string; border: string; label: string } {
   switch (status) {
-    case "beat":     return { bg: "bg-success-bg",  text: "text-success",  border: "border-green-200",  label: "Beat" };
-    case "meet":     return { bg: "bg-info-bg",   text: "text-info",   border: "border-blue-200",   label: "Met"   };
-    case "miss":     return { bg: "bg-danger-bg",    text: "text-danger",    border: "border-red-200",    label: "Over"  };
+    case "beat":     return { bg: "bg-success-bg",  text: "text-success",  border: "border-border",  label: "Beat" };
+    case "meet":     return { bg: "bg-info-bg",   text: "text-info",   border: "border-border",   label: "Met"   };
+    case "miss":     return { bg: "bg-danger-bg",    text: "text-danger",    border: "border-border",    label: "Over"  };
     case "locked":   return { bg: "bg-surface-2",   text: "text-muted",   border: "border-border",   label: "🔒 In progress" };
     case "too-early":return { bg: "bg-surface-2",   text: "text-subtle",   border: "border-border",   label: "Too early" };
     default:         return { bg: "bg-surface-2",   text: "text-subtle",   border: "border-border",   label: "—"     };
   }
 }
 
-export default function BonusesClient({ projects }: { projects: Project[] }) {
+export default function BonusesClient({ projects, lastSync }: { projects: Project[]; lastSync?: string | null }) {
   const [foremanFilter, setForemanFilter] = useState("all");
 
   const foremen = useMemo(() => ["all", ...Array.from(new Set(projects.map(p => p.foreman))).sort()], [projects]);
@@ -88,7 +89,10 @@ export default function BonusesClient({ projects }: { projects: Project[] }) {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-text">Bonus Eligibility</h1>
+          <div className="flex items-baseline gap-3 flex-wrap">
+            <h1 className="text-xl font-bold text-text">Bonus Eligibility</h1>
+            <FreshnessStamp ts={lastSync ?? null} />
+          </div>
           <p className="text-xs sm:text-sm text-muted mt-0.5">
             Per-foreman incentive tracking · Rough and Finish stage bonuses assessed at each stage's 100% mark
           </p>
@@ -142,9 +146,9 @@ export default function BonusesClient({ projects }: { projects: Project[] }) {
                     <div className="h-2 rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: "#00BAD6" }} />
                   </div>
                   <div className="mt-4 grid grid-cols-4 gap-1 text-center">
-                    <StageChip label="Beat"   count={f.beat}   color="text-success bg-success-bg border-green-200" />
-                    <StageChip label="Met"    count={f.meet}   color="text-info  bg-info-bg  border-blue-200"  />
-                    <StageChip label="Over"   count={f.miss}   color="text-danger   bg-danger-bg   border-red-200"   />
+                    <StageChip label="Beat"   count={f.beat}   color="text-success bg-success-bg border-border" />
+                    <StageChip label="Met"    count={f.meet}   color="text-info  bg-info-bg  border-border"  />
+                    <StageChip label="Over"   count={f.miss}   color="text-danger   bg-danger-bg   border-border"   />
                     <StageChip label="🔒 WIP" count={f.locked} color="text-muted  bg-surface-2  border-border"  />
                   </div>
                 </div>

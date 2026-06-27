@@ -4,6 +4,7 @@ import { auth }      from "@/auth";
 import db            from "@/lib/db";
 import Navbar        from "@/components/Navbar";
 import ForecastClient from "@/components/ForecastClient";
+import { getLastSync } from "@/lib/lastSync";
 
 export default async function ForecastPage() {
   const session = await auth();
@@ -94,7 +95,7 @@ export default async function ForecastPage() {
   return (
     <div className="min-h-screen flex flex-col bg-surface-2">
       <Navbar userName={session.user?.name ?? "Admin"} role={role} userEmail={session.user?.email ?? undefined} userTitle={(session.user as any)?.title ?? undefined} />
-      <ForecastClient rows={rows} role={role} />
+      <ForecastClient rows={rows} role={role} lastSync={getLastSync()} />
     </div>
   );
 }

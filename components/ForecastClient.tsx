@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { toCSV, downloadCSV } from "@/lib/csv";
+import FreshnessStamp from "./FreshnessStamp";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const MILESTONES = [
@@ -99,9 +100,9 @@ function timelineInheritCount(row: any): number {
 }
 
 // ── Props ─────────────────────────────────────────────────────────────────────
-interface Props { rows: any[]; role: string; }
+interface Props { rows: any[]; role: string; lastSync?: string | null; }
 
-export default function ForecastClient({ rows, role }: Props) {
+export default function ForecastClient({ rows, role, lastSync }: Props) {
   const [data,    setData]    = useState<any[]>(rows);
   const [editing, setEditing] = useState<number | null>(null);
   const [draft,   setDraft]   = useState<any>(null);
@@ -205,7 +206,10 @@ export default function ForecastClient({ rows, role }: Props) {
       {/* ── Header ── */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-text">Revenue Forecasting (Accrual)</h1>
+          <div className="flex items-baseline gap-3 flex-wrap">
+            <h1 className="text-xl font-bold text-text">Revenue Forecasting (Accrual)</h1>
+            <FreshnessStamp ts={lastSync ?? null} />
+          </div>
           <p className="text-xs sm:text-sm text-muted mt-0.5">
             Dates from Timeline · 10 / 25 / 25 / 30 / 10% milestone split
           </p>
@@ -273,7 +277,7 @@ export default function ForecastClient({ rows, role }: Props) {
           { label: "Tracked Projects",           value: String(activeData.length) },
         ] as Array<{ label: string; value: string; sub?: string; hi?: string; prominent?: boolean; muted?: boolean }>).map(card => (
           <div key={card.label} className={`bg-surface rounded-xl border shadow-sm px-4 py-3 ${
-            card.prominent ? "border-cyan-200 ring-1 ring-cyan-100" :
+            card.prominent ? "border-border ring-1 ring-cyan-100" :
             card.muted     ? "border-border bg-surface-2/40"        :
                              "border-border"
           }`}>
@@ -290,9 +294,9 @@ export default function ForecastClient({ rows, role }: Props) {
       {/* ── Reconciliation banner ── */}
       {pastTotal > 0 && (
         <div className={`rounded-xl p-3 text-xs flex items-center gap-3 ${
-          Math.abs(reconcileDiff) < 5000 ? "bg-success-bg border border-green-200"
-          : reconcileDiff > 0            ? "bg-info-bg border border-blue-200"
-                                         : "bg-warning-bg border border-yellow-200"
+          Math.abs(reconcileDiff) < 5000 ? "bg-success-bg border border-border"
+          : reconcileDiff > 0            ? "bg-info-bg border border-border"
+                                         : "bg-warning-bg border border-border"
         }`}>
           <span className="text-base">
             {Math.abs(reconcileDiff) < 5000 ? "✅" : reconcileDiff > 0 ? "ℹ️" : "⚠️"}
@@ -820,7 +824,7 @@ export default function ForecastClient({ rows, role }: Props) {
         </div>
         );
       })() : (
-        <div className="bg-info-bg border border-blue-200 rounded-xl p-5 text-sm text-info">
+        <div className="bg-info-bg border border-border rounded-xl p-5 text-sm text-info">
           📅 No milestone dates available. Add stage start/end dates on the <strong>Timeline</strong> page — they'll flow here automatically.
         </div>
       )}
@@ -923,7 +927,7 @@ export default function ForecastClient({ rows, role }: Props) {
                                     if (e.target.value !== "") changeField(`${m.key}_amount`, "");
                                   }}
                                   title={`Override %. Default ${(m.pct * 100).toFixed(0)}%. Clears the $ override.`}
-                                  className="w-1/2 text-[10px] px-1 py-0.5 border border-amber-200 rounded bg-warning-bg/50 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                  className="w-1/2 text-[10px] px-1 py-0.5 border border-border rounded bg-warning-bg/50 focus:outline-none focus:ring-1 focus:ring-amber-400"
                                 />
                                 <input
                                   type="number" step="0.01" placeholder="$"
@@ -933,7 +937,7 @@ export default function ForecastClient({ rows, role }: Props) {
                                     if (e.target.value !== "") changeField(`${m.key}_pct`, "");
                                   }}
                                   title="Override actual $ amount. Clears the % override."
-                                  className="w-1/2 text-[10px] px-1 py-0.5 border border-amber-200 rounded bg-warning-bg/50 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                  className="w-1/2 text-[10px] px-1 py-0.5 border border-border rounded bg-warning-bg/50 focus:outline-none focus:ring-1 focus:ring-amber-400"
                                 />
                               </div>
                               {source === "timeline" && <span className="text-[9px] text-accent">← Timeline</span>}

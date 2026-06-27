@@ -496,7 +496,7 @@ export default function TimelineClient({ projects, stagesByProject }: Props) {
       {/* ── Gantt view ── */}
       {view === "gantt" && (
         <>
-          <div className="md:hidden bg-warning-bg border border-amber-200 rounded-xl p-4 text-xs text-warning">
+          <div className="md:hidden bg-warning-bg border border-border rounded-xl p-4 text-xs text-warning">
             📱 The Gantt chart is designed for wider screens. For the best view, open this page on a laptop/desktop — or rotate your phone to landscape.
           </div>
           <GanttView visible={visible} stagesByProject={localStages} />
@@ -695,7 +695,7 @@ function GanttView({ visible, stagesByProject }: {
               <div key={foreman}>
                 {/* Foreman group header */}
                 <div className="flex items-stretch border-b border-border sticky z-[5]" style={{ backgroundColor: "#e0f2fe" }}>
-                  <div className="shrink-0 px-4 py-1.5 font-bold text-xs uppercase tracking-wider border-r border-blue-200 flex items-center gap-2"
+                  <div className="shrink-0 px-4 py-1.5 font-bold text-xs uppercase tracking-wider border-r border-border flex items-center gap-2"
                     style={{ width: LABEL_W, minWidth: LABEL_W, color: "#0369a1" }}>
                     <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "#0369a1" }} />
                     {foreman}
