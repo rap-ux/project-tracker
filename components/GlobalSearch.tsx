@@ -51,19 +51,19 @@ export default function GlobalSearch() {
         type: "project" as const, id: p.id,
         label: p.name,
         detail: [p.foreman, p.stage, p.builder].filter(Boolean).join(" · "),
-        href: p.is_pipeline ? "/clients" : "/dashboard",
+        href: `/dashboard?focus=${p.id}${p.is_pipeline ? "&view=pipeline" : ""}`,
       })),
       ...results.changeOrders.map(c => ({
         type: "co" as const, id: c.id,
         label: `CO: ${c.description}`,
         detail: `${c.project_name} · ${c.status} · ${fmt$(c.amount)}`,
-        href: "/dashboard",
+        href: `/dashboard?focus=${c.project_id}`,
       })),
       ...results.comments.map(c => ({
         type: "comment" as const, id: c.id,
         label: c.body.length > 70 ? c.body.slice(0, 67) + "…" : c.body,
         detail: `${c.user_name} on ${c.project_name}`,
-        href: "/dashboard",
+        href: `/dashboard?focus=${c.project_id}`,
       })),
     ] : [];
 
@@ -151,7 +151,7 @@ export default function GlobalSearch() {
                 onChange={e => setQuery(e.target.value)}
                 onKeyDown={onKeyDownInput}
                 placeholder="Search projects, builders, contacts, comments, change orders…"
-                className="flex-1 text-sm outline-none placeholder-gray-400"
+                className="flex-1 text-sm bg-transparent text-text outline-none placeholder:text-subtle"
               />
               {loading && <span className="text-xs text-subtle">…</span>}
               <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-border text-subtle">Esc</kbd>
@@ -295,8 +295,7 @@ function ResultRow({ active, icon, title, sub, badge, onClick, onHover }: {
     <button
       onClick={onClick}
       onMouseEnter={onHover}
-      className="w-full flex items-start gap-3 px-4 py-2.5 text-left transition-colors"
-      style={{ backgroundColor: active ? "#f0fdfe" : "transparent" }}>
+      className={`w-full flex items-start gap-3 px-4 py-2.5 text-left transition-colors ${active ? "bg-accent-soft" : ""}`}>
       <span className="text-base shrink-0">{icon}</span>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-text truncate">{title}</p>
@@ -306,7 +305,7 @@ function ResultRow({ active, icon, title, sub, badge, onClick, onHover }: {
         <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-surface-2 text-muted font-medium">{badge}</span>
       )}
       {active && (
-        <span className="shrink-0 text-xs" style={{ color: "#00BAD6" }}>↵</span>
+        <span className="shrink-0 text-xs text-accent">↵</span>
       )}
     </button>
   );

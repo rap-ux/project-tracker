@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import ChangeOrdersPanel     from "./ChangeOrdersPanel";
 import CommentsPanel           from "./CommentsPanel";
 import { toCSV, downloadCSV }  from "@/lib/csv";
@@ -85,6 +85,7 @@ interface Props {
 
 export default function DashboardClient({ projects, pipeline, kpis, flagged, uploads, role, userEmail, stagesByProject, lastSync }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { confirm, dialog: confirmDialog } = useConfirm();
   const [view,          setView]          = useState<"active" | "pipeline">("active");
   const [search,        setSearch]        = useState("");
@@ -102,6 +103,21 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
   // Live preview of calculated project_completion in the edit modal
   const [draftStage,      setDraftStage]      = useState<string>("");
   const [draftStagePct,   setDraftStagePct]   = useState<number>(0);
+
+  // Deep-link from global search: ?focus=<id> expands and scrolls to that project.
+  useEffect(() => {
+    const focus = searchParams.get("focus");
+    if (searchParams.get("view") === "pipeline") setView("pipeline");
+    if (!focus) return;
+    const id = Number(focus);
+    setExpandedRows(prev => new Set(prev).add(id));
+    const timer = setTimeout(() => {
+      document.getElementById(`project-row-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 300);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   function calcProjectCompletion(stage: string, stagePct: number): number {
     const sc = Math.min(1, Math.max(0, stagePct / 100));
     if (stage === "Rough" || stage === "Underground") return sc * 0.70;
@@ -764,6 +780,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                 return (
                   <React.Fragment key={p.id}>
                   <tr
+                    id={`project-row-${p.id}`}
                     onClick={() => toggleRow(p.id)}
                     title={expandedRows.has(p.id) ? "Click to hide insights" : "Click to show insights"}
                     className={`cursor-pointer hover:bg-surface-2 transition-colors border-b border-border ${
