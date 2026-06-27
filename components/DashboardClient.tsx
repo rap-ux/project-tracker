@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import ChangeOrdersPanel     from "./ChangeOrdersPanel";
 import CommentsPanel           from "./CommentsPanel";
 import { toCSV, downloadCSV }  from "@/lib/csv";
@@ -82,6 +83,7 @@ interface Props {
 }
 
 export default function DashboardClient({ projects, pipeline, kpis, flagged, uploads, role, userEmail, stagesByProject, lastSync }: Props) {
+  const router = useRouter();
   const [view,          setView]          = useState<"active" | "pipeline">("active");
   const [search,        setSearch]        = useState("");
   const [filterForeman, setFilterForeman] = useState("all");
@@ -147,7 +149,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
       })
     ));
     setBulkStatus("✅ Updated");
-    setTimeout(() => { setBulkStatus(""); window.location.reload(); }, 800);
+    setTimeout(() => { setBulkStatus(""); router.refresh(); }, 800);
   }
   async function bulkDelete() {
     if (selectedIds.size === 0) return;
@@ -157,7 +159,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
       fetch(`/api/projects/${id}`, { method: "DELETE" })
     ));
     setBulkStatus("✅ Deleted");
-    setTimeout(() => { setBulkStatus(""); window.location.reload(); }, 600);
+    setTimeout(() => { setBulkStatus(""); router.refresh(); }, 600);
   }
   function exportCurrentCSV(list: any[], filenameHint: string) {
     const rows = list.map((p: any) => ({
@@ -252,7 +254,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
     });
     setActivating(false);
     setActivateProject(null);
-    window.location.reload();
+    router.refresh();
   }
 
   // ── Save edits ─────────────────────────────────────────────────────────────
@@ -303,7 +305,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
 
     await Promise.all(saves);
     setEditProject(null);
-    window.location.reload();
+    router.refresh();
   }
 
   // ── Add project ────────────────────────────────────────────────────────────
@@ -323,14 +325,14 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
     };
     await fetch("/api/projects", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     setShowAddForm(false);
-    window.location.reload();
+    router.refresh();
   }
 
   // ── Delete project ─────────────────────────────────────────────────────────
   async function handleDelete(id: number) {
     if (!confirm("Delete this project?")) return;
     await fetch(`/api/projects/${id}`, { method: "DELETE" });
-    window.location.reload();
+    router.refresh();
   }
 
   const isAdmin       = role === "owner" || role === "admin";

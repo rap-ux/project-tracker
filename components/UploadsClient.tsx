@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 
 // ── Field display helpers ─────────────────────────────────────────────────────
 const FIELD_LABELS: Record<string, string> = {
@@ -85,6 +86,7 @@ interface Props {
 }
 
 export default function UploadsClient({ batches, changesByBatch, projects }: Props) {
+  const router = useRouter();
   const [tab,            setTab]            = useState<"pending" | "history">("pending");
   const [expandedBatch,  setExpandedBatch]  = useState<number | null>(null);
   const [checked,        setChecked]        = useState<Set<number>>(new Set());
@@ -151,7 +153,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
         : "";
       setMsg({ text: `✅ ${data.changeCount} change(s) staged across ${data.projectCount} project(s). Review below.${newNote}`, ok: true });
       setTab("pending");
-      setTimeout(() => window.location.reload(), 1500);
+      setTimeout(() => router.refresh(), 1500);
     } else {
       setMsg({ text: `❌ ${data.error ?? "Upload failed"}`, ok: false });
     }
@@ -171,7 +173,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
     if (data.ok) {
       setMsg({ text: `✅ ${data.changeCount} change(s) staged. Review below.`, ok: true });
       setTab("pending");
-      setTimeout(() => window.location.reload(), 800);
+      setTimeout(() => router.refresh(), 800);
     } else {
       setMsg({ text: `❌ ${data.error ?? "Import failed"}`, ok: false });
     }
@@ -190,7 +192,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
       setMsg({ text: `✅ ${data.changeCount} change(s) staged. Review below.`, ok: true });
       setPasteText("");
       setTab("pending");
-      setTimeout(() => window.location.reload(), 800);
+      setTimeout(() => router.refresh(), 800);
     } else {
       setMsg({ text: `❌ ${data.error ?? "Could not parse pasted text"}`, ok: false });
     }
@@ -214,7 +216,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
     setApplying(null);
     if (data.ok) {
       setMsg({ text: `✅ Applied ${data.applied} change(s) to ${data.projects} project(s).`, ok: true });
-      setTimeout(() => window.location.reload(), 800);
+      setTimeout(() => router.refresh(), 800);
     } else {
       setMsg({ text: `❌ ${data.error ?? "Apply failed"}`, ok: false });
     }
@@ -226,7 +228,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
     setDiscarding(batchId);
     await fetch(`/api/upload/batches/${batchId}`, { method: "DELETE" });
     setDiscarding(null);
-    window.location.reload();
+    router.refresh();
   }
 
   // ── Revert ────────────────────────────────────────────────────────────────
@@ -238,7 +240,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
     setReverting(null);
     if (data.ok) {
       setMsg({ text: `✅ Reverted ${data.reverted} change(s) across ${data.projects} project(s).`, ok: true });
-      setTimeout(() => window.location.reload(), 800);
+      setTimeout(() => router.refresh(), 800);
     } else {
       setMsg({ text: `❌ ${data.error ?? "Revert failed"}`, ok: false });
     }
