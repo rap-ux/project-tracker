@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useConfirm } from "./useConfirm";
 
 const fmt$ = (n: number) => "$" + (n ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
 
@@ -28,6 +29,7 @@ export default function ChangeOrdersPanel({ projectId, isAdmin, onTotalChange }:
   isAdmin: boolean;
   onTotalChange?: (total: number) => void;
 }) {
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const [cos,       setCos]       = useState<CO[] | null>(null);
   const [adding,    setAdding]    = useState(false);
   const [saving,    setSaving]    = useState(false);
@@ -77,7 +79,7 @@ export default function ChangeOrdersPanel({ projectId, isAdmin, onTotalChange }:
   }
 
   async function handleDelete(id: number) {
-    if (!confirm("Delete this change order?")) return;
+    if (!(await confirm("Delete this change order?", { title: "Delete change order", confirmLabel: "Delete", danger: true }))) return;
     await fetch(`/api/change-orders/${id}`, { method: "DELETE" });
     fetchCOs();
   }
@@ -97,6 +99,7 @@ export default function ChangeOrdersPanel({ projectId, isAdmin, onTotalChange }:
 
   return (
     <div className="border-t border-border pt-3">
+      {confirmDialog}
       <div className="flex items-center justify-between mb-2 flex-wrap gap-1">
         <div className="flex items-center gap-3">
           <p className="text-[10px] font-semibold text-subtle uppercase tracking-wide">📝 Change Orders</p>

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import ChangeOrdersPanel     from "./ChangeOrdersPanel";
 import CommentsPanel           from "./CommentsPanel";
 import { toCSV, downloadCSV }  from "@/lib/csv";
+import { useConfirm }           from "./useConfirm";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const fmt$   = (n: number) => "$" + (n ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
@@ -84,6 +85,7 @@ interface Props {
 
 export default function DashboardClient({ projects, pipeline, kpis, flagged, uploads, role, userEmail, stagesByProject, lastSync }: Props) {
   const router = useRouter();
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const [view,          setView]          = useState<"active" | "pipeline">("active");
   const [search,        setSearch]        = useState("");
   const [filterForeman, setFilterForeman] = useState("all");
@@ -153,7 +155,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
   }
   async function bulkDelete() {
     if (selectedIds.size === 0) return;
-    if (!confirm(`Delete ${selectedIds.size} project(s)? This cannot be undone.`)) return;
+    if (!(await confirm(`Delete ${selectedIds.size} project(s)? This cannot be undone.`, { title: "Delete projects", confirmLabel: "Delete", danger: true }))) return;
     setBulkStatus(`Deleting ${selectedIds.size}…`);
     await Promise.all(Array.from(selectedIds).map(id =>
       fetch(`/api/projects/${id}`, { method: "DELETE" })
@@ -330,7 +332,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
 
   // ── Delete project ─────────────────────────────────────────────────────────
   async function handleDelete(id: number) {
-    if (!confirm("Delete this project?")) return;
+    if (!(await confirm("Delete this project? This cannot be undone.", { title: "Delete project", confirmLabel: "Delete", danger: true }))) return;
     await fetch(`/api/projects/${id}`, { method: "DELETE" });
     router.refresh();
   }
@@ -341,6 +343,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
 
   return (
     <main className="flex-1 max-w-screen-xl mx-auto w-full px-4 py-6 space-y-6">
+      {confirmDialog}
 
       {/* ── Tracked Project KPIs ── */}
       {/* Wrapped + labeled so it's clear these totals reflect tracked projects only */}

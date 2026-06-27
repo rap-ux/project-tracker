@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useConfirm } from "./useConfirm";
 
 // ── Field display helpers ─────────────────────────────────────────────────────
 const FIELD_LABELS: Record<string, string> = {
@@ -87,6 +88,7 @@ interface Props {
 
 export default function UploadsClient({ batches, changesByBatch, projects }: Props) {
   const router = useRouter();
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const [tab,            setTab]            = useState<"pending" | "history">("pending");
   const [expandedBatch,  setExpandedBatch]  = useState<number | null>(null);
   const [checked,        setChecked]        = useState<Set<number>>(new Set());
@@ -224,7 +226,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
 
   // ── Discard ───────────────────────────────────────────────────────────────
   async function handleDiscard(batchId: number) {
-    if (!confirm("Discard this batch? The staged changes will be removed.")) return;
+    if (!(await confirm("This removes the staged changes without applying them.", { title: "Discard batch", confirmLabel: "Discard", danger: true }))) return;
     setDiscarding(batchId);
     await fetch(`/api/upload/batches/${batchId}`, { method: "DELETE" });
     setDiscarding(null);
@@ -233,7 +235,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
 
   // ── Revert ────────────────────────────────────────────────────────────────
   async function handleRevert(batchId: number) {
-    if (!confirm("Revert this upload? All changes from this batch will be rolled back to their previous values.")) return;
+    if (!(await confirm("All changes from this batch will be rolled back to their previous values.", { title: "Revert upload", confirmLabel: "Revert", danger: true }))) return;
     setReverting(batchId);
     const res  = await fetch(`/api/upload/batches/${batchId}/revert`, { method: "POST" });
     const data = await res.json();
@@ -248,6 +250,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
 
   return (
     <main className="flex-1 max-w-screen-lg mx-auto w-full px-4 py-6 space-y-6">
+      {confirmDialog}
 
       {/* ── Page header ── */}
       <div>
