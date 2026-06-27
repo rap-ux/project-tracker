@@ -110,6 +110,9 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
     if (searchParams.get("view") === "pipeline") setView("pipeline");
     if (!focus) return;
     const id = Number(focus);
+    // Clear any active filter/search so the focused project isn't hidden.
+    setSearch("");
+    setFilterForeman("all");
     setExpandedRows(prev => new Set(prev).add(id));
     const timer = setTimeout(() => {
       document.getElementById(`project-row-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });

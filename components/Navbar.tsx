@@ -3,7 +3,7 @@
 import { signOut }     from "next-auth/react";
 import Link            from "next/link";
 import { usePathname } from "next/navigation";
-import { useState }    from "react";
+import { useState, useRef, useEffect } from "react";
 import GlobalActivityButton from "./GlobalActivityButton";
 import AlertsBell            from "./AlertsBell";
 import GlobalSearch          from "./GlobalSearch";
@@ -91,6 +91,22 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
   const primaryLinks   = visibleLinks.filter(l => l.primary);
   const secondaryLinks = visibleLinks.filter(l => !l.primary);
   const moreActive     = secondaryLinks.some(l => l.href === path);
+  const moreRef        = useRef<HTMLDivElement>(null);
+
+  // Close the "More" menu on any outside tap/click (needed for touch — mouseleave
+  // never fires on a tablet).
+  useEffect(() => {
+    if (!moreOpen) return;
+    function onDown(e: MouseEvent | TouchEvent) {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("touchstart", onDown);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("touchstart", onDown);
+    };
+  }, [moreOpen]);
 
   return (
     <nav
@@ -127,7 +143,7 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
             })}
 
             {secondaryLinks.length > 0 && (
-              <div className="relative"
+              <div className="relative" ref={moreRef}
                 onMouseLeave={() => setMoreOpen(false)}>
                 <button
                   onClick={() => setMoreOpen(v => !v)}
