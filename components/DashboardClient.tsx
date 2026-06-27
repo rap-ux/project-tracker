@@ -431,7 +431,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
             <Link
               href="/uploads"
               className="text-sm px-3 py-1.5 bg-surface border border-border hover:bg-surface-2 text-muted rounded-lg font-medium transition-colors inline-block">
-              Uploads
+              Sync
             </Link>
             <button onClick={() => setShowAddForm(true)}
               className="text-sm px-4 py-1.5 bg-accent text-accent-foreground rounded-lg font-semibold transition-opacity hover:opacity-90">
@@ -1123,10 +1123,10 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
         </div>
       </div>}  {/* end view === "active" */}
 
-      {/* ── Recent uploads ── */}
+      {/* ── Recent data syncs ── */}
       {!isForeman && uploads.length > 0 && (
         <div className="bg-surface rounded-xl border border-border shadow-sm p-4">
-          <h3 className="text-sm font-semibold text-text mb-3">Recent QBO Uploads</h3>
+          <h3 className="text-sm font-semibold text-text mb-3">Recent data syncs</h3>
           <div className="space-y-1">
             {uploads.map((u: any) => (
               <div key={u.id} className="flex justify-between text-xs text-muted">

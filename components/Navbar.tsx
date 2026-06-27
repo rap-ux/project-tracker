@@ -57,7 +57,7 @@ const OWNER_LINKS: Array<{ href: string; label: string; icon: IconKey; superOnly
   { href: "/dashboard", label: "Projects",  icon: "dashboard", primary: true },
   { href: "/forecast",  label: "Forecast",  icon: "forecast",  primary: true },
   { href: "/bonuses",   label: "Bonuses",   icon: "bonuses",   primary: true },
-  { href: "/uploads",   label: "Uploads",   icon: "uploads"   },
+  { href: "/uploads",   label: "Sync",      icon: "uploads"   },
   { href: "/analytics", label: "Analytics", icon: "analytics" },
   { href: "/timeline",  label: "Timeline",  icon: "timeline"  },
   { href: "/inputs",    label: "Inputs",    icon: "inputs"    },

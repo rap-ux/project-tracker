@@ -267,7 +267,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
           <QuickLink href="/dashboard" icon="grid"     label="Dashboard"  sub="All projects" />
           <QuickLink href="/forecast"  icon="trend"    label="Forecast"   sub="Cash projection" />
           <QuickLink href="/analytics" icon="chart"    label="Analytics"  sub="Margin trends" />
-          <QuickLink href="/uploads"   icon="upload"   label="Uploads"    sub="Sync data" />
+          <QuickLink href="/uploads"   icon="upload"   label="Sync"       sub="Review changes" />
         </div>
       </section>
 

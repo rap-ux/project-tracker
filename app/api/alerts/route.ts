@@ -92,7 +92,7 @@ export async function GET() {
           key:      "qbo_stale",
           severity: days >= 14 ? "critical" : "warning",
           title:    `QBO data is ${days} days old`,
-          detail:   `Last upload: ${lastDate.toLocaleDateString()}. Materials/hours may be out of date.`,
+          detail:   `Last sync: ${lastDate.toLocaleDateString()}. Materials/hours may be out of date.`,
           href:     "/uploads",
         });
       }
@@ -100,8 +100,8 @@ export async function GET() {
       alerts.push({
         key:      "qbo_none",
         severity: "info",
-        title:    "No QBO uploads yet",
-        detail:   "Upload a QuickBooks export to populate materials + hours.",
+        title:    "No data synced yet",
+        detail:   "Sync from the Google Sheet to populate materials + hours.",
         href:     "/uploads",
       });
     }

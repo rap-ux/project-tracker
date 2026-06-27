@@ -102,7 +102,7 @@ export default async function HelpPage() {
                   ["Change Order (CO)", "A contract amendment for added or modified scope. Status: Quoted / Approved / Invoiced / Completed."],
                   ["Foreman", "The lead assigned to a project. Earns stage-based bonuses based on budget performance."],
                   ["@Mention", "Tag a teammate in a project comment using @FirstName. They get a notification."],
-                  ["QBO", "QuickBooks Online — the source of truth for materials and hours. Imported via the Uploads page."],
+                  ["QBO", "QuickBooks Online — the source of truth for materials and hours. Flows into Switchboard through the Google Sheet sync."],
                   ["Bonus tier", "Beat (under budget by >10%) / Met (within 10%) / Over (over budget) / Locked (in progress)."],
                 ].map(([term, def]) => (
                   <tr key={term} className="hover:bg-surface-2">
@@ -121,13 +121,13 @@ export default async function HelpPage() {
           <div className="space-y-5">
             {[
               ["Add a new project", "Dashboard → “+ New Project” → fill in name, foreman, stage, contract value, and dates → Save. To add a Minor / pipeline project, choose “Minor” as the type."],
-              ["Update hours or materials", "Two ways: manually edit the project on Dashboard, or import a QBO/Excel file via Uploads. Imports show a preview before any change is applied."],
+              ["Update hours or materials", "Two ways: manually edit the project on Dashboard, or sync from the Google Sheet (Switchboard → Sync now in the sheet, or the nightly auto-sync). Synced changes show a preview before anything is applied."],
               ["Mark a stage complete", "Open the project on Dashboard or Timeline → set Stage Completion to 100% → Save. The system auto-snapshots Rough or Finish hours actual at the right moments."],
               ["Set or override a milestone date", "Forecast page → click any milestone date in the table → enter the override → Save. Default dates flow from Timeline; manual overrides take precedence on Forecast."],
               ["Add a Change Order", "Open the project detail → Change Orders tab → “+ Add CO” → fill description, amount, status → Save. The CO is logged to the activity feed."],
               ["Comment on a project / @mention someone", "Project detail → Comments tab → type a message, add @FirstName to tag a teammate. They’ll see an alert on their home page."],
               ["Read your bonus progress", "Foremen are auto-redirected to the Foreman page at login. Top card shows current earned vs maximum bonus; per-project status indicates Beat / Met / Over / Locked."],
-              ["Upload QBO data", "Uploads page → drop a .xlsx or .csv export from QuickBooks → review the staged batch → Apply. Wrong batch? Use Revert."],
+              ["Sync data from the sheet", "In the Google Sheet, use the Switchboard → Sync now menu (or wait for the nightly sync). Changes land on the Sync page as a staged batch → review → Apply. Wrong batch? Use Revert."],
               ["Export a CSV", "Dashboard, Forecast, and Clients each have an export button. Whatever you have filtered is what gets exported."],
               ["Dismiss an alert", "Click the bell icon in the top nav → dismiss any alert you’ve handled. Dismissals are per-user."],
             ].map(([title, body]) => (
@@ -156,7 +156,7 @@ export default async function HelpPage() {
                   "Portfolio Snapshot KPIs: Upcoming Cash (30 days), Tracked Projects, Avg Materials Burn, Hours vs Goal",
                   "Upcoming Milestones — next 30 days with dollar amounts",
                   "Recent activity feed (with @mention notifications)",
-                  "QBO staleness banner if upload data is more than 7 days old",
+                  "QBO staleness banner if synced data is more than 7 days old",
                 ],
               },
               {
@@ -221,13 +221,13 @@ export default async function HelpPage() {
                 ],
               },
               {
-                heading: "Uploads",
-                where:   "“Uploads” in the top nav.",
+                heading: "Sync",
+                where:   "“Sync” in the top nav.",
                 items: [
-                  "QBO / Excel / CSV file import (materials, hours, GL codes)",
-                  "Batch staging — preview line-by-line before applying",
+                  "Changes flow in from the Google Sheet (Switchboard → Sync now, or nightly)",
+                  "Batch staging — preview every change line-by-line before applying",
                   "Apply / Revert batch",
-                  "Upload history with timestamps and change counts",
+                  "Sync history with timestamps and change counts",
                 ],
               },
               {
