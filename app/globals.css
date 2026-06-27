@@ -1,3 +1,89 @@
 @import "tailwindcss";
 
-body { font-family: var(--font-geist-sans, Arial, sans-serif); }
+/* Class-based dark mode (so we can offer light / dark / auto, not just OS) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Design tokens ──────────────────────────────────────────────────────────
+   Semantic colors with a light and dark value. Components use the Tailwind
+   utilities these generate (bg-surface, text-muted, border-border, …) and get
+   dark mode for free. Light values intentionally match the prior palette. */
+:root {
+  --bg:            #f6f7f9;
+  --surface:       #ffffff;
+  --surface-2:     #f1f3f5;
+  --surface-3:     #e9ecef;
+  --text:          #14171a;
+  --muted:         #5b6470;
+  --subtle:        #8b95a1;
+  --border:        rgba(20, 23, 26, 0.08);
+  --border-strong: rgba(20, 23, 26, 0.14);
+
+  --accent:            #00BAD6;
+  --accent-strong:     #00a0b8;
+  --accent-foreground: #ffffff;
+  --accent-soft:       #e6fafe;
+
+  --danger:    #dc2626; --danger-bg:  #fef2f2;
+  --warning:   #b45309; --warning-bg: #fffbeb;
+  --success:   #16a34a; --success-bg: #f0fdf4;
+  --info:      #0e7490; --info-bg:    #ecfeff;
+
+  --glass: rgba(255, 255, 255, 0.72);
+}
+
+.dark {
+  --bg:            #0b0d10;
+  --surface:       #15181d;
+  --surface-2:     #1d2127;
+  --surface-3:     #262b32;
+  --text:          #e9edf2;
+  --muted:         #9aa4b0;
+  --subtle:        #6b7480;
+  --border:        rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.16);
+
+  --accent:            #22c9e3;
+  --accent-strong:     #00BAD6;
+  --accent-foreground: #07242a;
+  --accent-soft:       rgba(34, 201, 227, 0.12);
+
+  --danger:    #f87171; --danger-bg:  rgba(248, 113, 113, 0.12);
+  --warning:   #fbbf24; --warning-bg: rgba(251, 191, 36, 0.12);
+  --success:   #4ade80; --success-bg: rgba(74, 222, 128, 0.12);
+  --info:      #38bdf8; --info-bg:    rgba(56, 189, 248, 0.12);
+
+  --glass: rgba(21, 24, 29, 0.72);
+}
+
+@theme inline {
+  --color-bg:              var(--bg);
+  --color-surface:         var(--surface);
+  --color-surface-2:       var(--surface-2);
+  --color-surface-3:       var(--surface-3);
+  --color-text:            var(--text);
+  --color-muted:           var(--muted);
+  --color-subtle:          var(--subtle);
+  --color-border:          var(--border);
+  --color-border-strong:   var(--border-strong);
+  --color-accent:          var(--accent);
+  --color-accent-strong:   var(--accent-strong);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft:     var(--accent-soft);
+  --color-danger:          var(--danger);
+  --color-danger-bg:       var(--danger-bg);
+  --color-warning:         var(--warning);
+  --color-warning-bg:      var(--warning-bg);
+  --color-success:         var(--success);
+  --color-success-bg:      var(--success-bg);
+  --color-info:            var(--info);
+  --color-info-bg:         var(--info-bg);
+}
+
+body {
+  font-family: var(--font-geist, Arial, sans-serif);
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Smooth, contained theme transition — chrome only, not every element */
+body, .theme-fade { transition: background-color .25s ease, color .25s ease, border-color .25s ease; }

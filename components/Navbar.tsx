@@ -9,6 +9,7 @@ import AlertsBell            from "./AlertsBell";
 import GlobalSearch          from "./GlobalSearch";
 import UserMenu              from "./UserMenu";
 import PresenceIndicator     from "./PresenceIndicator";
+import ThemeToggle            from "./ThemeToggle";
 
 interface NavbarProps { userName: string; role: string; userEmail?: string; userTitle?: string; }
 
@@ -142,6 +143,7 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
       <div className="flex items-center gap-2 sm:gap-3 shrink-0 flex-shrink-0">
         <GlobalSearch />
         {isSuperAdmin && <PresenceIndicator />}
+        <ThemeToggle compact />
         <AlertsBell />
         <GlobalActivityButton />
 
