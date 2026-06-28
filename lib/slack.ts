@@ -19,7 +19,7 @@ export async function notifySlack(text: string): Promise<void> {
       body:    JSON.stringify({
         text,
         username: "Switchboard",
-        icon_url: appUrl("/switchboard-icon.png"),
+        icon_url: appUrl("/switchboard-icon.png?v=2"),
       }),
     });
   } catch {
