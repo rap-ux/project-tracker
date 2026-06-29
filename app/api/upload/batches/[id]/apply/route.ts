@@ -1,7 +1,8 @@
 export const dynamic = 'force-dynamic';
-import { auth }       from "@/auth";
-import db              from "@/lib/db";
-import { NextRequest } from "next/server";
+import { auth }            from "@/auth";
+import db                   from "@/lib/db";
+import { postStageReport }  from "@/lib/stageReport";
+import { NextRequest }      from "next/server";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -71,6 +72,9 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     db.prepare("INSERT INTO uploads (filename, uploaded_by, rows_updated) VALUES (?, ?, ?)")
       .run(batch.filename, batch.uploaded_by, byProject.size);
   })();
+
+  // The DB just changed — post the per-stage snapshot Cole requested (best-effort).
+  postStageReport().catch(() => {});
 
   return Response.json({ ok: true, applied: changes.length, projects: byProject.size });
 }
