@@ -38,10 +38,24 @@ function rowFor(p: any): StageRow | null {
   return { name: p.name, stage, allot, prog, byProg: allot * prog, actual };
 }
 
-export function buildStageReport(): string | null {
-  const raw = db.prepare(
-    "SELECT * FROM projects WHERE is_pipeline = 0 ORDER BY foreman, name"
-  ).all() as any[];
+// When `projectIds` is given, the report is scoped to just those projects —
+// used by the sync-apply trigger so each post shows only what changed. With no
+// ids, it's a full-portfolio snapshot (the on-demand / manual send).
+export function buildStageReport(projectIds?: number[] | null): string | null {
+  const scoped = Array.isArray(projectIds);
+
+  let raw: any[];
+  if (scoped) {
+    if (projectIds!.length === 0) return null;
+    const ph = projectIds!.map(() => "?").join(",");
+    raw = db.prepare(
+      `SELECT * FROM projects WHERE is_pipeline = 0 AND id IN (${ph}) ORDER BY foreman, name`
+    ).all(...projectIds!) as any[];
+  } else {
+    raw = db.prepare(
+      "SELECT * FROM projects WHERE is_pipeline = 0 ORDER BY foreman, name"
+    ).all() as any[];
+  }
 
   const rows = raw.map(rowFor).filter((r): r is StageRow => r !== null);
   if (rows.length === 0) return null;
@@ -77,16 +91,19 @@ export function buildStageReport(): string | null {
   const stamp = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
   let msg = `📐 *Stage progress — ${stamp}*\n`;
-  msg += `Allotted vs. actual hours for each project's current stage. ⚠ = running over pace.\n`;
+  msg += scoped
+    ? `${rows.length} project${rows.length === 1 ? "" : "s"} updated this sync — allotted vs. actual hours for the current stage. ⚠ = running over pace.\n`
+    : `Allotted vs. actual hours for each project's current stage. ⚠ = running over pace.\n`;
   msg += "```\n" + header + "\n" + lines.join("\n") + "\n```\n";
   msg += `Open Switchboard: ${appUrl("/dashboard")}`;
   return msg;
 }
 
 // Fire-and-forget — never let a Slack hiccup break the apply request.
-export async function postStageReport(): Promise<void> {
+// Pass the changed project ids so the post is scoped to what actually moved.
+export async function postStageReport(projectIds?: number[] | null): Promise<void> {
   try {
-    const msg = buildStageReport();
+    const msg = buildStageReport(projectIds);
     if (msg) await notifySlack(msg);
   } catch {
     /* best-effort */

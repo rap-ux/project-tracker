@@ -73,8 +73,9 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       .run(batch.filename, batch.uploaded_by, byProject.size);
   })();
 
-  // The DB just changed — post the per-stage snapshot Cole requested (best-effort).
-  postStageReport().catch(() => {});
+  // The DB just changed — post a per-stage snapshot scoped to the projects that
+  // moved in this sync (best-effort; never blocks the apply).
+  postStageReport([...byProject.keys()]).catch(() => {});
 
   return Response.json({ ok: true, applied: changes.length, projects: byProject.size });
 }
