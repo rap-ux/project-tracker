@@ -51,19 +51,19 @@ export default function GlobalSearch() {
         type: "project" as const, id: p.id,
         label: p.name,
         detail: [p.foreman, p.stage, p.builder].filter(Boolean).join(" · "),
-        href: `/dashboard?focus=${p.id}${p.is_pipeline ? "&view=pipeline" : ""}`,
+        href: `/projects/${p.id}`,
       })),
       ...results.changeOrders.map(c => ({
         type: "co" as const, id: c.id,
         label: `CO: ${c.description}`,
         detail: `${c.project_name} · ${c.status} · ${fmt$(c.amount)}`,
-        href: `/dashboard?focus=${c.project_id}`,
+        href: `/projects/${c.project_id}`,
       })),
       ...results.comments.map(c => ({
         type: "comment" as const, id: c.id,
         label: c.body.length > 70 ? c.body.slice(0, 67) + "…" : c.body,
         detail: `${c.user_name} on ${c.project_name}`,
-        href: `/dashboard?focus=${c.project_id}`,
+        href: `/projects/${c.project_id}`,
       })),
     ] : [];
 
