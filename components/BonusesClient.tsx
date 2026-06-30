@@ -101,10 +101,11 @@ export default function BonusesClient({ projects, lastSync }: { projects: Projec
             const active = foremanFilter === f;
             return (
               <button key={f} onClick={() => setForemanFilter(f)}
-                className="text-xs px-3 py-1 rounded-full border font-medium transition-all"
-                style={active
-                  ? { backgroundColor: "#00BAD6", borderColor: "#00BAD6", color: "#fff" }
-                  : { backgroundColor: "var(--surface)", borderColor: "#d1d5db", color: "#6b7280" }}>
+                className={`text-xs px-3 py-1 rounded-full border border-border font-medium transition-all ${
+                  active
+                    ? "bg-accent text-accent-foreground font-medium"
+                    : "bg-surface text-muted hover:bg-surface-2"
+                }`}>
                 {f === "all" ? "All" : f}
               </button>
             );
@@ -114,7 +115,7 @@ export default function BonusesClient({ projects, lastSync }: { projects: Projec
 
       {/* Grand totals */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard label="Total Earned"      value={fmt$(grandTotals.earned)}   sub="confirmed" hi="#16a34a" />
+        <KpiCard label="Total Earned"      value={fmt$(grandTotals.earned)}   sub="confirmed" hi="var(--success)" />
         <KpiCard label="Max Possible"      value={fmt$(grandTotals.possible)} sub={`across ${filtered.length} projects`} />
         <KpiCard label="Foremen Tracked"   value={String(foremanAgg.length)}  />
         <KpiCard label="Avg Earned / Proj" value={fmt$(filtered.length > 0 ? grandTotals.earned / filtered.length : 0)} />
@@ -137,11 +138,11 @@ export default function BonusesClient({ projects, lastSync }: { projects: Projec
                     <span className="text-2xl">{pct >= 70 ? "🏆" : pct >= 40 ? "💪" : "📋"}</span>
                   </div>
                   <div className="mt-4">
-                    <p className="text-2xl font-bold" style={{ color: "#00BAD6" }}>{fmt$(f.earned)}</p>
+                    <p className="text-2xl font-bold" style={{ color: "var(--accent)" }}>{fmt$(f.earned)}</p>
                     <p className="text-[11px] text-muted">of {fmt$(f.possible)} possible · {pct.toFixed(0)}%</p>
                   </div>
                   <div className="mt-3 w-full bg-surface-2 rounded-full h-2 overflow-hidden">
-                    <div className="h-2 rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: "#00BAD6" }} />
+                    <div className="h-2 rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: "var(--accent)" }} />
                   </div>
                   <div className="mt-4 grid grid-cols-4 gap-1 text-center">
                     <StageChip label="Beat"   count={f.beat}   color="text-success bg-success-bg border-border" />
@@ -162,7 +163,7 @@ export default function BonusesClient({ projects, lastSync }: { projects: Projec
           <h2 className="text-sm font-bold text-text">Per-Project Bonus Detail</h2>
           <p className="text-[11px] text-subtle">Rough = 70% of project · Finish = 30% · Each stage has its own allowed hours and bonus tier</p>
         </div>
-        <div className="overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-surface-2 border-b border-border text-[11px] uppercase tracking-wider text-muted font-semibold">
@@ -213,13 +214,63 @@ export default function BonusesClient({ projects, lastSync }: { projects: Projec
             {filtered.length > 0 && (
               <tfoot>
                 <tr className="border-t-2 border-border-strong text-xs font-semibold" style={{ backgroundColor: "var(--accent-soft)" }}>
-                  <td className="px-4 py-3 font-bold" style={{ color: "#00BAD6" }}>Totals ({filtered.length})</td>
+                  <td className="px-4 py-3 font-bold" style={{ color: "var(--accent)" }}>Totals ({filtered.length})</td>
                   <td colSpan={5}></td>
                   <td className="px-4 py-3 text-right font-mono font-bold text-success">{fmt$(grandTotals.earned)}</td>
                 </tr>
               </tfoot>
             )}
           </table>
+        </div>
+
+        {/* Mobile card view */}
+        <div className="md:hidden divide-y divide-border">
+          {filtered.length === 0 && (
+            <p className="px-4 py-10 text-center text-sm text-subtle">
+              No projects match the selected foreman.
+            </p>
+          )}
+          {filtered.map(p => {
+            const roughSty  = stageStatusStyle(p.inc.rough.status);
+            const finishSty = stageStatusStyle(p.inc.finish.status);
+            return (
+              <div key={p.id} className="p-4 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-bold text-text">{p.name}</p>
+                    <p className="text-[11px] text-subtle">{p.foreman} · {p.stage} · {fmtPct(p.stage_completion)}</p>
+                  </div>
+                  <p className={`text-base font-mono font-bold shrink-0 ${p.inc.totalEarned > 0 ? "text-success" : "text-subtle"}`}>
+                    {p.inc.totalEarned > 0 ? fmt$(p.inc.totalEarned) : "—"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 text-xs text-muted">
+                  <span>Contract: <span className="font-mono text-text">{fmt$(p.contract_value)}</span></span>
+                  <span>Tier: <span className="font-mono text-text">{fmt$(p.tier.max)}/stage</span></span>
+                </div>
+                <div className="flex gap-4 pt-1">
+                  <div className="flex-1">
+                    <p className="text-[10px] text-subtle uppercase tracking-wide mb-1">Rough</p>
+                    <span className={`inline-flex items-center gap-1 text-[11px] font-bold rounded-lg px-2 py-1 border ${roughSty.bg} ${roughSty.border} ${roughSty.text}`}>
+                      {p.inc.rough.status === "no-data" ? "—" : p.inc.rough.label}
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[10px] text-subtle uppercase tracking-wide mb-1">Finish</p>
+                    <span className={`inline-flex items-center gap-1 text-[11px] font-bold rounded-lg px-2 py-1 border ${finishSty.bg} ${finishSty.border} ${finishSty.text}`}>
+                      {p.inc.finish.status === "no-data" ? "—" : p.inc.finish.label}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          {filtered.length > 0 && (
+            <div className="p-4 flex items-center justify-between text-sm font-semibold" style={{ backgroundColor: "var(--accent-soft)" }}>
+              <span style={{ color: "var(--accent)" }}>Totals ({filtered.length})</span>
+              <span className="font-mono font-bold text-success">{fmt$(grandTotals.earned)}</span>
+            </div>
+          )}
         </div>
       </section>
 
@@ -231,7 +282,7 @@ export default function BonusesClient({ projects, lastSync }: { projects: Projec
             Bonus is earned per stage (Rough and Finish separately) when the stage reaches 100% complete
           </p>
         </div>
-        <div className="overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-muted border-b text-xs">
@@ -255,6 +306,22 @@ export default function BonusesClient({ projects, lastSync }: { projects: Projec
             </tbody>
           </table>
         </div>
+
+        {/* Mobile card view */}
+        <div className="md:hidden divide-y divide-border">
+          {BONUS_TIERS.map(t => (
+            <div key={t.label} className="p-4 space-y-2">
+              <p className="text-sm font-bold text-text">{t.label}</p>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="px-2 py-1 rounded-md font-bold text-warning bg-warning-bg">Met {fmt$(t.meet)}</span>
+                <span className="px-2 py-1 rounded-md font-bold text-warning bg-warning-bg">Beat {fmt$(t.beat)}</span>
+              </div>
+              <p className="text-xs text-muted">
+                Max per stage: <span className="font-semibold text-text">{fmt$(t.max)}</span> · Max per project: <span className="font-semibold text-text">{fmt$(t.max * 2)}</span>
+              </p>
+            </div>
+          ))}
+        </div>
       </section>
 
     </main>
@@ -265,7 +332,7 @@ function KpiCard({ label, value, sub, hi }: { label: string; value: string; sub?
   return (
     <div className="bg-surface rounded-2xl border border-border shadow-sm px-4 py-3">
       <p className="text-[10px] text-muted font-semibold uppercase tracking-wide">{label}</p>
-      <p className="text-2xl font-bold mt-0.5" style={hi ? { color: hi } : { color: "#111827" }}>{value}</p>
+      <p className="text-2xl font-bold mt-0.5" style={hi ? { color: hi } : { color: "var(--text)" }}>{value}</p>
       {sub && <p className="text-[10px] text-subtle mt-0.5">{sub}</p>}
     </div>
   );

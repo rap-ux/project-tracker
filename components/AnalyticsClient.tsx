@@ -149,18 +149,20 @@ export default function AnalyticsClient({ projects, finishDateByProject, lastSyn
           <div className="flex rounded-lg border border-border overflow-hidden text-sm" title="Filter projects that have completed Rough stage (project_completion ≥ 70%)">
             <button
               onClick={() => setPastRoughOnly(false)}
-              className="px-3 py-1.5 font-medium transition-colors"
-              style={!pastRoughOnly
-                ? { backgroundColor: "#101010", color: "#fff" }
-                : { backgroundColor: "var(--surface)", color: "#6b7280" }}>
+              className={`px-3 py-1.5 font-medium transition-colors ${
+                !pastRoughOnly
+                  ? "bg-accent text-accent-foreground"
+                  : "bg-surface text-muted hover:bg-surface-2"
+              }`}>
               All ({projects.length})
             </button>
             <button
               onClick={() => setPastRoughOnly(true)}
-              className="px-3 py-1.5 font-medium transition-colors"
-              style={pastRoughOnly
-                ? { backgroundColor: "#101010", color: "#fff" }
-                : { backgroundColor: "var(--surface)", color: "#6b7280" }}>
+              className={`px-3 py-1.5 font-medium transition-colors ${
+                pastRoughOnly
+                  ? "bg-accent text-accent-foreground"
+                  : "bg-surface text-muted hover:bg-surface-2"
+              }`}>
               Past Rough ({pastRoughCount})
             </button>
           </div>
@@ -172,10 +174,11 @@ export default function AnalyticsClient({ projects, finishDateByProject, lastSyn
               { v: "builder", label: "🏗️ Builder"      },
             ] as const).map(o => (
               <button key={o.v} onClick={() => setView(o.v)}
-                className="px-3 py-1.5 font-medium transition-colors"
-                style={view === o.v
-                  ? { backgroundColor: "#101010", color: "#fff" }
-                  : { backgroundColor: "var(--surface)", color: "#6b7280" }}>
+                className={`px-3 py-1.5 font-medium transition-colors ${
+                  view === o.v
+                    ? "bg-accent text-accent-foreground"
+                    : "bg-surface text-muted hover:bg-surface-2"
+                }`}>
                 {o.label}
               </button>
             ))}
@@ -189,7 +192,7 @@ export default function AnalyticsClient({ projects, finishDateByProject, lastSyn
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <Kpi label="Avg Est. Margin"    value={fmtPct(avgEstMargin)} />
             <Kpi label="Avg Actual Margin"  value={fmtPct(avgActualMargin)}
-              hi={avgActualMargin >= avgEstMargin ? "#16a34a" : "#dc2626"} />
+              hi={avgActualMargin >= avgEstMargin ? "var(--success)" : "var(--danger)"} />
             <Kpi label="Spread"             value={fmtPct(avgActualMargin - avgEstMargin)}
               sub={avgActualMargin >= avgEstMargin ? "Beating estimates" : "Under estimates"} />
             <Kpi label="Projects Analyzed"  value={String(trendRows.length)} />
@@ -205,9 +208,9 @@ export default function AnalyticsClient({ projects, finishDateByProject, lastSyn
                 {/* Legend changes per view */}
                 <div className="flex items-center gap-4 text-xs">
                   {marginChartView === "bar" && <>
-                    <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-red-500"   />Loss</span>
-                    <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-amber-500" />Thin</span>
-                    <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-green-500" />Healthy</span>
+                    <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-danger"   />Loss</span>
+                    <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-warning" />Thin</span>
+                    <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-success" />Healthy</span>
                     <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-emerald-600" />Great+</span>
                   </>}
                 </div>
@@ -220,10 +223,9 @@ export default function AnalyticsClient({ projects, finishDateByProject, lastSyn
                     <button key={v.key} onClick={() => setMarginChartView(v.key)}
                       className={`px-2.5 py-1 font-medium transition-colors ${
                         marginChartView === v.key
-                          ? "text-white"
+                          ? "bg-accent text-accent-foreground"
                           : "text-muted hover:bg-surface hover:text-text"
-                      }`}
-                      style={marginChartView === v.key ? { backgroundColor: "#00BAD6" } : {}}>
+                      }`}>
                       <span className="mr-1">{v.icon}</span>{v.label}
                     </button>
                   ))}
@@ -256,9 +258,9 @@ export default function AnalyticsClient({ projects, finishDateByProject, lastSyn
                 const zeroY  = BPT + plotH * (maxPct / range);
                 const yFor   = (v: number) => BPT + plotH * ((maxPct - v) / range);
                 const colorFor = (p: number) =>
-                  p < 0    ? "#ef4444" :
-                  p < 0.15 ? "#f59e0b" :
-                  p < 0.30 ? "#10b981" :
+                  p < 0    ? "var(--danger)" :
+                  p < 0.15 ? "var(--warning)" :
+                  p < 0.30 ? "var(--success)" :
                              "#059669";
                 const ticks: number[] = [];
                 for (let v = Math.floor(minPct * 10) / 10; v <= maxPct + 0.05; v += 0.1) ticks.push(Math.round(v * 100) / 100);
@@ -270,10 +272,10 @@ export default function AnalyticsClient({ projects, finishDateByProject, lastSyn
                         <g key={i}>
                           <line x1={BPL} x2={sw - BPR}
                             y1={yFor(v)} y2={yFor(v)}
-                            stroke={v === 0 ? "#374151" : "#f3f4f6"}
+                            stroke="var(--border)"
                             strokeWidth={v === 0 ? 1.5 : 1} strokeDasharray={v === 0 ? "0" : "3 4"} />
                           <text x={BPL - 8} y={yFor(v) + 3}
-                            fontSize="10" fill="#6b7280" textAnchor="end">
+                            fontSize="10" fill="var(--muted)" textAnchor="end">
                             {(v * 100).toFixed(0)}%
                           </text>
                         </g>
@@ -281,9 +283,9 @@ export default function AnalyticsClient({ projects, finishDateByProject, lastSyn
                       {/* Avg line */}
                       <line x1={BPL} x2={sw - BPR}
                         y1={yFor(avgActualMargin)} y2={yFor(avgActualMargin)}
-                        stroke="#00BAD6" strokeWidth={1} strokeDasharray="2 4" opacity={0.5} />
+                        stroke="var(--accent)" strokeWidth={1} strokeDasharray="2 4" opacity={0.5} />
                       <text x={sw - BPR - 2} y={yFor(avgActualMargin) - 3}
-                        fontSize="9" fill="#00BAD6" textAnchor="end" fontWeight="600">
+                        fontSize="9" fill="var(--accent)" textAnchor="end" fontWeight="600">
                         avg {fmtPct(avgActualMargin)}
                       </text>
                       {/* Bars */}
@@ -308,7 +310,7 @@ export default function AnalyticsClient({ projects, finishDateByProject, lastSyn
                             <line
                               x1={cx - BW / 2 - 2} x2={cx + BW / 2 + 2}
                               y1={estY} y2={estY}
-                              stroke="#374151" strokeWidth="1.5" strokeDasharray="3 2" opacity="0.6" />
+                              stroke="var(--text)" strokeWidth="1.5" strokeDasharray="3 2" opacity="0.6" />
                             {/* Value label */}
                             <text x={cx} y={actual >= 0 ? topY - 4 : botY + 12}
                               fontSize="10" fontWeight="600"
@@ -317,7 +319,7 @@ export default function AnalyticsClient({ projects, finishDateByProject, lastSyn
                             </text>
                             {/* Project label (rotated) */}
                             <text x={cx} y={sh - BPB + 14}
-                              fontSize="10" fill="#6b7280" textAnchor="end"
+                              fontSize="10" fill="var(--muted)" textAnchor="end"
                               transform={`rotate(-35, ${cx}, ${sh - BPB + 14})`}>
                               {r.name.length > 14 ? r.name.slice(0, 12) + "…" : r.name}
                             </text>
@@ -402,15 +404,15 @@ export default function AnalyticsClient({ projects, finishDateByProject, lastSyn
                       ))}
                       <text x={cx} y={cy - 8} textAnchor="middle"
                         fontSize="20" fontWeight="800"
-                        fill={inOverrun ? "#dc2626" : "#10b981"}>
+                        fill={inOverrun ? "var(--danger)" : "var(--success)"}>
                         {centerValue}
                       </text>
                       <text x={cx} y={cy + 10} textAnchor="middle"
-                        fontSize="9" fill="#6b7280" letterSpacing="1.5" fontWeight="600">
+                        fontSize="9" fill="var(--muted)" letterSpacing="1.5" fontWeight="600">
                         {centerLabel}
                       </text>
                       <text x={cx} y={cy + 26} textAnchor="middle"
-                        fontSize="10" fill="#9ca3af">
+                        fontSize="10" fill="var(--subtle)">
                         of {fmt$(totalContract)}
                       </text>
                     </svg>
@@ -469,7 +471,7 @@ export default function AnalyticsClient({ projects, finishDateByProject, lastSyn
             <div className="px-4 py-2.5 bg-surface-2 border-b">
               <h2 className="text-sm font-semibold text-text">Per-Project Margins</h2>
             </div>
-            <div className="overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-surface-2 border-b border-border text-[11px] uppercase tracking-wider text-muted font-semibold">
@@ -508,6 +510,40 @@ export default function AnalyticsClient({ projects, finishDateByProject, lastSyn
                 </tbody>
               </table>
             </div>
+            <div className="md:hidden divide-y divide-border">
+              {marginRows.map(r => {
+                const delta = r.m.actualPct - r.m.estPct;
+                return (
+                  <div key={r.id} className="rounded-xl border border-border bg-surface p-4 space-y-2 m-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-bold text-text">{r.name}</p>
+                      <span className={`text-xs font-semibold shrink-0 ${r.m.actualPct >= 0 ? "text-success" : "text-danger"}`}>
+                        {fmtPct(r.m.actualPct)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted">{r.foreman}</p>
+                    <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                      <div>
+                        <p className="text-subtle uppercase text-[10px]">Contract</p>
+                        <p className="font-mono font-semibold text-text">{fmt$(r.contract_value)}</p>
+                      </div>
+                      <div>
+                        <p className="text-subtle uppercase text-[10px]">Actual Margin $</p>
+                        <p className={`font-mono font-semibold ${r.m.actual >= 0 ? "text-success" : "text-danger"}`}>{fmt$(r.m.actual)}</p>
+                      </div>
+                      <div>
+                        <p className="text-subtle uppercase text-[10px]">Est %</p>
+                        <p className="font-mono text-muted">{fmtPct(r.m.estPct)}</p>
+                      </div>
+                      <div>
+                        <p className="text-subtle uppercase text-[10px]">Δ (vs est)</p>
+                        <p className={`font-mono font-medium ${delta >= 0 ? "text-success" : "text-danger"}`}>{delta >= 0 ? "+" : ""}{fmtPct(delta)}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </>
       )}
@@ -519,7 +555,7 @@ export default function AnalyticsClient({ projects, finishDateByProject, lastSyn
             <h2 className="text-sm font-semibold text-text">Per-Foreman Performance</h2>
             <p className="text-xs text-subtle">Aggregates across all tracked projects</p>
           </div>
-          <div className="overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-surface-2 border-b border-border text-[11px] uppercase tracking-wider text-muted font-semibold">
@@ -547,6 +583,35 @@ export default function AnalyticsClient({ projects, finishDateByProject, lastSyn
               </tbody>
             </table>
           </div>
+          <div className="md:hidden divide-y divide-border">
+            {foremanAgg.map(f => (
+              <div key={f.foreman} className="rounded-xl border border-border bg-surface p-4 space-y-2 m-3">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-bold text-text">{f.foreman}</p>
+                  <span className={`text-xs font-semibold shrink-0 ${f.marginPct >= 0 ? "text-success" : "text-danger"}`}>
+                    {fmtPct(f.marginPct)}
+                  </span>
+                </div>
+                <p className="text-xs text-muted">{f.projects} project{f.projects === 1 ? "" : "s"}</p>
+                <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                  <div>
+                    <p className="text-subtle uppercase text-[10px]">Total Contract</p>
+                    <p className="font-mono font-semibold text-text">{fmt$(f.contract)}</p>
+                  </div>
+                  <div>
+                    <p className="text-subtle uppercase text-[10px]">Total Margin $</p>
+                    <p className={`font-mono font-semibold ${f.margin$ >= 0 ? "text-success" : "text-danger"}`}>{fmt$(f.margin$)}</p>
+                  </div>
+                  <div>
+                    <p className="text-subtle uppercase text-[10px]">Avg Hours Variance</p>
+                    <p className={`font-mono font-semibold ${f.hoursVarPct <= 0 ? "text-success" : "text-danger"}`}>
+                      {f.hoursVarPct > 0 ? "+" : ""}{fmtPct(f.hoursVarPct)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -557,7 +622,7 @@ export default function AnalyticsClient({ projects, finishDateByProject, lastSyn
             <h2 className="text-sm font-semibold text-text">Per-Builder Profitability</h2>
             <p className="text-xs text-subtle">Sorted by total contract value</p>
           </div>
-          <div className="overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-surface-2 border-b border-border text-[11px] uppercase tracking-wider text-muted font-semibold">
@@ -581,6 +646,29 @@ export default function AnalyticsClient({ projects, finishDateByProject, lastSyn
               </tbody>
             </table>
           </div>
+          <div className="md:hidden divide-y divide-border">
+            {builderAgg.map(b => (
+              <div key={b.builder} className="rounded-xl border border-border bg-surface p-4 space-y-2 m-3">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-bold text-text">{b.builder}</p>
+                  <span className={`text-xs font-semibold shrink-0 ${b.marginPct >= 0 ? "text-success" : "text-danger"}`}>
+                    {fmtPct(b.marginPct)}
+                  </span>
+                </div>
+                <p className="text-xs text-muted">{b.projects} project{b.projects === 1 ? "" : "s"}</p>
+                <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                  <div>
+                    <p className="text-subtle uppercase text-[10px]">Total Contract</p>
+                    <p className="font-mono font-semibold text-text">{fmt$(b.contract)}</p>
+                  </div>
+                  <div>
+                    <p className="text-subtle uppercase text-[10px]">Total Margin $</p>
+                    <p className={`font-mono font-semibold ${b.margin$ >= 0 ? "text-success" : "text-danger"}`}>{fmt$(b.margin$)}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -592,7 +680,7 @@ function Kpi({ label, value, sub, hi }: { label: string; value: string; sub?: st
   return (
     <div className="bg-surface rounded-xl border border-border shadow-sm px-4 py-3">
       <p className="text-[10px] text-muted font-semibold uppercase tracking-wide">{label}</p>
-      <p className="text-xl font-bold mt-0.5" style={hi ? { color: hi } : { color: "#111827" }}>{value}</p>
+      <p className="text-xl font-bold mt-0.5" style={hi ? { color: hi } : { color: "var(--text)" }}>{value}</p>
       {sub && <p className="text-[10px] text-subtle mt-0.5">{sub}</p>}
     </div>
   );

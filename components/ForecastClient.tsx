@@ -222,8 +222,8 @@ export default function ForecastClient({ rows, role, lastSync }: Props) {
                 <button key={f} onClick={() => toggleForeman(f)}
                   className="text-xs px-3 py-1 rounded-full border font-medium transition-all"
                   style={active
-                    ? { backgroundColor: "#00BAD6", borderColor: "#00BAD6", color: "#fff" }
-                    : { backgroundColor: "var(--surface)", borderColor: "#d1d5db", color: "#9ca3af" }}>
+                    ? { backgroundColor: "var(--accent)", borderColor: "var(--accent)", color: "var(--accent-foreground)" }
+                    : { backgroundColor: "var(--surface)", borderColor: "var(--border)", color: "var(--muted)" }}>
                   {f}
                 </button>
               );
@@ -269,19 +269,19 @@ export default function ForecastClient({ rows, role, lastSync }: Props) {
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
         {([
           { label: "Tracked Contract Value",     value: fmt$(activeContractTotal) },
-          { label: "Already Received",           value: fmt$(pastTotal),            sub: "milestones passed", hi: "#16a34a" },
-          { label: "Upcoming Sales",             value: fmt$(futureTotal),          sub: "future milestones", hi: "#00BAD6", prominent: true },
+          { label: "Already Received",           value: fmt$(pastTotal),            sub: "milestones passed", hi: "var(--success)" },
+          { label: "Upcoming Sales",             value: fmt$(futureTotal),          sub: "future milestones", hi: "var(--accent)", prominent: true },
           { label: "Tracked Remaining Unbilled", value: fmt$(activeRemainingTotal), sub: "contract − invoiced · secondary health-check", muted: true },
           { label: "Tracked Projects",           value: String(activeData.length) },
         ] as Array<{ label: string; value: string; sub?: string; hi?: string; prominent?: boolean; muted?: boolean }>).map(card => (
           <div key={card.label} className={`bg-surface rounded-xl border shadow-sm px-4 py-3 ${
-            card.prominent ? "border-border ring-1 ring-cyan-100" :
+            card.prominent ? "border-border ring-1 ring-accent-soft" :
             card.muted     ? "border-border bg-surface-2/40"        :
                              "border-border"
           }`}>
             <p className={`text-[10px] font-semibold uppercase tracking-wide ${card.muted ? "text-subtle" : "text-muted"}`}>{card.label}</p>
             <p className={`font-bold mt-0.5 ${card.prominent ? "text-2xl" : card.muted ? "text-base" : "text-xl"}`}
-               style={card.muted ? { color: "#6b7280" } : card.hi ? { color: card.hi } : { color: "#111827" }}>
+               style={card.muted ? { color: "var(--muted)" } : card.hi ? { color: card.hi } : { color: "var(--text)" }}>
               {card.value}
             </p>
             {card.sub && <p className={`text-[10px] mt-0.5 ${card.muted ? "text-subtle/80" : "text-subtle"}`}>{card.sub}</p>}
@@ -366,7 +366,7 @@ export default function ForecastClient({ rows, role, lastSync }: Props) {
         const years = Array.from(new Set(monthKeys.map(mk => mk.split("-")[0]))).sort();
         const heatmapMax = maxMonth;
         function heatColor(val: number, isPast: boolean): string {
-          if (val === 0) return "#f9fafb";
+          if (val === 0) return "var(--surface-2)";
           const t = Math.sqrt(val / heatmapMax); // sqrt for visual balance
           if (isPast) {
             // gray→dark-gray scale
@@ -413,10 +413,10 @@ export default function ForecastClient({ rows, role, lastSync }: Props) {
                 <button key={v.key} onClick={() => { setChartView(v.key); setHoverIdx(null); }}
                   className={`px-3 py-1.5 font-medium transition-colors ${
                     chartView === v.key
-                      ? "text-white"
+                      ? "text-accent-foreground"
                       : "text-muted hover:bg-surface hover:text-text"
                   }`}
-                  style={chartView === v.key ? { backgroundColor: "#00BAD6" } : {}}>
+                  style={chartView === v.key ? { backgroundColor: "var(--accent)" } : {}}>
                   <span className="mr-1">{v.icon}</span>{v.label}
                 </button>
               ))}
@@ -431,7 +431,7 @@ export default function ForecastClient({ rows, role, lastSync }: Props) {
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-wide text-subtle font-medium">Peak month</div>
-              <div className="text-lg font-bold tabular-nums" style={{ color: "#00BAD6" }}>{fmt$(maxMonth)}</div>
+              <div className="text-lg font-bold tabular-nums" style={{ color: "var(--accent)" }}>{fmt$(maxMonth)}</div>
             </div>
             {nowIdx >= 0 && (
               <div>
@@ -446,7 +446,7 @@ export default function ForecastClient({ rows, role, lastSync }: Props) {
             {chartView === "flow" && (
               <>
                 <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-2 rounded-sm" style={{ background: "linear-gradient(180deg, rgba(0,186,214,0.55), rgba(0,186,214,0.08))" }} />
+                  <div className="w-3 h-2 rounded-sm" style={{ background: "linear-gradient(180deg, color-mix(in srgb, var(--accent) 55%, transparent), color-mix(in srgb, var(--accent) 8%, transparent))" }} />
                   <span className="font-medium text-text">Cash per month</span>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -494,8 +494,8 @@ export default function ForecastClient({ rows, role, lastSync }: Props) {
             <svg width={svgW} height={CHART_H} className="block">
               <defs>
                 <linearGradient id="cf-area" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%"   stopColor="#00BAD6" stopOpacity="0.55" />
-                  <stop offset="100%" stopColor="#00BAD6" stopOpacity="0.02" />
+                  <stop offset="0%"   stopColor="var(--accent)" stopOpacity="0.55" />
+                  <stop offset="100%" stopColor="var(--accent)" stopOpacity="0.02" />
                 </linearGradient>
               </defs>
 
@@ -504,7 +504,7 @@ export default function ForecastClient({ rows, role, lastSync }: Props) {
                 <line key={i}
                   x1={PAD_X} x2={svgW - PAD_X}
                   y1={PAD_T + plotH * f} y2={PAD_T + plotH * f}
-                  stroke="#f3f4f6" strokeDasharray={i === 4 ? "0" : "3 4"} />
+                  stroke="var(--border)" strokeDasharray={i === 4 ? "0" : "3 4"} />
               ))}
 
               {/* "NOW" vertical marker */}
@@ -513,20 +513,20 @@ export default function ForecastClient({ rows, role, lastSync }: Props) {
                   <line
                     x1={xFor(nowIdx)} x2={xFor(nowIdx)}
                     y1={PAD_T}        y2={CHART_H - PAD_B}
-                    stroke="#f59e0b" strokeDasharray="3 3" strokeWidth="1.5" opacity="0.7" />
-                  <rect x={xFor(nowIdx) - 18} y={PAD_T - 12} width="36" height="16" rx="8" fill="#fef3c7" />
+                    stroke="var(--warning)" strokeDasharray="3 3" strokeWidth="1.5" opacity="0.7" />
+                  <rect x={xFor(nowIdx) - 18} y={PAD_T - 12} width="36" height="16" rx="8" fill="var(--warning-bg)" />
                   <text x={xFor(nowIdx)} y={PAD_T - 1} textAnchor="middle"
-                    className="fill-amber-700" fontSize="9" fontWeight="700" letterSpacing="1">NOW</text>
+                    className="fill-warning" fontSize="9" fontWeight="700" letterSpacing="1">NOW</text>
                 </g>
               )}
 
               {/* Cumulative line — faint reference behind the monthly emphasis */}
-              <path d={cumLine} fill="none" stroke="#d1d5db" strokeWidth="1.5"
+              <path d={cumLine} fill="none" stroke="var(--border-strong)" strokeWidth="1.5"
                 strokeLinecap="round" strokeDasharray="4 4" opacity="0.8" />
 
               {/* Monthly area — the primary read */}
               <path d={areaPath} fill="url(#cf-area)" />
-              <path d={monthlyLine} fill="none" stroke="#00BAD6" strokeWidth="2.5" />
+              <path d={monthlyLine} fill="none" stroke="var(--accent)" strokeWidth="2.5" />
 
               {/* Dots + hover targets */}
               {monthKeys.map((mk, i) => {
@@ -544,16 +544,16 @@ export default function ForecastClient({ rows, role, lastSync }: Props) {
                       fill="transparent" />
                     {/* Monthly dot — the primary marker */}
                     <circle cx={px} cy={monthlyPts[i].y} r={hoverIdx === i ? 5 : 3.5}
-                      fill={isPast ? "#9ca3af" : isNow ? "#f59e0b" : "#00BAD6"}
-                      stroke="white" strokeWidth="1.5" />
+                      fill={isPast ? "var(--subtle)" : isNow ? "var(--warning)" : "var(--accent)"}
+                      stroke="var(--surface)" strokeWidth="1.5" />
                     {/* Month label */}
                     <text x={px} y={CHART_H - PAD_B + 14} textAnchor="middle"
-                      fontSize="10" className={isNow ? "fill-amber-700 font-semibold" : "fill-gray-500"}>
+                      fontSize="10" className={isNow ? "fill-warning font-semibold" : "fill-muted"}>
                       {monthLabel(mk)}
                     </text>
                     {/* Monthly amount printed below — the number that matters per period */}
                     <text x={px} y={CHART_H - PAD_B + 28} textAnchor="middle"
-                      fontSize="9" className={`tabular-nums ${totalByMonth[mk] > 0 ? "fill-gray-600 font-medium" : "fill-gray-300"}`}>
+                      fontSize="9" className={`tabular-nums ${totalByMonth[mk] > 0 ? "fill-muted font-medium" : "fill-subtle"}`}>
                       {totalByMonth[mk] > 0 ? fmt$(totalByMonth[mk]) : "—"}
                     </text>
                   </g>
@@ -565,7 +565,7 @@ export default function ForecastClient({ rows, role, lastSync }: Props) {
                 <line
                   x1={xFor(hovered.idx)} x2={xFor(hovered.idx)}
                   y1={PAD_T} y2={CHART_H - PAD_B}
-                  stroke="#9ca3af" strokeDasharray="2 3" strokeWidth="1" opacity="0.5" />
+                  stroke="var(--subtle)" strokeDasharray="2 3" strokeWidth="1" opacity="0.5" />
               )}
             </svg>
 
@@ -574,20 +574,20 @@ export default function ForecastClient({ rows, role, lastSync }: Props) {
               const leftPx = xFor(hovered.idx);
               const placeRight = leftPx > svgW / 2;
               return (
-                <div className="pointer-events-none absolute bg-gray-900 text-white rounded-lg shadow-xl px-3 py-2 text-[11px] space-y-0.5"
+                <div className="pointer-events-none absolute bg-text text-bg rounded-lg shadow-xl px-3 py-2 text-[11px] space-y-0.5"
                   style={{
                     top: PAD_T + 4,
                     left: placeRight ? undefined : leftPx + 12,
                     right: placeRight ? svgW - leftPx + 12 : undefined,
                     minWidth: "150px",
                   }}>
-                  <div className="font-semibold text-white/90 mb-1">{monthLabel(hovered.mk)}</div>
+                  <div className="font-semibold opacity-90 mb-1">{monthLabel(hovered.mk)}</div>
                   <div className="flex justify-between gap-3">
-                    <span className="text-cyan-300">Monthly</span>
+                    <span className="opacity-70">Monthly</span>
                     <span className="font-semibold tabular-nums">{fmt$(totalByMonth[hovered.mk])}</span>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <span className="text-amber-300">Running total</span>
+                    <span className="opacity-70">Running total</span>
                     <span className="font-semibold tabular-nums">{fmt$(cumByMonth[hovered.mk])}</span>
                   </div>
                 </div>
@@ -632,10 +632,10 @@ export default function ForecastClient({ rows, role, lastSync }: Props) {
                               onMouseLeave={() => setHoverIdx(null)}
                               className={`relative h-14 w-14 rounded-lg flex flex-col items-center justify-center transition-all ${
                                 exists ? "cursor-default hover:scale-105 hover:shadow-md hover:z-10" : ""
-                              } ${isNow ? "ring-2 ring-amber-400 ring-offset-1" : ""}`}
+                              } ${isNow ? "ring-2 ring-warning ring-offset-1" : ""}`}
                               style={{
-                                backgroundColor: exists ? heatColor(val, isPast) : "#fafafa",
-                                border: exists ? "1px solid rgba(0,0,0,0.04)" : "1px dashed #e5e7eb",
+                                backgroundColor: exists ? heatColor(val, isPast) : "var(--surface-2)",
+                                border: exists ? "1px solid var(--border)" : "1px dashed var(--border)",
                               }}>
                               {exists ? (
                                 <>
@@ -691,7 +691,7 @@ export default function ForecastClient({ rows, role, lastSync }: Props) {
                     <line key={i}
                       x1={PX} x2={sW - PX}
                       y1={PT + plH * f} y2={PT + plH * f}
-                      stroke="#f3f4f6" strokeDasharray={i === 4 ? "0" : "3 4"} />
+                      stroke="var(--border)" strokeDasharray={i === 4 ? "0" : "3 4"} />
                   ))}
                   {/* Stacked bars */}
                   {monthKeys.map((mk, i) => {
@@ -727,19 +727,19 @@ export default function ForecastClient({ rows, role, lastSync }: Props) {
                         {/* Total label */}
                         <text x={cx} y={PT + plH - (totalByMonth[mk] / compMax) * plH - 4}
                           textAnchor="middle" fontSize="9" fontWeight="600"
-                          className={isNow ? "fill-amber-700" : isPast ? "fill-gray-400" : "fill-gray-700"}>
+                          className={isNow ? "fill-warning" : isPast ? "fill-subtle" : "fill-muted"}>
                           {fmt$(totalByMonth[mk])}
                         </text>
                         {/* Month label */}
                         <text x={cx} y={CH - PB + 14} textAnchor="middle"
-                          fontSize="10" className={isNow ? "fill-amber-700 font-semibold" : "fill-gray-500"}>
+                          fontSize="10" className={isNow ? "fill-warning font-semibold" : "fill-muted"}>
                           {monthLabel(mk)}
                         </text>
                         {isNow && (
                           <>
-                            <rect x={cx - 16} y={CH - PB + 18} width="32" height="13" rx="6.5" fill="#fef3c7" />
+                            <rect x={cx - 16} y={CH - PB + 18} width="32" height="13" rx="6.5" fill="var(--warning-bg)" />
                             <text x={cx} y={CH - PB + 27} textAnchor="middle"
-                              fontSize="8" fontWeight="700" className="fill-amber-700" letterSpacing="1">NOW</text>
+                              fontSize="8" fontWeight="700" className="fill-warning" letterSpacing="1">NOW</text>
                           </>
                         )}
                       </g>
@@ -753,14 +753,14 @@ export default function ForecastClient({ rows, role, lastSync }: Props) {
                   const placeRight = leftPx > sW / 2;
                   const parts = byMonth[hovered.mk];
                   return (
-                    <div className="pointer-events-none absolute bg-gray-900 text-white rounded-lg shadow-xl px-3 py-2 text-[11px] space-y-1"
+                    <div className="pointer-events-none absolute bg-text text-bg rounded-lg shadow-xl px-3 py-2 text-[11px] space-y-1"
                       style={{
                         top: PT + 4,
                         left: placeRight ? undefined : leftPx + 12,
                         right: placeRight ? sW - leftPx + 12 : undefined,
                         minWidth: "180px",
                       }}>
-                      <div className="font-semibold text-white/90 mb-1 flex justify-between gap-3 border-b border-white/10 pb-1">
+                      <div className="font-semibold opacity-90 mb-1 flex justify-between gap-3 border-b border-bg/10 pb-1">
                         <span>{monthLabel(hovered.mk)}</span>
                         <span className="tabular-nums">{fmt$(totalByMonth[hovered.mk])}</span>
                       </div>
@@ -768,9 +768,9 @@ export default function ForecastClient({ rows, role, lastSync }: Props) {
                         <div key={i} className="flex items-center justify-between gap-3">
                           <div className="flex items-center gap-1.5 truncate">
                             <div className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: projectColor(p.projectName) }} />
-                            <span className="truncate text-white/80">{p.projectName}</span>
+                            <span className="truncate opacity-80">{p.projectName}</span>
                           </div>
-                          <span className="font-semibold tabular-nums text-white/90">{fmt$(p.amount)}</span>
+                          <span className="font-semibold tabular-nums opacity-90">{fmt$(p.amount)}</span>
                         </div>
                       ))}
                     </div>
@@ -839,7 +839,163 @@ export default function ForecastClient({ rows, role, lastSync }: Props) {
           </div>
           <p className="text-xs text-subtle">Cash received = milestone date + {RECEIPT_DELAY_DAYS} days</p>
         </div>
-        <div className="overflow-x-auto">
+
+        {/* ── Mobile cards ── */}
+        <div className="md:hidden p-3 space-y-3">
+          {activeData.length === 0 && (
+            <p className="px-2 py-8 text-center text-subtle text-sm">No tracked projects match filters.</p>
+          )}
+          {activeData.map((row: any) => {
+            const filled = datesFilled(row);
+            const inherited = timelineInheritCount(row);
+            const invoicedPct = row.contract_value > 0 ? (row.total_invoiced ?? 0) / row.contract_value : 0;
+            // Next upcoming milestone (first with a date that hasn't passed receipt), else last filled
+            const milestonesWithDates = MILESTONES
+              .map(m => ({ m, dateVal: row[m.key] ?? "" }))
+              .filter(x => x.dateVal);
+            const nextMilestone = milestonesWithDates.find(x => !isPast(addDays(x.dateVal, RECEIPT_DELAY_DAYS)))
+              ?? milestonesWithDates[milestonesWithDates.length - 1];
+
+            return (
+              <div key={row.id} className="rounded-xl border border-border bg-surface p-4 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-bold text-text">{row.name}</p>
+                    {row.stage && <p className="text-[10px] text-subtle">{row.stage} · {((row.stage_completion ?? 0) * 100).toFixed(0)}%</p>}
+                    <p className="text-xs text-muted mt-0.5">{row.foreman}</p>
+                  </div>
+                  <div className="inline-flex items-center gap-1 shrink-0">
+                    <span className="text-xs font-bold text-text">{filled}/5</span>
+                    {inherited > 0 && (
+                      <span className="text-[9px] px-1 py-0.5 rounded bg-accent-soft text-accent font-semibold"
+                        title={`${inherited} dates inherited from Timeline`}>T{inherited}</span>
+                    )}
+                    {filled - inherited > 0 && (
+                      <span className="text-[9px] px-1 py-0.5 rounded bg-warning-bg text-warning font-semibold"
+                        title={`${filled - inherited} dates manually overridden`}>M{filled - inherited}</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <p className="text-subtle text-[10px] uppercase tracking-wide">Contract</p>
+                    <p className="font-mono text-text">{fmt$(row.contract_value)}</p>
+                  </div>
+                  <div>
+                    <p className="text-subtle text-[10px] uppercase tracking-wide">Invoiced</p>
+                    <p className="font-mono text-muted">{fmt$(row.total_invoiced ?? 0)} <span className="text-subtle">({(invoicedPct * 100).toFixed(0)}%)</span></p>
+                  </div>
+                  <div>
+                    <p className="text-subtle text-[10px] uppercase tracking-wide">Remaining</p>
+                    <p className="font-mono text-text">{fmt$(row.remaining_value)}</p>
+                  </div>
+                  <div>
+                    <p className="text-subtle text-[10px] uppercase tracking-wide">
+                      {nextMilestone === milestonesWithDates[milestonesWithDates.length - 1] && nextMilestone && isPast(addDays(nextMilestone.dateVal, RECEIPT_DELAY_DAYS))
+                        ? "Last Milestone" : "Next Milestone"}
+                    </p>
+                    {nextMilestone ? (() => {
+                      const { amount: payAmt } = resolveMilestoneAmount(row, nextMilestone.m.key, nextMilestone.m.pct);
+                      const datePast = isPast(addDays(nextMilestone.dateVal, RECEIPT_DELAY_DAYS));
+                      return (
+                        <p className="text-text">
+                          <span className="font-medium">{nextMilestone.m.shortLabel}</span>{" "}
+                          <span className="text-subtle">{nextMilestone.dateVal}</span>{" "}
+                          <span className={`font-mono ${datePast ? "text-success" : "text-subtle"}`}>{fmt$(payAmt)}{datePast ? " ✓" : ""}</span>
+                        </p>
+                      );
+                    })() : <p className="text-subtle">—</p>}
+                  </div>
+                </div>
+
+                {isAdmin && (
+                  <div className="pt-2 border-t border-border">
+                    {editing === row.id ? (
+                      <div className="space-y-2">
+                        {MILESTONES.map(m => {
+                          const d = draft;
+                          const dateVal = d[m.key] ?? "";
+                          const pctVal  = d[`${m.key}_pct`] ?? "";
+                          const amtVal  = d[`${m.key}_amount`] ?? "";
+                          return (
+                            <div key={m.key} className="flex items-center gap-1.5">
+                              <span className="text-[10px] w-16 shrink-0 text-subtle">{m.shortLabel}</span>
+                              <input
+                                type="date"
+                                value={dateVal}
+                                onChange={e => changeField(m.key, e.target.value)}
+                                className="flex-1 text-xs px-1.5 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                              />
+                              <input
+                                type="number" step="0.01" min="0" max="100" placeholder={`${(m.pct * 100).toFixed(0)}%`}
+                                value={pctVal}
+                                onChange={e => {
+                                  changeField(`${m.key}_pct`, e.target.value);
+                                  if (e.target.value !== "") changeField(`${m.key}_amount`, "");
+                                }}
+                                className="w-14 text-[10px] px-1 py-0.5 border border-border rounded bg-warning-bg/50 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                              />
+                              <input
+                                type="number" step="0.01" min="0" placeholder="$"
+                                value={amtVal}
+                                onChange={e => {
+                                  changeField(`${m.key}_amount`, e.target.value);
+                                  if (e.target.value !== "") changeField(`${m.key}_pct`, "");
+                                }}
+                                className="w-16 text-[10px] px-1 py-0.5 border border-border rounded bg-warning-bg/50 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                              />
+                            </div>
+                          );
+                        })}
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] w-16 shrink-0 text-subtle">Remaining</span>
+                          <input
+                            type="number" step="any"
+                            value={draft.remaining_value ?? ""}
+                            onChange={e => changeField("remaining_value", e.target.value)}
+                            className="flex-1 text-xs px-1.5 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                          />
+                        </div>
+                        <div className="flex gap-1.5 pt-1">
+                          <button onClick={save} disabled={saving}
+                            className="flex-1 text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded transition-colors">
+                            {saving ? "…" : "Save"}
+                          </button>
+                          <button onClick={() => setEditing(null)}
+                            className="flex-1 text-xs px-3 py-1.5 bg-surface-2 hover:bg-surface-3 rounded transition-colors">
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button onClick={() => startEdit(row)}
+                        title="Override a milestone date or remaining value"
+                        className="w-full text-xs px-3 py-1.5 bg-surface-2 hover:bg-surface-3 rounded transition-colors">
+                        Override
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {activeData.length > 0 && (
+            <div className="rounded-xl border border-border-strong p-4 text-xs font-semibold" style={{ backgroundColor: "var(--accent-soft)" }}>
+              <div className="flex justify-between" style={{ color: "var(--accent)" }}>
+                <span>Totals ({activeData.length})</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 mt-2 text-text">
+                <span>Contract: <span className="font-mono">{fmt$(activeContractTotal)}</span></span>
+                <span>Invoiced: <span className="font-mono">{fmt$(actualInvoiced)}</span></span>
+                <span>Remaining: <span className="font-mono">{fmt$(activeRemainingTotal)}</span></span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── Desktop table ── */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-surface-2 border-b border-border text-[11px] uppercase tracking-wider text-muted font-semibold">
@@ -1011,7 +1167,7 @@ export default function ForecastClient({ rows, role, lastSync }: Props) {
             {activeData.length > 0 && (
               <tfoot>
                 <tr className="text-xs font-semibold border-t-2 border-border-strong" style={{ backgroundColor: "var(--accent-soft)" }}>
-                  <td className="px-4 py-3 sticky left-0 font-bold" style={{ backgroundColor: "var(--accent-soft)", color: "#00BAD6" }}>
+                  <td className="px-4 py-3 sticky left-0 font-bold" style={{ backgroundColor: "var(--accent-soft)", color: "var(--accent)" }}>
                     Totals ({activeData.length})
                   </td>
                   <td className="px-4 py-3" />
@@ -1046,7 +1202,49 @@ export default function ForecastClient({ rows, role, lastSync }: Props) {
               Milestone split doesn't apply to small jobs. Showing contract vs. invoiced only.
             </p>
           </div>
-          <div className="overflow-x-auto">
+          {/* ── Mobile cards ── */}
+          <div className="md:hidden p-3 space-y-3">
+            {minorData.map(p => {
+              const remaining = (p.contract_value ?? 0) - (p.total_invoiced ?? 0);
+              return (
+                <div key={p.id} className="rounded-xl border border-border bg-surface p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-bold text-text">{p.name}</p>
+                    {p.stage && <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-info-bg text-info shrink-0">{p.stage}</span>}
+                  </div>
+                  <p className="text-xs text-muted">{p.foreman}</p>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div>
+                      <p className="text-subtle text-[10px] uppercase tracking-wide">Contract</p>
+                      <p className="font-mono text-text">{fmt$(p.contract_value)}</p>
+                    </div>
+                    <div>
+                      <p className="text-subtle text-[10px] uppercase tracking-wide">Invoiced</p>
+                      <p className="font-mono text-muted">{fmt$(p.total_invoiced)}</p>
+                    </div>
+                    <div>
+                      <p className="text-subtle text-[10px] uppercase tracking-wide">Remaining</p>
+                      <p className="font-mono font-semibold text-text">{fmt$(remaining)}</p>
+                    </div>
+                  </div>
+                  {p.payment_notes && (
+                    <p className="text-xs text-subtle italic">{p.payment_notes}</p>
+                  )}
+                </div>
+              );
+            })}
+            <div className="rounded-xl border border-border-strong bg-surface-2 p-4 text-xs font-semibold">
+              <p className="text-text">Minor Totals ({minorData.length})</p>
+              <div className="grid grid-cols-3 gap-2 mt-2 text-text font-mono">
+                <span>{fmt$(minorContractTotal)}</span>
+                <span>{fmt$(minorInvoicedTotal)}</span>
+                <span>{fmt$(minorRemainingTotal)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Desktop table ── */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-700 text-white text-xs uppercase tracking-wide">

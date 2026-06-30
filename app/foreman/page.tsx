@@ -70,19 +70,19 @@ export default async function ForemanPage() {
         </div>
 
         {/* ── Bonus Summary Card ── */}
-        <div className={`rounded-2xl p-6 shadow-md text-white ${
+        <div className={`rounded-2xl p-6 shadow-md ${
           totals.totalBonus >= totals.maxPossibleBonus && totals.maxPossibleBonus > 0
-            ? "bg-gradient-to-br from-green-600 to-emerald-700"
+            ? "bg-success text-white"
             : totals.totalBonus > 0
-            ? "bg-gradient-to-br from-blue-600 to-blue-800"
-            : "bg-gradient-to-br from-slate-700 to-slate-800"
+            ? "bg-accent text-accent-foreground"
+            : "bg-surface-3 text-text"
         }`}>
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm font-medium text-white/70 uppercase tracking-wide">Current Bonus Eligibility</p>
+              <p className="text-sm font-medium opacity-70 uppercase tracking-wide">Current Bonus Eligibility</p>
               <p className="text-4xl font-bold mt-1">{fmt$(totals.totalBonus)}</p>
-              <p className="text-sm text-white/70 mt-1">of {fmt$(totals.maxPossibleBonus)} maximum possible</p>
-              <p className="text-xs text-white/50 mt-1">Paid at each project's completion milestone</p>
+              <p className="text-sm opacity-70 mt-1">of {fmt$(totals.maxPossibleBonus)} maximum possible</p>
+              <p className="text-xs opacity-50 mt-1">Paid at each project's completion milestone</p>
             </div>
             <span className="text-5xl">
               {totals.totalBonus >= totals.maxPossibleBonus && totals.maxPossibleBonus > 0 ? "🏆"
@@ -91,21 +91,21 @@ export default async function ForemanPage() {
           </div>
 
           {/* Progress bar */}
-          <div className="mt-5 w-full bg-surface/20 rounded-full h-3 overflow-hidden">
+          <div className="mt-5 w-full bg-current/20 rounded-full h-3 overflow-hidden">
             <div
-              className="h-3 rounded-full bg-surface transition-all"
+              className="h-3 rounded-full bg-current opacity-90 transition-all"
               style={{ width: totals.maxPossibleBonus > 0 ? `${(totals.totalBonus / totals.maxPossibleBonus) * 100}%` : "0%" }}
             />
           </div>
 
           {/* Stage counts */}
           <div className="mt-4 grid grid-cols-4 gap-3 text-center">
-            <div><p className="text-xl font-bold">{totals.jobsBeat}</p><p className="text-xs text-white/70">Beat Budget</p></div>
-            <div><p className="text-xl font-bold">{totals.jobsMet}</p><p className="text-xs text-white/70">Met Budget</p></div>
-            <div><p className="text-xl font-bold text-danger">{totals.jobsMissed}</p><p className="text-xs text-white/70">Over Budget</p></div>
-            <div><p className="text-xl font-bold text-white/50">{totals.jobsLocked ?? 0}</p><p className="text-xs text-white/70">🔒 In Progress</p></div>
+            <div><p className="text-xl font-bold">{totals.jobsBeat}</p><p className="text-xs opacity-70">Beat Budget</p></div>
+            <div><p className="text-xl font-bold">{totals.jobsMet}</p><p className="text-xs opacity-70">Met Budget</p></div>
+            <div><p className="text-xl font-bold text-danger">{totals.jobsMissed}</p><p className="text-xs opacity-70">Over Budget</p></div>
+            <div><p className="text-xl font-bold opacity-50">{totals.jobsLocked ?? 0}</p><p className="text-xs opacity-70">🔒 In Progress</p></div>
           </div>
-          <p className="mt-3 text-xs text-white/40 text-center">Counts are per stage — each project has a Rough and Finish stage bonus</p>
+          <p className="mt-3 text-xs opacity-40 text-center">Counts are per stage — each project has a Rough and Finish stage bonus</p>
         </div>
 
         {/* ── Bonus Tier Reference ── */}

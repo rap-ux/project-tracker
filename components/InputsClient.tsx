@@ -66,17 +66,18 @@ export default function InputsClient({ inputs, role }: Props) {
         <div className="flex items-center gap-3 flex-wrap">
           <button
             onClick={() => setShowPipeline(p => !p)}
-            className="text-xs px-3 py-1.5 rounded-full border font-medium transition-all"
-            style={showPipeline
-              ? { backgroundColor: "#101010", borderColor: "#101010", color: "#fff" }
-              : { backgroundColor: "var(--surface)", borderColor: "#d1d5db", color: "#9ca3af" }}>
+            className={`text-xs px-3 py-1.5 rounded-full border border-border font-medium transition-all ${
+              showPipeline
+                ? "bg-accent text-accent-foreground"
+                : "bg-surface text-muted hover:bg-surface-2"
+            }`}>
             {showPipeline ? "Minor Projects: On" : "Minor Projects: Off"}
           </button>
           {msg && <p className="text-sm text-text bg-surface border rounded-lg px-4 py-2 shadow-sm">{msg}</p>}
         </div>
       </div>
 
-      <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
+      <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden hidden md:block">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -154,6 +155,72 @@ export default function InputsClient({ inputs, role }: Props) {
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div className="md:hidden space-y-3">
+        {visibleRows.map((row: any) => {
+          const isEditing = editing === row.id;
+          const d = isEditing ? draft : row;
+
+          return (
+            <div key={row.id} className={`rounded-xl border border-border bg-surface p-4 space-y-2 ${isEditing ? "bg-info-bg" : ""} ${row.is_pipeline ? "opacity-75" : ""}`}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-text truncate">
+                    {row.name}
+                    {row.is_pipeline ? <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-surface-2 text-subtle font-normal">Minor</span> : null}
+                  </p>
+                  <p className="text-xs text-muted mt-0.5">{row.foreman}</p>
+                </div>
+                <span className="shrink-0 text-xs font-mono text-text">
+                  {"$" + (row.contract_value ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-x-3 gap-y-2 pt-1">
+                {fields.map(f => (
+                  <div key={f.key}>
+                    <p className="text-subtle uppercase text-[10px]">{f.label}</p>
+                    {isEditing ? (
+                      <input
+                        type="number" step="any" min="0" max={f.pct ? 100 : undefined}
+                        value={f.pct ? (d[f.key] * 100).toFixed(2) : d[f.key]}
+                        onChange={e => change(f.key, f.pct ? String(parseFloat(e.target.value) / 100) : e.target.value)}
+                        className="w-full px-2 py-1 text-xs text-text border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                      />
+                    ) : (
+                      <p className="text-sm text-text">
+                        {f.pct ? fmtPct(d[f.key]) : f.key.includes("rate") || f.key.includes("wage") ? fmt$(d[f.key]) : d[f.key]?.toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {isAdmin && (
+                <div className="pt-2 border-t border-border">
+                  {isEditing ? (
+                    <div className="flex gap-2">
+                      <button onClick={save} disabled={saving}
+                        className="flex-1 text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded transition-colors">
+                        {saving ? "…" : "Save"}
+                      </button>
+                      <button onClick={() => setEditing(null)}
+                        className="flex-1 text-xs px-3 py-1.5 bg-surface-2 hover:bg-surface-3 rounded transition-colors">
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => startEdit(row)}
+                      className="w-full text-xs px-3 py-1.5 bg-surface-2 hover:bg-surface-3 rounded transition-colors">
+                      Edit
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <p className="text-xs text-subtle">
