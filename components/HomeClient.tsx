@@ -1,14 +1,7 @@
 "use client";
 
 import Link from "next/link";
-
-const fmt$  = (n: number) => "$" + (n ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
-const fmt$k = (n: number) => {
-  const v = n ?? 0;
-  if (Math.abs(v) >= 1000) return "$" + Math.round(v / 1000) + "k";
-  return "$" + Math.round(v);
-};
-const fmtPct = (n: number) => ((n ?? 0) * 100).toFixed(1) + "%";
+import { fmt$, fmt$k, fmtPct } from "@/lib/format";
 
 function greeting(hour: number): string {
   if (hour < 12) return "Good morning";

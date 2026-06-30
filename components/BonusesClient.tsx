@@ -2,9 +2,7 @@
 
 import { useMemo, useState } from "react";
 import FreshnessStamp from "./FreshnessStamp";
-
-const fmt$   = (n: number) => "$" + (n ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
-const fmtPct = (n: number) => ((n ?? 0) * 100).toFixed(1) + "%";
+import { fmt$, fmtPct } from "@/lib/format";
 
 const BONUS_TIERS = [
   { label: "<$50K",       meet: 150,  beat: 200,  max: 350  },

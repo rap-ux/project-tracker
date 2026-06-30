@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useModalA11y } from "./useModalA11y";
 
 interface Props {
   project: any;
@@ -12,31 +13,57 @@ interface Props {
 // and the project detail page.
 export default function ActivateProjectModal({ project, onClose, onActivated }: Props) {
   const [activating, setActivating] = useState(false);
+  const [error, setError] = useState("");
+  const [confirmZero, setConfirmZero] = useState(false);
+  const { ref: modalRef, dialogProps } = useModalA11y(onClose);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setActivating(true);
+    setError("");
     const fd = new FormData(e.currentTarget);
-    await fetch(`/api/projects/${project.id}`, {
-      method:  "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        is_pipeline:    0,
-        contract_value: Number(fd.get("contract_value")) || 0,
-        foreman:        fd.get("foreman"),
-        stage:          fd.get("stage"),
-      }),
-    });
-    setActivating(false);
-    onActivated();
+    const contractValue = Number(fd.get("contract_value")) || 0;
+
+    // A $0 contract is sometimes legitimate (e.g. T&M with no signed value
+    // yet), but it's also the easiest way to accidentally zero out a real
+    // project — confirm once rather than silently accepting it.
+    if (contractValue <= 0 && !confirmZero) {
+      setError("Contract value is $0 — this project won't count toward bonus or margin tracking. Submit again to activate anyway.");
+      setConfirmZero(true);
+      return;
+    }
+
+    setActivating(true);
+    try {
+      const res = await fetch(`/api/projects/${project.id}`, {
+        method:  "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          is_pipeline:    0,
+          contract_value: contractValue,
+          foreman:        fd.get("foreman"),
+          stage:          fd.get("stage"),
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || `Activation failed (${res.status}). The project is still in Minor Projects — try again.`);
+        setActivating(false);
+        return;
+      }
+      onActivated();
+    } catch {
+      setError("Network error — activation did not go through. Try again.");
+      setActivating(false);
+    }
   }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-      <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-sm">
+      <div ref={modalRef} {...dialogProps} aria-labelledby="activate-project-title"
+        className="bg-surface rounded-2xl shadow-2xl w-full max-w-sm outline-none">
         <div className="px-6 py-4 border-b flex justify-between items-start">
           <div>
-            <h2 className="text-base font-bold text-text">Activate Project</h2>
+            <h2 id="activate-project-title" className="text-base font-bold text-text">Activate Project</h2>
             <p className="text-xs text-muted mt-0.5">{project.name}</p>
           </div>
           <button onClick={onClose} className="text-subtle hover:text-muted text-2xl leading-none ml-4">&times;</button>
@@ -91,11 +118,15 @@ export default function ActivateProjectModal({ project, onClose, onActivated }: 
             <p>• Minor Projects toggle no longer needed to see it</p>
           </div>
 
+          {error && (
+            <p className="text-xs text-danger bg-danger-bg border border-border rounded-lg px-3 py-2">{error}</p>
+          )}
+
           <div className="flex gap-3 pt-1">
             <button type="submit" disabled={activating}
               className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity disabled:opacity-60"
               style={{ backgroundColor: "#00BAD6" }}>
-              {activating ? "Activating…" : "✓ Confirm & Activate"}
+              {activating ? "Activating…" : confirmZero ? "Activate Anyway" : "✓ Confirm & Activate"}
             </button>
             <button type="button" onClick={onClose}
               className="flex-1 py-2.5 bg-surface-2 hover:bg-surface-3 rounded-lg text-sm font-medium transition-colors">

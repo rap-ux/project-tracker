@@ -7,9 +7,7 @@ import nodemailer from "nodemailer";
 import fs from "fs";
 import path from "path";
 import type { NextRequest } from "next/server";
-
-// Keep in sync with Navbar's SUPER_ADMIN_EMAILS list.
-const SUPER_ADMIN_EMAILS = ["rap@totallywiredelectric.com"];
+import { isSuperAdmin } from "@/lib/auth-roles";
 
 export async function GET(req: NextRequest) {
   const url = req.nextUrl;
@@ -20,8 +18,7 @@ export async function GET(req: NextRequest) {
   const secretOk = !!expectedSecret && providedSecret === expectedSecret;
   if (!secretOk) {
     const session = await auth();
-    const email = session?.user?.email ?? "";
-    if (!SUPER_ADMIN_EMAILS.includes(email)) {
+    if (!isSuperAdmin(session?.user?.email)) {
       return Response.json({ error: "Forbidden" }, { status: 403 });
     }
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef } from "react";
+import { fmt$, fmtPct } from "@/lib/format";
 
 // ── Stage config ──────────────────────────────────────────────────────────────
 const STAGES = [
@@ -23,9 +24,6 @@ const STAGE_BAR_COLOR: Record<string, { solid: string; light: string; text: stri
 };
 
 const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
-const fmt$   = (n: number) => "$" + (n ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
-const fmtPct = (n: number) => ((n ?? 0) * 100).toFixed(0) + "%";
 
 const STATUS_STYLE: Record<string, { bg: string; color: string; border: string }> = {
   "Complete":    { bg: "var(--success-bg)", color: "#16a34a", border: "#bbf7d0" },

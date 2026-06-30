@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useConfirm } from "./useConfirm";
-
-const fmt$ = (n: number) => "$" + (n ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
+import { fmt$ } from "@/lib/format";
 
 interface CO {
   id: number;
@@ -34,6 +33,7 @@ export default function ChangeOrdersPanel({ projectId, isAdmin, onTotalChange }:
   const [adding,    setAdding]    = useState(false);
   const [saving,    setSaving]    = useState(false);
   const [editing,   setEditing]   = useState<number | null>(null);
+  const [error,     setError]     = useState("");
 
   async function fetchCOs() {
     const res  = await fetch(`/api/projects/${projectId}/change-orders`);
@@ -71,16 +71,20 @@ export default function ChangeOrdersPanel({ projectId, isAdmin, onTotalChange }:
   }
 
   async function handleStatusChange(id: number, newStatus: string) {
-    await fetch(`/api/change-orders/${id}`, {
+    setError("");
+    const res = await fetch(`/api/change-orders/${id}`, {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: newStatus }),
     });
+    if (!res.ok) { setError("Couldn't update status — try again."); return; }
     fetchCOs();
   }
 
   async function handleDelete(id: number) {
-    if (!(await confirm("Delete this change order?", { title: "Delete change order", confirmLabel: "Delete", danger: true }))) return;
-    await fetch(`/api/change-orders/${id}`, { method: "DELETE" });
+    if (!(await confirm("Delete this change order? This also removes it from the project's billed/approved totals.", { title: "Delete change order", confirmLabel: "Delete", danger: true }))) return;
+    setError("");
+    const res = await fetch(`/api/change-orders/${id}`, { method: "DELETE" });
+    if (!res.ok) { setError("Delete failed — the change order is still there. Try again."); return; }
     fetchCOs();
   }
 
@@ -100,6 +104,9 @@ export default function ChangeOrdersPanel({ projectId, isAdmin, onTotalChange }:
   return (
     <div className="border-t border-border pt-3">
       {confirmDialog}
+      {error && (
+        <p className="text-xs text-danger bg-danger-bg border border-border rounded-lg px-3 py-2 mb-2">{error}</p>
+      )}
       <div className="flex items-center justify-between mb-2 flex-wrap gap-1">
         <div className="flex items-center gap-3">
           <p className="text-[10px] font-semibold text-subtle uppercase tracking-wide">📝 Change Orders</p>

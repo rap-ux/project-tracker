@@ -1,9 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-
-const fmt$   = (n: number) => "$" + (n ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
-const fmtPct = (n: number) => ((n ?? 0) * 100).toFixed(1) + "%";
+import { fmt$, fmtPct } from "@/lib/format";
 
 function relativeTime(ts: string | null | undefined): { label: string; title: string; stale: boolean } {
   if (!ts) return { label: "Never", title: "No data uploaded yet", stale: true };

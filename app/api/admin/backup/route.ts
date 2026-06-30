@@ -5,17 +5,14 @@ import { auth } from "@/auth";
 import db from "@/lib/db";
 import fs from "fs";
 import path from "path";
-
-// Keep in sync with Navbar's SUPER_ADMIN_EMAILS list.
-const SUPER_ADMIN_EMAILS = ["rap@totallywiredelectric.com"];
+import { isSuperAdmin } from "@/lib/auth-roles";
 
 export async function GET() {
   const session = await auth();
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   // Super-admin only — the file contains the full users table (with password hashes).
-  const email = session.user?.email ?? "";
-  if (!SUPER_ADMIN_EMAILS.includes(email)) {
+  if (!isSuperAdmin(session.user?.email)) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
 

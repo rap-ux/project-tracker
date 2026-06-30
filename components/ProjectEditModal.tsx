@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useModalA11y } from "./useModalA11y";
 
 interface StageDate { stage: string; start_date: string | null; end_date: string | null }
 
@@ -20,14 +21,24 @@ function calcProjectCompletion(stage: string, stagePct: number): number {
 }
 
 // Edit-project form, used by both the dashboard list and the project detail page.
+// Dollar/hours fields that must never go negative.
+const NON_NEGATIVE_FIELDS = new Set([
+  "contract_value", "total_invoiced", "est_materials_budget", "actual_materials",
+  "unrecorded_materials", "est_total_hours", "actual_total_hours", "unrecorded_hours",
+  "goal_hours", "rough_hours_allowed", "rough_hours_actual", "finish_hours_allowed", "finish_hours_actual",
+]);
+
 export default function ProjectEditModal({ project, stagesForProject, onClose, onSaved }: Props) {
   const [draftStage,    setDraftStage]    = useState<string>(project.stage ?? "Rough");
   const [draftStagePct, setDraftStagePct] = useState<number>(Math.round((project.stage_completion ?? 0) * 100));
   const [saving, setSaving] = useState(false);
+  const [error,  setError]  = useState("");
+  const [confirmOverInvoiced, setConfirmOverInvoiced] = useState(false);
+  const { ref: modalRef, dialogProps } = useModalA11y(onClose);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setSaving(true);
+    setError("");
     const fd = new FormData(e.currentTarget);
     const body: Record<string, any> = {};
     const stageDates: StageDate[] = [];
@@ -36,6 +47,30 @@ export default function ProjectEditModal({ project, stagesForProject, onClose, o
       if (k.startsWith("sd_start_") || k.startsWith("sd_end_")) return;
       body[k] = isNaN(Number(v)) || v === "" ? v : Number(v);
     });
+
+    for (const f of NON_NEGATIVE_FIELDS) {
+      if (typeof body[f] === "number" && body[f] < 0) {
+        setError(`${f.replace(/_/g, " ")} can't be negative.`);
+        return;
+      }
+    }
+
+    // Over-invoicing is unusual but not always wrong (deposits, retainage
+    // structures, etc.) — warn once and let the user confirm rather than block.
+    if (
+      !confirmOverInvoiced &&
+      typeof body.total_invoiced === "number" &&
+      typeof body.contract_value === "number" &&
+      body.contract_value > 0 &&
+      body.total_invoiced > body.contract_value
+    ) {
+      setError(
+        `Invoiced (${body.total_invoiced.toLocaleString()}) is more than the contract value ` +
+        `(${body.contract_value.toLocaleString()}). Submit again to save anyway.`
+      );
+      setConfirmOverInvoiced(true);
+      return;
+    }
 
     const stageNames = ["Underground", "Rough", "Finish"];
     for (const s of stageNames) {
@@ -49,33 +84,46 @@ export default function ProjectEditModal({ project, stagesForProject, onClose, o
     if (body.stage_completion != null) body.stage_completion = Math.min(1, Math.max(0, body.stage_completion / 100));
     delete body.project_completion;
 
-    const saves: Promise<any>[] = [
-      fetch(`/api/projects/${project.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      }),
-    ];
-    if (stageDates.length > 0) {
-      saves.push(
-        fetch(`/api/projects/${project.id}/stages`, {
+    setSaving(true);
+    try {
+      const saves: Promise<Response>[] = [
+        fetch(`/api/projects/${project.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(stageDates),
-        })
-      );
-    }
+          body: JSON.stringify(body),
+        }),
+      ];
+      if (stageDates.length > 0) {
+        saves.push(
+          fetch(`/api/projects/${project.id}/stages`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(stageDates),
+          })
+        );
+      }
 
-    await Promise.all(saves);
-    setSaving(false);
-    onSaved();
+      const results = await Promise.all(saves);
+      const failed = results.find(r => !r.ok);
+      if (failed) {
+        const data = await failed.json().catch(() => ({}));
+        setError(data.error || `Save failed (${failed.status}). Nothing was lost — try again.`);
+        setSaving(false);
+        return;
+      }
+      onSaved();
+    } catch {
+      setError("Network error — the save did not go through. Try again.");
+      setSaving(false);
+    }
   }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-      <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div ref={modalRef} {...dialogProps} aria-labelledby="edit-project-title"
+        className="bg-surface rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto outline-none">
         <div className="sticky top-0 bg-surface px-6 py-4 border-b flex justify-between items-center">
-          <h2 className="text-lg font-bold text-text">Edit: {project.name}</h2>
+          <h2 id="edit-project-title" className="text-lg font-bold text-text">Edit: {project.name}</h2>
           <button onClick={onClose} className="text-subtle hover:text-muted text-2xl leading-none">&times;</button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
@@ -182,7 +230,7 @@ export default function ProjectEditModal({ project, stagesForProject, onClose, o
                 ].map(f => (
                   <div key={f.key}>
                     <label className="block text-xs font-medium text-muted mb-1">{f.label}</label>
-                    <input name={f.key} type={f.type} step="any"
+                    <input name={f.key} type={f.type} step="any" min="0"
                       defaultValue={project[f.key] ?? ""}
                       className="w-full px-2.5 py-1.5 text-sm border border-border-strong rounded-lg focus:outline-none focus:ring-2"
                       style={{ "--tw-ring-color": "#00BAD6" } as React.CSSProperties} />
@@ -224,10 +272,14 @@ export default function ProjectEditModal({ project, stagesForProject, onClose, o
             </div>
           </div>
 
+          {error && (
+            <p className="text-xs text-danger bg-danger-bg border border-border rounded-lg px-3 py-2">{error}</p>
+          )}
+
           <div className="col-span-2 flex gap-3 pt-2">
             <button type="submit" disabled={saving}
               className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors disabled:opacity-60">
-              {saving ? "Saving…" : "Save Changes"}
+              {saving ? "Saving…" : confirmOverInvoiced ? "Save Anyway" : "Save Changes"}
             </button>
             <button type="button" onClick={onClose}
               className="flex-1 py-2 bg-surface-2 hover:bg-surface-3 rounded-lg text-sm font-medium transition-colors">

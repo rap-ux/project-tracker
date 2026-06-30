@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-
-const fmt$ = (n: number) => "$" + (n ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
+import { fmt$ } from "@/lib/format";
 
 interface Project {
   id: number; name: string; foreman: string; stage: string;

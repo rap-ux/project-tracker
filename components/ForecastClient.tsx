@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { toCSV, downloadCSV } from "@/lib/csv";
 import FreshnessStamp from "./FreshnessStamp";
+import { fmt$ } from "@/lib/format";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const MILESTONES = [
@@ -15,9 +16,6 @@ const MILESTONES = [
 
 const RECEIPT_DELAY_DAYS = 30;
 const TODAY = new Date();
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-const fmt$ = (n: number) => "$" + (n ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
 
 function addDays(dateStr: string, days: number): Date {
   const d = new Date(dateStr + "T00:00:00");
@@ -920,7 +918,7 @@ export default function ForecastClient({ rows, role, lastSync }: Props) {
                               />
                               <div className="flex gap-1">
                                 <input
-                                  type="number" step="0.01" placeholder={`${(m.pct * 100).toFixed(0)}%`}
+                                  type="number" step="0.01" min="0" max="100" placeholder={`${(m.pct * 100).toFixed(0)}%`}
                                   value={pctVal}
                                   onChange={e => {
                                     changeField(`${m.key}_pct`, e.target.value);
@@ -930,7 +928,7 @@ export default function ForecastClient({ rows, role, lastSync }: Props) {
                                   className="w-1/2 text-[10px] px-1 py-0.5 border border-border rounded bg-warning-bg/50 focus:outline-none focus:ring-1 focus:ring-amber-400"
                                 />
                                 <input
-                                  type="number" step="0.01" placeholder="$"
+                                  type="number" step="0.01" min="0" placeholder="$"
                                   value={amtVal}
                                   onChange={e => {
                                     changeField(`${m.key}_amount`, e.target.value);

@@ -213,42 +213,61 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
       return;
     }
     setApplying(batchId);
-    const res  = await fetch(`/api/upload/batches/${batchId}/apply`, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ changeIds }),
-    });
-    const data = await res.json();
-    setApplying(null);
-    if (data.ok) {
-      setMsg({ text: `✅ Applied ${data.applied} change(s) to ${data.projects} project(s).`, ok: true });
-      setTimeout(() => router.refresh(), 800);
-    } else {
-      setMsg({ text: `❌ ${data.error ?? "Apply failed"}`, ok: false });
+    try {
+      const res  = await fetch(`/api/upload/batches/${batchId}/apply`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ changeIds }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setMsg({ text: `✅ Applied ${data.applied} change(s) to ${data.projects} project(s).`, ok: true });
+        setTimeout(() => router.refresh(), 800);
+      } else {
+        setMsg({ text: `❌ ${data.error ?? "Apply failed"}`, ok: false });
+      }
+    } catch {
+      setMsg({ text: "❌ Network error — nothing was applied. Try again.", ok: false });
+    } finally {
+      setApplying(null);
     }
   }
 
   // ── Discard ───────────────────────────────────────────────────────────────
   async function handleDiscard(batchId: number) {
-    if (!(await confirm("This removes the staged changes without applying them.", { title: "Discard batch", confirmLabel: "Discard", danger: true }))) return;
+    if (!(await confirm("This removes the staged changes without applying them. The batch can't be recovered afterward — you'd need to re-sync from the sheet.", { title: "Discard batch", confirmLabel: "Discard", danger: true }))) return;
     setDiscarding(batchId);
-    await fetch(`/api/upload/batches/${batchId}`, { method: "DELETE" });
-    setDiscarding(null);
-    router.refresh();
+    try {
+      const res = await fetch(`/api/upload/batches/${batchId}`, { method: "DELETE" });
+      if (!res.ok) {
+        setMsg({ text: "❌ Discard failed — the batch is still pending. Try again.", ok: false });
+        return;
+      }
+      router.refresh();
+    } catch {
+      setMsg({ text: "❌ Network error — nothing was discarded. Try again.", ok: false });
+    } finally {
+      setDiscarding(null);
+    }
   }
 
   // ── Revert ────────────────────────────────────────────────────────────────
   async function handleRevert(batchId: number) {
-    if (!(await confirm("All changes from this batch will be rolled back to their previous values.", { title: "Revert upload", confirmLabel: "Revert", danger: true }))) return;
+    if (!(await confirm("All changes from this batch will be rolled back to their previous values across every affected project.", { title: "Revert upload", confirmLabel: "Revert", danger: true }))) return;
     setReverting(batchId);
-    const res  = await fetch(`/api/upload/batches/${batchId}/revert`, { method: "POST" });
-    const data = await res.json();
-    setReverting(null);
-    if (data.ok) {
-      setMsg({ text: `✅ Reverted ${data.reverted} change(s) across ${data.projects} project(s).`, ok: true });
-      setTimeout(() => router.refresh(), 800);
-    } else {
-      setMsg({ text: `❌ ${data.error ?? "Revert failed"}`, ok: false });
+    try {
+      const res  = await fetch(`/api/upload/batches/${batchId}/revert`, { method: "POST" });
+      const data = await res.json();
+      if (data.ok) {
+        setMsg({ text: `✅ Reverted ${data.reverted} change(s) across ${data.projects} project(s).`, ok: true });
+        setTimeout(() => router.refresh(), 800);
+      } else {
+        setMsg({ text: `❌ ${data.error ?? "Revert failed"}`, ok: false });
+      }
+    } catch {
+      setMsg({ text: "❌ Network error — nothing was reverted. Try again.", ok: false });
+    } finally {
+      setReverting(null);
     }
   }
 

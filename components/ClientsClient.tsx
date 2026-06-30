@@ -2,8 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { toCSV, downloadCSV } from "@/lib/csv";
-
-const fmt$ = (n: number) => "$" + (n ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
+import { fmt$ } from "@/lib/format";
 
 interface Project {
   id: number;

@@ -1,15 +1,13 @@
 export const dynamic = 'force-dynamic';
 import { auth } from "@/auth";
 import db       from "@/lib/db";
-
-const SUPER_ADMIN_EMAILS = ["rap@totallywiredelectric.com"];
+import { isSuperAdmin } from "@/lib/auth-roles";
 
 export async function GET() {
   const session = await auth();
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-  const email = session.user?.email ?? "";
-  if (!SUPER_ADMIN_EMAILS.includes(email)) {
+  if (!isSuperAdmin(session.user?.email)) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
 

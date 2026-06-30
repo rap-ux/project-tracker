@@ -2,10 +2,9 @@
 
 import { useState, useRef } from "react";
 import type { ProjectData, PortfolioData } from "@/app/report/page";
+import { fmt$, fmtPct } from "@/lib/format";
 
 // ── Formatters ────────────────────────────────────────────────────────────────
-const fmt$ = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
-const fmtPct = (n: number) => (n * 100).toFixed(1) + "%";
 const fmtHrs = (n: number) => Math.round(n).toLocaleString("en-US");
 const fmtVariance = (hrs: number) => `${hrs >= 0 ? "+" : ""}${Math.round(hrs)}`;
 

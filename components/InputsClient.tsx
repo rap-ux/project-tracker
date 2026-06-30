@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-const fmtPct = (n: number) => (n * 100).toFixed(1) + "%";
-const fmt$   = (n: number) => "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 });
+import { fmt$, fmtPct } from "@/lib/format";
 
 interface Props { inputs: any[]; role: string; }
 
@@ -116,7 +114,7 @@ export default function InputsClient({ inputs, role }: Props) {
                       <td key={f.key} className="px-4 py-3 text-center">
                         {isEditing ? (
                           <input
-                            type="number" step="any"
+                            type="number" step="any" min="0" max={f.pct ? 100 : undefined}
                             value={f.pct ? (d[f.key] * 100).toFixed(2) : d[f.key]}
                             onChange={e => change(f.key, f.pct ? String(parseFloat(e.target.value) / 100) : e.target.value)}
                             className="w-20 px-2 py-1 text-xs text-center border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"

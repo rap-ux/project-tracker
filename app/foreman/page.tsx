@@ -5,9 +5,7 @@ import db               from "@/lib/db";
 import { calcIncentive, calcForemanTotal } from "@/lib/incentive";
 import Navbar              from "@/components/Navbar";
 import ForemanProjectCard  from "@/components/ForemanProjectCard";
-
-const fmt$   = (n: number) => "$" + (n ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
-const fmtPct = (n: number) => ((n ?? 0) * 100).toFixed(1) + "%";
+import { fmt$, fmtPct }    from "@/lib/format";
 
 // Bonus tier table — shown at top for reference
 const BONUS_TIERS = [

@@ -10,6 +10,7 @@ import GlobalSearch          from "./GlobalSearch";
 import UserMenu              from "./UserMenu";
 import PresenceIndicator     from "./PresenceIndicator";
 import ThemeToggle            from "./ThemeToggle";
+import { isSuperAdmin }       from "@/lib/auth-roles";
 
 interface NavbarProps { userName: string; role: string; userEmail?: string; userTitle?: string; }
 
@@ -71,7 +72,6 @@ const OWNER_LINKS: Array<{ href: string; label: string; icon: IconKey; superOnly
 // and these emails always display 'Super Admin' as their title regardless of
 // whatever the cached session has (handles stale JWTs that pre-date the
 // `title` column in the users table).
-const SUPER_ADMIN_EMAILS = ["rap@totallywiredelectric.com"];
 const EMAIL_TITLE_OVERRIDES: Record<string, string> = {
   "rap@totallywiredelectric.com": "Super Admin",
 };
@@ -83,9 +83,9 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
   const [moreOpen,   setMoreOpen]   = useState(false);
   const emailOverride = userEmail && EMAIL_TITLE_OVERRIDES[userEmail];
   const displayRole   = emailOverride || (userTitle && userTitle.trim()) || role;
-  const isSuperAdmin  = !!userEmail && SUPER_ADMIN_EMAILS.includes(userEmail);
+  const isSuperAdminUser = isSuperAdmin(userEmail);
   const visibleLinks = OWNER_LINKS.filter(l =>
-       (!l.superOnly || isSuperAdmin)
+       (!l.superOnly || isSuperAdminUser)
     && (!l.ownerOnly || role === "owner")
   );
   const primaryLinks   = visibleLinks.filter(l => l.primary);
@@ -180,7 +180,7 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
       {/* ── Right: Search + Alerts + Activity + user + sign out ── */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0 flex-shrink-0">
         <GlobalSearch />
-        {isSuperAdmin && <PresenceIndicator />}
+        {isSuperAdminUser && <PresenceIndicator />}
         <ThemeToggle compact />
         <AlertsBell />
         <GlobalActivityButton />

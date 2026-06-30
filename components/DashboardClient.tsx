@@ -8,10 +8,9 @@ import { useConfirm }           from "./useConfirm";
 import ProjectTile               from "./ProjectTile";
 import ProjectEditModal          from "./ProjectEditModal";
 import ActivateProjectModal      from "./ActivateProjectModal";
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-const fmt$   = (n: number) => "$" + (n ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
-const fmtPct = (n: number) => ((n ?? 0) * 100).toFixed(1) + "%";
+import { isSuperAdmin }          from "@/lib/auth-roles";
+import { fmt$, fmtPct }          from "@/lib/format";
+import { useModalA11y }          from "./useModalA11y";
 
 function relativeTime(ts: string | null | undefined): { label: string; title: string; stale: boolean } {
   if (!ts) return { label: "Never", title: "No data uploaded yet", stale: true };
@@ -35,6 +34,19 @@ function relativeTime(ts: string | null | undefined): { label: string; title: st
   else                   label = `${months[dt.getUTCMonth()]} ${dt.getUTCDate()}`;
   const stale = diffD > 14; // flag if no update in 2+ weeks
   return { label, title, stale };
+}
+
+// Wraps modal content with Escape-to-close + focus trap. A separate component
+// so the hook's effect only runs while the modal is actually mounted.
+function ModalShell({ onClose, maxW = "max-w-md", children }: { onClose: () => void; maxW?: string; children: React.ReactNode }) {
+  const { ref, dialogProps } = useModalA11y(onClose);
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+      <div ref={ref} {...dialogProps} className={`bg-surface rounded-2xl shadow-2xl w-full ${maxW} outline-none`}>
+        {children}
+      </div>
+    </div>
+  );
 }
 
 function ProgressBar({ value, max, color = "blue" }: { value: number; max: number; color?: string }) {
@@ -61,9 +73,6 @@ function KpiCard({ label, value, sub }: { label: string; value: string; sub?: st
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-// Keep in sync with Navbar's SUPER_ADMIN_EMAILS list.
-const SUPER_ADMIN_EMAILS = ["rap@totallywiredelectric.com"];
-
 interface Props {
   projects:         any[];
   pipeline:         any[];
@@ -235,7 +244,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
 
   const isAdmin       = role === "owner" || role === "admin";
   const isForeman     = role === "foreman";
-  const isSuperAdmin  = !!userEmail && SUPER_ADMIN_EMAILS.includes(userEmail);
+  const isSuperAdminUser = isSuperAdmin(userEmail);
 
   return (
     <main className="flex-1 max-w-screen-xl mx-auto w-full px-4 py-6 space-y-6">
@@ -333,7 +342,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
               + Add project
             </button>
           </>}
-          {isSuperAdmin && (
+          {isSuperAdminUser && (
             <a
               href="/api/admin/backup"
               title="Download a snapshot of the entire database"
@@ -693,8 +702,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
 
       {/* ── Add project modal ── */}
       {showAddForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-          <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-md">
+        <ModalShell onClose={() => setShowAddForm(false)}>
             <div className="px-6 py-4 border-b flex justify-between items-center">
               <h2 className="text-lg font-bold text-text">Add New Project</h2>
               <button onClick={() => setShowAddForm(false)} className="text-subtle hover:text-muted text-2xl leading-none">&times;</button>
@@ -713,6 +721,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                 <div key={f.name}>
                   <label className="block text-xs font-medium text-muted mb-1">{f.label}</label>
                   <input name={f.name} type={f.type} step="any" required={f.required}
+                    min={f.type === "number" ? 0 : undefined}
                     placeholder={f.name === "stage" ? "Rough or Finish" : ""}
                     className="w-full px-3 py-2 text-sm border border-border-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" />
                 </div>
@@ -728,8 +737,7 @@ export default function DashboardClient({ projects, pipeline, kpis, flagged, upl
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </ModalShell>
       )}
 
     </main>

@@ -8,9 +8,7 @@ import CommentsPanel        from "./CommentsPanel";
 import ProjectEditModal     from "./ProjectEditModal";
 import ActivateProjectModal from "./ActivateProjectModal";
 import { useConfirm }       from "./useConfirm";
-
-const fmt$   = (n: number) => "$" + (n ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
-const fmtPct = (n: number) => ((n ?? 0) * 100).toFixed(1) + "%";
+import { fmt$, fmtPct }     from "@/lib/format";
 
 function fmtDate(d: string | null | undefined): string {
   if (!d) return "—";

@@ -1,9 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { fmt$, fmtPct } from "@/lib/format";
+import { useModalA11y } from "./useModalA11y";
 
-const fmt$   = (n: number) => "$" + (n ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
-const fmtPct = (n: number) => ((n ?? 0) * 100).toFixed(1) + "%";
+// Wraps modal content with Escape-to-close + focus trap. A separate component
+// so the hook's effect only runs while the modal is actually mounted.
+function ModalShell({ onClose, children }: { onClose: () => void; children: ReactNode }) {
+  const { ref, dialogProps } = useModalA11y(onClose);
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
+      <div ref={ref} {...dialogProps} className="bg-surface rounded-2xl shadow-2xl w-full max-w-sm outline-none">
+        {children}
+      </div>
+    </div>
+  );
+}
 
 const STAGE_OPTIONS = ["Contracting Phase", "Underground", "Rough", "Finish", "Extras"];
 
@@ -233,8 +245,7 @@ export default function ForemanProjectCard({ project: initial }: { project: Proj
 
       {/* ── Quick Update Modal ── */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-sm">
+        <ModalShell onClose={() => setShowModal(false)}>
             <div className="px-6 py-4 border-b flex justify-between items-center">
               <div>
                 <h2 className="text-base font-bold text-text">Quick Update</h2>
@@ -301,8 +312,7 @@ export default function ForemanProjectCard({ project: initial }: { project: Proj
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </ModalShell>
       )}
     </>
   );
