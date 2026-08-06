@@ -155,20 +155,25 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
                     className={`transition-transform ${moreOpen ? "rotate-180" : ""}`}><path d="m6 9 6 6 6-6"/></svg>
                 </button>
                 {moreOpen && (
-                  <div className="absolute left-0 top-full mt-1 w-52 rounded-xl border border-white/10 shadow-xl py-1.5 z-50"
-                    style={{ backgroundColor: "#17191d" }}>
-                    {secondaryLinks.map(l => {
-                      const active = path === l.href;
-                      return (
-                        <Link key={l.href} href={l.href} onClick={() => setMoreOpen(false)}
-                          className={`flex items-center gap-3 px-3.5 py-2 text-sm transition-colors ${
-                            active ? "text-[#00BAD6]" : "text-white/70 hover:text-white hover:bg-white/[0.06]"
-                          }`}>
-                          <NavIcon name={l.icon} size={16} />
-                          {l.label}
-                        </Link>
-                      );
-                    })}
+                  /* pt-1 (not mt-1) keeps the visual gap inside the hover area —
+                     with a margin, crossing the gap fires the wrapper's mouseleave
+                     and the menu closes before the pointer can reach it. */
+                  <div className="absolute left-0 top-full pt-1 z-50">
+                    <div className="w-52 rounded-xl border border-white/10 shadow-xl py-1.5"
+                      style={{ backgroundColor: "#17191d" }}>
+                      {secondaryLinks.map(l => {
+                        const active = path === l.href;
+                        return (
+                          <Link key={l.href} href={l.href} onClick={() => setMoreOpen(false)}
+                            className={`flex items-center gap-3 px-3.5 py-2 text-sm transition-colors ${
+                              active ? "text-[#00BAD6]" : "text-white/70 hover:text-white hover:bg-white/[0.06]"
+                            }`}>
+                            <NavIcon name={l.icon} size={16} />
+                            {l.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>
