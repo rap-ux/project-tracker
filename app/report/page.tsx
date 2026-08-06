@@ -3,6 +3,7 @@ import { auth }          from "@/auth";
 import db                 from "@/lib/db";
 import { calcIncentive }  from "@/lib/incentive";
 import type { IncentiveResult } from "@/lib/incentive";
+import { rollupDivision } from "@/lib/qboSync";
 import { redirect }       from "next/navigation";
 import Navbar             from "@/components/Navbar";
 import InsightsReport     from "@/components/InsightsReport";
@@ -16,8 +17,11 @@ export interface ProjectData {
   goal_hours: number;
   rough_hours_allowed: number; rough_hours_actual: number;
   finish_hours_allowed: number; finish_hours_actual: number;
+  is_async: number;
   // computed
   effectiveMaterials: number; effectiveHours: number;
+  outsideLaborHours: number;
+  avRevenue: number; electricRevenue: number; unknownRevenue: number;
   invoicedPct: number; materialsPct: number; materialsRemaining: number;
   hoursTobudgetPct: number; varianceHours: number; variancePct: number;
   hoursRemainingProject: number;
@@ -46,9 +50,33 @@ export default async function ReportPage() {
     "SELECT * FROM projects WHERE is_pipeline = 0 ORDER BY foreman, name"
   ).all() as any[];
 
+  // QBO enrichments: outside-labor hours from outsource-vendor bills, and the
+  // AV/electric revenue split from tagged estimates (+ orphan invoices).
+  const outsideByProject = new Map<number, number>();
+  for (const r of db.prepare(`
+    SELECT project_id, SUM(derived_hours) AS hrs
+    FROM qbo_bills WHERE is_outside_labor = 1 AND project_id IS NOT NULL
+    GROUP BY project_id
+  `).all() as any[]) outsideByProject.set(r.project_id, r.hrs || 0);
+
+  const estByProject = new Map<number, any[]>();
+  for (const r of db.prepare(
+    "SELECT project_id, total, division, division_override, av_pct, electric_pct FROM qbo_estimates WHERE project_id IS NOT NULL"
+  ).all() as any[]) {
+    (estByProject.get(r.project_id) ?? estByProject.set(r.project_id, []).get(r.project_id)!).push(r);
+  }
+  const invByProject = new Map<number, any[]>();
+  for (const r of db.prepare(
+    "SELECT project_id, total, division, division_override, av_pct, electric_pct, linked_estimate_qbo_id FROM qbo_invoices WHERE project_id IS NOT NULL"
+  ).all() as any[]) {
+    (invByProject.get(r.project_id) ?? invByProject.set(r.project_id, []).get(r.project_id)!).push(r);
+  }
+
   const projects: ProjectData[] = raw.map(p => {
     const effectiveMaterials = (p.actual_materials || 0) + (p.unrecorded_materials || 0);
     const effectiveHours     = (p.actual_total_hours || 0) + (p.unrecorded_hours || 0);
+    const outsideLaborHours  = outsideByProject.get(p.id) ?? 0;
+    const split = rollupDivision(estByProject.get(p.id) ?? [], invByProject.get(p.id) ?? []);
     const incentive = calcIncentive(
       p.goal_hours || 0, effectiveHours, p.contract_value || 0,
       p.stage, p.stage_completion || 0,
@@ -56,7 +84,8 @@ export default async function ReportPage() {
       p.finish_hours_allowed || 0, p.finish_hours_actual || 0,
     );
     return {
-      ...p, effectiveMaterials, effectiveHours,
+      ...p, effectiveMaterials, effectiveHours, outsideLaborHours,
+      avRevenue: split.av, electricRevenue: split.electric, unknownRevenue: split.unknown,
       invoicedPct:          p.contract_value > 0         ? (p.total_invoiced || 0) / p.contract_value : 0,
       materialsPct:         p.est_materials_budget > 0   ? effectiveMaterials / p.est_materials_budget : 0,
       materialsRemaining:   (p.est_materials_budget || 0) - effectiveMaterials,
@@ -69,7 +98,9 @@ export default async function ReportPage() {
   });
 
   const early      = (p: ProjectData) => p.incentive.rough.status === "too-early" || p.stage === "Contracting Phase";
-  const assessable = projects.filter(p => !early(p));
+  // Async-flagged jobs (AV/electric phases out of sync, e.g. Jim Bridger) are
+  // excluded from over/under judgment — their hours-vs-progress ratio lies.
+  const assessable = projects.filter(p => !early(p) && !p.is_async);
 
   const portfolio: PortfolioData = {
     totalProjects:      projects.length,

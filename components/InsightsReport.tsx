@@ -208,6 +208,8 @@ function ProjectTable({ projects }: { projects: ProjectData[] }) {
     { label: "Est Hrs",          w: "min-w-[80px]"  },
     { label: "Act Hrs / %",      w: "min-w-[100px]" },
     { label: "Goal Hrs",         w: "min-w-[80px]"  },
+    { label: "Outside Hrs",      w: "min-w-[90px]"  },
+    { label: "AV / Electric",    w: "min-w-[120px]" },
     { label: "Variance",         w: "min-w-[110px]" },
     { label: "Rough Allow/Act",  w: "min-w-[120px]" },
     { label: "Finish Allow/Act", w: "min-w-[120px]" },
@@ -250,10 +252,26 @@ function ProjectTable({ projects }: { projects: ProjectData[] }) {
                   <span className="text-subtle">{fmtPct(p.hoursTobudgetPct)}</span>
                 </td>
                 <td className="px-2 py-2 text-text">{fmtHrs(p.goal_hours)}</td>
+                <td className="px-2 py-2 text-text">
+                  {p.outsideLaborHours > 0 ? fmtHrs(p.outsideLaborHours) : <span className="text-subtle">—</span>}
+                </td>
+                <td className="px-2 py-2 text-text">
+                  {(p.avRevenue > 0 || p.electricRevenue > 0)
+                    ? <>{fmt$(p.avRevenue)} / {fmt$(p.electricRevenue)}
+                        {p.unknownRevenue > 0 && <><br /><span className="text-subtle">{fmt$(p.unknownRevenue)} untagged</span></>}</>
+                    : <span className="text-subtle">—</span>}
+                </td>
+                {p.is_async ? (
+                  <td className="px-2 py-2 text-subtle">
+                    ⟳ phases out of sync<br />
+                    <span className="text-[10px]">no judgment</span>
+                  </td>
+                ) : (
                 <td className={`px-2 py-2 font-semibold ${overHrs ? "text-danger" : aheadHrs ? "text-success" : "text-text"}`}>
                   {fmtVariance(p.varianceHours)} hrs<br />
                   <span className="font-normal text-subtle">{fmtPct(Math.abs(p.variancePct))} {p.variancePct >= 0 ? "↓" : "↑"}</span>
                 </td>
+                )}
                 <td className="px-2 py-2 text-text">
                   {fmtHrs(p.rough_hours_allowed)} / {fmtHrs(p.rough_hours_actual)}
                 </td>
@@ -316,7 +334,10 @@ export default function InsightsReport({ projects, portfolio, generatedAt, userN
   const dateStr = date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
 
   const earlyProjects = projects.filter(isEarly);
-  const assessable    = projects.filter(p => !isEarly(p));
+  // Async-flagged jobs stay in the table but out of the over/under judgment —
+  // AV and electric phases are out of sync, so hours-vs-progress is misleading.
+  const asyncProjects = projects.filter(p => !!p.is_async && !isEarly(p));
+  const assessable    = projects.filter(p => !isEarly(p) && !p.is_async);
   const posProjects   = assessable.filter(p => p.variancePct >= 0).sort((a, b) => b.variancePct - a.variancePct);
   const watchProjects = assessable.filter(p => p.variancePct < 0).sort((a, b) => a.variancePct - b.variancePct);
 
@@ -438,6 +459,21 @@ export default function InsightsReport({ projects, portfolio, generatedAt, userN
             <h2 className="text-base font-bold text-text mb-2">Watch Items</h2>
             <div className="space-y-2">
               {watchProjects.map(p => <PerfRow key={p.id} p={p} type="watch" />)}
+            </div>
+          </section>
+        )}
+
+        {/* Phases out of sync */}
+        {asyncProjects.length > 0 && (
+          <section className="mb-6">
+            <h2 className="text-base font-bold text-text mb-2">Phases Out of Sync</h2>
+            <div className="flex gap-2 text-sm text-text">
+              <span>⟳</span>
+              <span>
+                {asyncProjects.map(p => p.name).join(", ")} — AV and electric phases are running on
+                different timelines, so hours-vs-progress isn&apos;t a fair read right now. Excluded
+                from over/under judgment until the phases catch up.
+              </span>
             </div>
           </section>
         )}

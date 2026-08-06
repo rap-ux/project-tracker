@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ChangeOrdersPanel    from "./ChangeOrdersPanel";
 import CommentsPanel        from "./CommentsPanel";
+import QboFinancialsPanel   from "./QboFinancialsPanel";
 import ProjectEditModal     from "./ProjectEditModal";
 import ActivateProjectModal from "./ActivateProjectModal";
 import { useConfirm }       from "./useConfirm";
@@ -366,6 +367,9 @@ export default function ProjectDetailClient({ project: p, stages, availableUsers
 
       {/* ── Change Orders ── */}
       {!p.is_pipeline && !isForeman && <ChangeOrdersPanel projectId={p.id} isAdmin={isAdmin} />}
+
+      {/* ── QuickBooks revenue stack ── */}
+      {!p.is_pipeline && !isForeman && <QboFinancialsPanel projectId={p.id} isAdmin={isAdmin} />}
 
       {/* ── Comments / @mentions ── */}
       <CommentsPanel projectId={p.id} availableUsers={availableUsers} />

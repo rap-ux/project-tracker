@@ -236,6 +236,18 @@ export default function ProjectEditModal({ project, stagesForProject, onClose, o
                       style={{ "--tw-ring-color": "#00BAD6" } as React.CSSProperties} />
                   </div>
                 ))}
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-1">
+                    Phase Timing
+                    <span className="ml-1 text-subtle font-normal">(AV vs electric)</span>
+                  </label>
+                  <select name="is_async" defaultValue={project.is_async ? 1 : 0}
+                    className="w-full px-2.5 py-1.5 text-sm border border-border-strong rounded-lg focus:outline-none focus:ring-2 bg-surface"
+                    style={{ "--tw-ring-color": "#00BAD6" } as React.CSSProperties}>
+                    <option value={0}>In sync — judge hours normally</option>
+                    <option value={1}>Out of sync — suspend hours judgment</option>
+                  </select>
+                </div>
               </div>
             </div>
           )}

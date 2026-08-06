@@ -22,6 +22,10 @@ function rowFor(p: any): StageRow | null {
   const stage = String(p.stage ?? "");
   let allot: number, actual: number;
 
+  // Async-flagged jobs (AV/electric phases out of sync) get no pace judgment —
+  // they're listed separately by the caller instead of showing a false ⚠.
+  if (p.is_async) return null;
+
   if (stage === "Rough") {
     allot  = p.rough_hours_allowed  || 0;
     actual = p.rough_hours_actual   || 0;
@@ -58,7 +62,8 @@ export function buildStageReport(projectIds?: number[] | null): string | null {
   }
 
   const rows = raw.map(rowFor).filter((r): r is StageRow => r !== null);
-  if (rows.length === 0) return null;
+  const asyncNames = raw.filter(p => p.is_async).map(p => p.name);
+  if (rows.length === 0 && asyncNames.length === 0) return null;
 
   // Column widths — project name capped so the block stays readable on mobile.
   const NAME_CAP = 18;
@@ -94,7 +99,12 @@ export function buildStageReport(projectIds?: number[] | null): string | null {
   msg += scoped
     ? `${rows.length} project${rows.length === 1 ? "" : "s"} updated this sync — allotted vs. actual hours for the current stage. ⚠ = running over pace.\n`
     : `Allotted vs. actual hours for each project's current stage. ⚠ = running over pace.\n`;
-  msg += "```\n" + header + "\n" + lines.join("\n") + "\n```\n";
+  if (rows.length > 0) {
+    msg += "```\n" + header + "\n" + lines.join("\n") + "\n```\n";
+  }
+  if (asyncNames.length > 0) {
+    msg += `⟳ Phases out of sync (no pace judgment): ${asyncNames.join(", ")}\n`;
+  }
   msg += `Open Switchboard: ${appUrl("/dashboard")}`;
   return msg;
 }

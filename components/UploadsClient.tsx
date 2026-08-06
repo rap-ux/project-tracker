@@ -105,6 +105,7 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
   const [pasteText,      setPasteText]      = useState("");
   const [selectedProject, setSelectedProject] = useState<number>(projects[0]?.id ?? 0);
   const [msg,            setMsg]            = useState<{ text: string; ok: boolean } | null>(null);
+  const [qboSyncing,     setQboSyncing]     = useState(false);
   const bulkRef    = useRef<HTMLInputElement>(null);
   const projectRef = useRef<HTMLInputElement>(null);
 
@@ -303,6 +304,45 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
             Changes arrive automatically from the spreadsheet (via the <strong>Switchboard → Sync now</strong> menu in the sheet, or the nightly auto-sync) and appear below for review and approval. Unrecorded hours and materials are preserved automatically.
           </p>
         </div>
+      </div>
+
+      {/* ── QuickBooks Online sync (estimates / invoices / bills) ── */}
+      <div className="bg-surface rounded-xl border border-border shadow-sm p-6 flex items-start gap-3">
+        <span className="text-xl shrink-0">📗</span>
+        <div className="flex-1">
+          <h2 className="text-sm font-bold text-text uppercase tracking-wide">QuickBooks Online</h2>
+          <p className="text-xs text-subtle mt-1 max-w-xl">
+            Pulls every estimate, invoice, and bill straight from QuickBooks and attaches them to
+            projects — powering the per-project revenue stack, orphan-invoice alerts, outside-labor
+            hours, and the AV/electric split. Also runs nightly.
+          </p>
+        </div>
+        <button
+          onClick={async () => {
+            setQboSyncing(true);
+            setMsg(null);
+            try {
+              const res  = await fetch("/api/qbo/sync", { method: "POST" });
+              const data = await res.json();
+              if (res.ok) {
+                setMsg({
+                  text: `✅ QBO sync: ${data.estimates} estimates, ${data.invoices} invoices, ${data.bills} bills.` +
+                        (data.orphans ? ` ⚠ ${data.orphans} invoice(s) with no linked estimate.` : "") +
+                        (data.unmapped?.length ? ` ❓ Unmapped: ${data.unmapped.slice(0, 5).join(", ")}${data.unmapped.length > 5 ? "…" : ""}` : ""),
+                  ok: true,
+                });
+              } else {
+                setMsg({ text: `❌ ${data.error ?? "QBO sync failed"}`, ok: false });
+              }
+            } catch {
+              setMsg({ text: "❌ QBO sync failed — network error.", ok: false });
+            }
+            setQboSyncing(false);
+          }}
+          disabled={qboSyncing}
+          className="shrink-0 text-xs px-3 py-1.5 bg-cyan-500 hover:bg-cyan-600 disabled:opacity-50 text-white rounded-lg font-semibold">
+          {qboSyncing ? "Syncing…" : "Sync QBO now"}
+        </button>
       </div>
 
       {/* ── Manual file upload (archived: the Google Sheet sync is the path now) ── */}

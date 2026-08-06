@@ -11,6 +11,7 @@ const SECRET_AUTH_ROUTES = [
   "/api/admin/backup-email",
   "/api/slack/weekly-digest",
   "/api/slack/stage-report",
+  "/api/qbo/sync",
 ];
 
 export async function proxy(req: NextRequest) {
@@ -18,6 +19,11 @@ export async function proxy(req: NextRequest) {
 
   // Secret-authenticated webhooks bypass the session gate (they self-protect).
   if (SECRET_AUTH_ROUTES.some(p => pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
+
+  // Public legal pages (required by Intuit's production-app checklist)
+  if (pathname === "/privacy" || pathname === "/terms") {
     return NextResponse.next();
   }
 

@@ -4,6 +4,7 @@ import { auth }      from "@/auth";
 import db            from "@/lib/db";
 import Navbar        from "@/components/Navbar";
 import InputsClient  from "@/components/InputsClient";
+import VendorRulesPanel from "@/components/VendorRulesPanel";
 
 export default async function InputsPage() {
   const session = await auth();
@@ -35,6 +36,7 @@ export default async function InputsPage() {
     <div className="min-h-screen flex flex-col bg-surface-2">
       <Navbar userName={session.user?.name ?? "Admin"} role={role} userEmail={session.user?.email ?? undefined} userTitle={(session.user as any)?.title ?? undefined} />
       <InputsClient inputs={inputs} role={role} />
+      <VendorRulesPanel />
     </div>
   );
 }

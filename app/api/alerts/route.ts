@@ -26,13 +26,13 @@ export async function GET() {
     ? `SELECT id, name, foreman, stage, stage_completion, project_completion,
               actual_materials, unrecorded_materials, est_materials_budget,
               actual_total_hours, unrecorded_hours, goal_hours,
-              contract_value, total_invoiced
+              contract_value, total_invoiced, is_async
        FROM projects
        WHERE is_pipeline = 0 AND foreman LIKE ?`
     : `SELECT id, name, foreman, stage, stage_completion, project_completion,
               actual_materials, unrecorded_materials, est_materials_budget,
               actual_total_hours, unrecorded_hours, goal_hours,
-              contract_value, total_invoiced
+              contract_value, total_invoiced, is_async
        FROM projects
        WHERE is_pipeline = 0`;
 
@@ -57,7 +57,8 @@ export async function GET() {
         projectId: p.id, href: foremanHref,
       });
     }
-    if (hrsPct > 0.9 && (p.stage_completion ?? 0) < 0.8) {
+    // Async-flagged jobs: hours-vs-progress is suspended, so no hours alert.
+    if (!p.is_async && hrsPct > 0.9 && (p.stage_completion ?? 0) < 0.8) {
       alerts.push({
         key:      `hrs_risk_${p.id}`,
         severity: "warning",
@@ -103,6 +104,28 @@ export async function GET() {
         title:    "No data synced yet",
         detail:   "Sync from the Google Sheet to populate materials + hours.",
         href:     "/uploads",
+      });
+    }
+
+    // Orphan invoices: QBO invoices with no linked estimate. These carry revenue
+    // Nicole's estimate-based totals miss — her retroactive-cleanup worklist.
+    const orphanRows = db.prepare(`
+      SELECT i.qbo_id, i.doc_number, i.total, i.customer_name, p.name AS project_name, i.project_id
+      FROM qbo_invoices i
+      LEFT JOIN projects p ON p.id = i.project_id
+      WHERE i.linked_estimate_qbo_id IS NULL
+      ORDER BY i.txn_date DESC
+    `).all() as any[];
+    if (orphanRows.length > 0) {
+      const preview = orphanRows.slice(0, 3)
+        .map(o => `${o.project_name ?? o.customer_name ?? "Unmapped"} #${o.doc_number ?? o.qbo_id}`)
+        .join(", ");
+      alerts.push({
+        key:      `qbo_orphan_${orphanRows.length}`,
+        severity: "warning",
+        title:    `${orphanRows.length} invoice${orphanRows.length === 1 ? "" : "s"} with no linked estimate`,
+        detail:   `${preview}${orphanRows.length > 3 ? "…" : ""} — revenue not covered by any estimate.`,
+        href:     "/dashboard",
       });
     }
 

@@ -270,6 +270,108 @@ for (const col of [
   try { db.exec(`ALTER TABLE forecast_projects ADD COLUMN ${col}`); } catch { /* already exists */ }
 }
 
+// projects: QBO mapping + asynchronous-phases flag (AV/electric out of sync)
+for (const col of [
+  "qbo_customer_id TEXT",
+  "is_async        INTEGER DEFAULT 0",
+]) {
+  try { db.exec(`ALTER TABLE projects ADD COLUMN ${col}`); } catch { /* already exists */ }
+}
+
+// ── QuickBooks Online integration ─────────────────────────────────────────────
+// Synced copies of QBO documents. qbo_id is Intuit's Id, unique per entity type.
+// project_id stays NULL until the QBO customer is mapped to a Switchboard project.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS qbo_connection (
+    id                 INTEGER PRIMARY KEY CHECK (id = 1),
+    realm_id           TEXT NOT NULL,
+    access_token       TEXT NOT NULL,
+    refresh_token      TEXT NOT NULL,
+    expires_at         TEXT NOT NULL,
+    refresh_expires_at TEXT,
+    updated_at         TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS qbo_estimates (
+    qbo_id            TEXT PRIMARY KEY,
+    project_id        INTEGER REFERENCES projects(id) ON DELETE SET NULL,
+    customer_ref      TEXT,
+    customer_name     TEXT,
+    doc_number        TEXT,
+    txn_date          TEXT,
+    memo              TEXT,
+    total             REAL DEFAULT 0,
+    status            TEXT,
+    division          TEXT DEFAULT 'unknown',
+    division_override TEXT,
+    av_pct            REAL,
+    electric_pct      REAL,
+    line_items        TEXT,
+    synced_at         TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS qbo_invoices (
+    qbo_id                 TEXT PRIMARY KEY,
+    project_id             INTEGER REFERENCES projects(id) ON DELETE SET NULL,
+    customer_ref           TEXT,
+    customer_name          TEXT,
+    doc_number             TEXT,
+    txn_date               TEXT,
+    memo                   TEXT,
+    total                  REAL DEFAULT 0,
+    balance                REAL DEFAULT 0,
+    linked_estimate_qbo_id TEXT,
+    division               TEXT DEFAULT 'unknown',
+    division_override      TEXT,
+    av_pct                 REAL,
+    electric_pct           REAL,
+    line_items             TEXT,
+    synced_at              TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS qbo_bills (
+    qbo_id           TEXT PRIMARY KEY,
+    project_id       INTEGER REFERENCES projects(id) ON DELETE SET NULL,
+    customer_ref     TEXT,
+    vendor_ref       TEXT,
+    vendor_name      TEXT,
+    doc_number       TEXT,
+    txn_date         TEXT,
+    memo             TEXT,
+    total            REAL DEFAULT 0,
+    is_outside_labor INTEGER DEFAULT 0,
+    derived_hours    REAL DEFAULT 0,
+    synced_at        TEXT DEFAULT (datetime('now'))
+  );
+
+  -- Which vendors are outsourced labor, and the hourly rate used to back
+  -- hours out of their bills (Nicole's rule: outsource charges ~$53/hr).
+  CREATE TABLE IF NOT EXISTS qbo_vendor_rules (
+    vendor_ref       TEXT PRIMARY KEY,
+    vendor_name      TEXT,
+    is_outside_labor INTEGER DEFAULT 0,
+    hourly_rate      REAL DEFAULT 53,
+    updated_at       TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS qbo_sync_log (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    started_at    TEXT DEFAULT (datetime('now')),
+    finished_at   TEXT,
+    status        TEXT NOT NULL DEFAULT 'running',
+    estimates     INTEGER DEFAULT 0,
+    invoices      INTEGER DEFAULT 0,
+    bills         INTEGER DEFAULT 0,
+    orphans       INTEGER DEFAULT 0,
+    unmapped      INTEGER DEFAULT 0,
+    error         TEXT
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_qbo_estimates_project ON qbo_estimates(project_id);
+  CREATE INDEX IF NOT EXISTS idx_qbo_invoices_project  ON qbo_invoices(project_id);
+  CREATE INDEX IF NOT EXISTS idx_qbo_bills_project     ON qbo_bills(project_id);
+`);
+
 // ── Initial seed: 17 active projects ─────────────────────────────────────────
 const count = (db.prepare("SELECT COUNT(*) as c FROM projects").get() as { c: number }).c;
 

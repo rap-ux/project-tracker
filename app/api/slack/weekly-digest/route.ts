@@ -42,7 +42,8 @@ async function handle(req: NextRequest) {
       p.finish_hours_allowed || 0, p.finish_hours_actual || 0,
     );
     return { name: p.name, foreman: p.foreman, contract: p.contract_value || 0,
-      invoiced: p.total_invoiced || 0, inc, varianceHours: inc.varianceHours };
+      invoiced: p.total_invoiced || 0, inc, varianceHours: inc.varianceHours,
+      isAsync: !!p.is_async };
   });
 
   const totalContract = projects.reduce((s, p) => s + p.contract, 0);
@@ -50,11 +51,15 @@ async function handle(req: NextRequest) {
   const totalEarned   = projects.reduce((s, p) => s + (p.inc.totalEarned || 0), 0);
   const billedPct     = totalContract > 0 ? Math.round((totalInvoiced / totalContract) * 100) : 0;
 
-  const flagged = projects
+  // Async-flagged jobs (AV/electric out of step) sit out of the health buckets —
+  // their hours judgment is suspended, so a 🚨 there would be noise.
+  const asyncProjects = projects.filter(p => p.isAsync);
+  const judged = projects.filter(p => !p.isAsync);
+  const flagged = judged
     .filter(p => p.inc.projectStatus.key === "critical" || p.inc.projectStatus.key === "at-risk")
     .sort((a, b) => a.varianceHours - b.varianceHours);
-  const watch = projects.filter(p => p.inc.projectStatus.key === "watch").length;
-  const healthy = projects.length - flagged.length - watch;
+  const watch = judged.filter(p => p.inc.projectStatus.key === "watch").length;
+  const healthy = judged.length - flagged.length - watch;
 
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
 
@@ -72,6 +77,10 @@ async function handle(req: NextRequest) {
     if (flagged.length > 8) msg += `…and ${flagged.length - 8} more\n`;
   } else {
     msg += `\nNo projects over budget this week. 🎉\n`;
+  }
+
+  if (asyncProjects.length > 0) {
+    msg += `\n⟳ *Phases out of sync (no hours judgment):* ${asyncProjects.map(p => p.name).join(", ")}\n`;
   }
 
   msg += `\nOpen Switchboard: ${appUrl("/dashboard")}`;
