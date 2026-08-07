@@ -272,11 +272,21 @@ for (const col of [
 
 // projects: QBO mapping + asynchronous-phases flag (AV/electric out of sync)
 for (const col of [
-  "qbo_customer_id TEXT",
-  "is_async        INTEGER DEFAULT 0",
+  "qbo_customer_id    TEXT",
+  "is_async           INTEGER DEFAULT 0",
+  // 'manual' mappings are set by a person and survive syncs; 'auto' mappings
+  // are recomputed on every sync from name matching.
+  "qbo_mapping_source TEXT",
 ]) {
   try { db.exec(`ALTER TABLE projects ADD COLUMN ${col}`); } catch { /* already exists */ }
 }
+
+// One-time cleanup: mappings written before qbo_mapping_source existed came from
+// the old too-loose first-word matcher (it matched "Jim Davis" → "Jim Bridger").
+// Clearing them is safe — the next sync recomputes with the stricter rules.
+try {
+  db.exec("UPDATE projects SET qbo_customer_id = NULL WHERE qbo_customer_id IS NOT NULL AND qbo_mapping_source IS NULL");
+} catch { /* column races only on very first boot */ }
 
 // ── QuickBooks Online integration ─────────────────────────────────────────────
 // Synced copies of QBO documents. qbo_id is Intuit's Id, unique per entity type.

@@ -3,7 +3,7 @@ export const runtime = "nodejs";
 import { auth }         from "@/auth";
 import { isSuperAdmin } from "@/lib/auth-roles";
 import { exchangeCode } from "@/lib/qbo";
-import { notifySlack }  from "@/lib/slack";
+import { appUrl, notifySlack } from "@/lib/slack";
 import { NextRequest, NextResponse } from "next/server";
 
 // Intuit redirects here after consent with ?code=...&realmId=...&state=...
@@ -34,7 +34,9 @@ export async function GET(req: NextRequest) {
 
   notifySlack(`🔌 QuickBooks Online connected (realm ${realmId}). Run a sync from /uploads.`).catch(() => {});
 
-  const res = NextResponse.redirect(new URL("/uploads?qbo=connected", req.url));
+  // appUrl, not req.url — behind Railway's proxy req.url resolves to
+  // localhost:8080 and the redirect would leave the site.
+  const res = NextResponse.redirect(appUrl("/uploads?qbo=connected"));
   res.cookies.delete("qbo_oauth_state");
   return res;
 }

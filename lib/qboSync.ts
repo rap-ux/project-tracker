@@ -68,40 +68,47 @@ export function rollupDivision(estimates: any[], invoices: any[]) {
 
 // ── Customer → project mapping ────────────────────────────────────────────────
 // QBO projects are sub-customers; FullyQualifiedName is "Parent:Child". Match the
-// leaf name against Switchboard projects: saved mapping → exact → firstword LIKE
-// (the same fallback lib/importer.ts uses for sheet columns).
+// leaf name against Switchboard projects: manual mapping (set in the UI, survives
+// syncs) → exact name → unique prefix containment ("Jim Bridger Rd" ↔ "Jim
+// Bridger"). A first-word fallback proved too loose in production — it matched
+// "Jim Davis" to "Jim Bridger" — so anything weaker than a prefix goes to the
+// manual mapping UI instead.
 function leafName(fullName: string): string {
   const parts = fullName.split(":");
   return parts[parts.length - 1].trim();
 }
 
 function buildProjectMatcher() {
+  // Auto mappings are recomputed from scratch every sync; only manual ones persist.
+  db.prepare("UPDATE projects SET qbo_customer_id = NULL, qbo_mapping_source = NULL WHERE qbo_mapping_source = 'auto'").run();
+
   const byQboId = new Map<string, number>();
-  for (const r of db.prepare("SELECT id, qbo_customer_id FROM projects WHERE qbo_customer_id IS NOT NULL").all() as any[]) {
+  for (const r of db.prepare("SELECT id, qbo_customer_id FROM projects WHERE qbo_customer_id IS NOT NULL AND qbo_mapping_source = 'manual'").all() as any[]) {
     byQboId.set(String(r.qbo_customer_id), r.id);
   }
-  const exact = db.prepare("SELECT id FROM projects WHERE LOWER(name) = LOWER(?)");
-  const like  = db.prepare("SELECT id FROM projects WHERE name LIKE ? LIMIT 2");
-  const saveMapping = db.prepare("UPDATE projects SET qbo_customer_id = ? WHERE id = ? AND qbo_customer_id IS NULL");
+  const projects = db.prepare("SELECT id, name FROM projects").all() as { id: number; name: string }[];
+  const manuallyMapped = new Set(byQboId.values());
+  const saveAuto = db.prepare("UPDATE projects SET qbo_customer_id = ?, qbo_mapping_source = 'auto' WHERE id = ? AND qbo_customer_id IS NULL");
 
   return (customerRef: string | null, customerName: string | null): number | null => {
     if (customerRef && byQboId.has(customerRef)) return byQboId.get(customerRef)!;
-    const name = leafName(customerName ?? "");
-    if (!name) return null;
+    const name = leafName(customerName ?? "").toLowerCase();
+    if (name.length < 5) return null;
 
-    let row = exact.get(name) as { id: number } | undefined;
-    if (!row) {
-      const first = name.split(/\s+/)[0];
-      if (first.length >= 3) {
-        const candidates = like.all(`${first}%`) as { id: number }[];
-        if (candidates.length === 1) row = candidates[0];
-      }
-    }
-    if (row && customerRef) {
-      saveMapping.run(customerRef, row.id);
+    const candidates = projects.filter(p => {
+      if (manuallyMapped.has(p.id)) return false;
+      const pn = p.name.trim().toLowerCase();
+      if (pn.length < 5) return false;
+      return pn === name || name.startsWith(pn) || pn.startsWith(name);
+    });
+    if (candidates.length !== 1) return null;
+
+    const row = candidates[0];
+    if (customerRef) {
+      saveAuto.run(customerRef, row.id);
       byQboId.set(customerRef, row.id);
     }
-    return row?.id ?? null;
+    return row.id;
   };
 }
 

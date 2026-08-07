@@ -3,6 +3,7 @@
 import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useConfirm } from "./useConfirm";
+import QboMappingPanel from "./QboMappingPanel";
 
 // ── Field display helpers ─────────────────────────────────────────────────────
 const FIELD_LABELS: Record<string, string> = {
@@ -344,6 +345,9 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
           {qboSyncing ? "Syncing…" : "Sync QBO now"}
         </button>
       </div>
+
+      {/* ── QBO customer → project mapping ── */}
+      <QboMappingPanel />
 
       {/* ── Manual file upload (archived: the Google Sheet sync is the path now) ── */}
       {FILE_UPLOAD_ENABLED && (
