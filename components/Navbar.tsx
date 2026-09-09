@@ -16,7 +16,7 @@ interface NavbarProps { userName: string; role: string; userEmail?: string; user
 
 type IconKey =
   | "home" | "dashboard" | "inputs" | "forecast" | "timeline"
-  | "analytics" | "bonuses" | "clients" | "uploads" | "report" | "help" | "log";
+  | "analytics" | "bonuses" | "clients" | "uploads" | "report" | "help" | "log" | "reports";
 
 // Line-style icons matching the Switchboard aesthetic (2px stroke, rounded caps)
 function NavIcon({ name, size = 16 }: { name: IconKey; size?: number }) {
@@ -49,6 +49,8 @@ function NavIcon({ name, size = 16 }: { name: IconKey; size?: number }) {
       return (<svg {...common}><circle cx="12" cy="12" r="10"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7"/><line x1="12" y1="17" x2="12" y2="17.01"/></svg>);
     case "log":
       return (<svg {...common}><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>);
+    case "reports":
+      return (<svg {...common}><path d="M5 4h11l3 3v13H5z"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/></svg>);
   }
 }
 
@@ -81,6 +83,22 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
   const isOwner = role === "owner" || role === "admin";
   const [mobileOpen, setMobileOpen] = useState(false);
   const [moreOpen,   setMoreOpen]   = useState(false);
+  // Daily Reports has its own allow-list (REPORTS_ALLOWED_EMAILS). The link only
+  // shows for users on it, whatever their role. Cached per tab to avoid a
+  // request on every navigation.
+  const [reportsAllowed, setReportsAllowed] = useState(false);
+  useEffect(() => {
+    let cached: string | null = null;
+    try { cached = sessionStorage.getItem("reportsAllowed"); } catch {}
+    const lookup: Promise<{ allowed: boolean }> = cached !== null
+      ? Promise.resolve({ allowed: cached === "1" })
+      : fetch("/api/reports/access").then(r => r.ok ? r.json() : { allowed: false });
+    lookup.then(j => {
+      setReportsAllowed(!!j.allowed);
+      try { sessionStorage.setItem("reportsAllowed", j.allowed ? "1" : "0"); } catch {}
+    }).catch(() => {});
+  }, []);
+  const reportsActive = path.startsWith("/reports");
   const emailOverride = userEmail && EMAIL_TITLE_OVERRIDES[userEmail];
   const displayRole   = emailOverride || (userTitle && userTitle.trim()) || role;
   const isSuperAdminUser = isSuperAdmin(userEmail);
@@ -125,6 +143,17 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
             <img src="/switchboard-icon.svg" alt="Switchboard" className="h-7 w-7" title="Switchboard" />
           </div>
         </Link>
+
+        {/* ── Daily Reports (allow-listed users, any role) ── */}
+        {reportsAllowed && (
+          <Link href="/reports/inbox"
+            className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+              reportsActive ? "text-[#00BAD6] bg-white/[0.07]" : "text-white/60 hover:text-white hover:bg-white/[0.06]"
+            }`}>
+            <NavIcon name="reports" size={16} />
+            Daily Reports
+          </Link>
+        )}
 
         {/* ── Desktop Nav links (primary + More) ── */}
         {isOwner && (
@@ -266,6 +295,17 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
                   </button>
                 </div>
               </div>
+
+              {/* Daily Reports (allow-listed users, any role) */}
+              {reportsAllowed && (
+                <Link href="/reports/inbox"
+                  onClick={() => setMobileOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ${reportsActive ? "text-[#00BAD6]" : "text-white/85 hover:bg-surface/10"}`}
+                  style={reportsActive ? { backgroundColor: "rgba(0,186,214,0.15)" } : undefined}>
+                  <NavIcon name="reports" size={18} />
+                  Daily Reports
+                </Link>
+              )}
 
               {/* Nav links */}
               {isOwner && visibleLinks.map(l => {

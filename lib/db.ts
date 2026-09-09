@@ -819,6 +819,64 @@ if (userCount === 0) {
   })(defaultUsers);
 }
 
+// ── Daily Reports (end-of-day call transcripts → reports → searchable facts) ──
+// See HANDOFF.md "Daily Reports". Additive: the JOB is the existing `projects`
+// row; reports hang off it via project_id. `projects.aliases` holds loose names
+// heard on calls ("Pyramid", "the Pyramid job") as a JSON string[].
+try { db.exec(`ALTER TABLE projects ADD COLUMN aliases TEXT NOT NULL DEFAULT '[]'`); } catch { /* already exists */ }
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS daily_reports (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id       INTEGER REFERENCES projects(id) ON DELETE SET NULL,
+    job_name         TEXT    NOT NULL,             -- job name as heard on the call
+    work_date        TEXT    NOT NULL,             -- YYYY-MM-DD, day the work happened
+    call_date        TEXT    NOT NULL,             -- YYYY-MM-DD, day the call was made
+    reporter         TEXT    NOT NULL,             -- job lead giving the update
+    caller           TEXT    NOT NULL,             -- Cole / Taimez
+    source           TEXT    NOT NULL,             -- 'paste' | 'audio' | 'ringcentral'
+    transcript       TEXT    NOT NULL,
+    audio_path       TEXT,                         -- absolute path under DATA_DIR/audio
+    status           TEXT    NOT NULL DEFAULT 'draft',  -- 'draft' | 'confirmed'
+    accomplished     TEXT    NOT NULL DEFAULT '[]',     -- JSON string[]
+    next_steps       TEXT    NOT NULL DEFAULT '[]',
+    blockers         TEXT    NOT NULL DEFAULT '[]',
+    materials        TEXT    NOT NULL DEFAULT '[]',
+    people           TEXT    NOT NULL DEFAULT '[]',
+    summary          TEXT    NOT NULL DEFAULT '',
+    extraction_notes TEXT    NOT NULL DEFAULT '',
+    created_by       TEXT    NOT NULL,
+    created_at       TEXT    NOT NULL DEFAULT (datetime('now')),
+    updated_at       TEXT    NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_daily_reports_project_date ON daily_reports(project_id, work_date);
+  CREATE INDEX IF NOT EXISTS idx_daily_reports_status_date  ON daily_reports(status, work_date);
+
+  -- One row per bullet of a CONFIRMED report. Rebuilt whenever a report is saved.
+  -- This is what Ask searches; only matching reports go to the model.
+  CREATE TABLE IF NOT EXISTS daily_report_facts (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_id  INTEGER NOT NULL REFERENCES daily_reports(id) ON DELETE CASCADE,
+    project_id INTEGER REFERENCES projects(id) ON DELETE SET NULL,
+    job_name   TEXT    NOT NULL,
+    work_date  TEXT    NOT NULL,
+    category   TEXT    NOT NULL,   -- 'done' | 'next' | 'blocked' | 'needs'
+    text       TEXT    NOT NULL,
+    people     TEXT    NOT NULL DEFAULT '[]'
+  );
+  CREATE INDEX IF NOT EXISTS idx_daily_report_facts_project_date ON daily_report_facts(project_id, work_date);
+  CREATE VIRTUAL TABLE IF NOT EXISTS daily_report_facts_fts
+    USING fts5(text, job_name, people, content='daily_report_facts', content_rowid='id');
+  CREATE TRIGGER IF NOT EXISTS daily_report_facts_ai AFTER INSERT ON daily_report_facts BEGIN
+    INSERT INTO daily_report_facts_fts(rowid, text, job_name, people)
+    VALUES (new.id, new.text, new.job_name, new.people);
+  END;
+  CREATE TRIGGER IF NOT EXISTS daily_report_facts_ad AFTER DELETE ON daily_report_facts BEGIN
+    INSERT INTO daily_report_facts_fts(daily_report_facts_fts, rowid, text, job_name, people)
+    VALUES ('delete', old.id, old.text, old.job_name, old.people);
+  END;
+`);
+
 } // end: skip init during build
 
 export default db;
