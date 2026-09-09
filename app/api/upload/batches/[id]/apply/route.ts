@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { auth }            from "@/auth";
 import db                   from "@/lib/db";
+import { applyStagedChanges, type StagedChangeRow } from "@/lib/importer";
 import { postStageReport }  from "@/lib/stageReport";
 import { NextRequest }      from "next/server";
 
@@ -37,32 +38,21 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   const changes = db.prepare(`
     SELECT * FROM import_staged_changes
     WHERE id IN (${placeholders}) AND batch_id = ?
-  `).all(...changeIds, batchId) as any[];
+  `).all(...changeIds, batchId) as StagedChangeRow[];
 
   if (changes.length === 0) {
     return Response.json({ error: "No valid changes found" }, { status: 400 });
   }
 
-  // Text fields are stored/applied as strings; everything else parses to number.
-  const TEXT_FIELDS = new Set(["stage", "foreman"]);
-
-  // Group updates by project_id
-  const byProject = new Map<number, Array<{ field: string; newValue: number | string }>>();
-  for (const c of changes) {
-    if (!byProject.has(c.project_id)) byProject.set(c.project_id, []);
-    const newValue = TEXT_FIELDS.has(c.field) ? String(c.new_value) : parseFloat(c.new_value);
-    byProject.get(c.project_id)!.push({ field: c.field, newValue });
+  // Apply updates (creates staged new projects first; see lib/importer.ts)
+  let result: { projectIds: number[]; created: string[] };
+  try {
+    result = applyStagedChanges(batchId, changes, session.user?.name ?? "Unknown");
+  } catch (e: any) {
+    return Response.json({ error: e.message ?? "Apply failed" }, { status: 500 });
   }
 
-  // Apply updates
   db.transaction(() => {
-    for (const [projectId, fields] of byProject) {
-      const setClause = fields.map(f => `${f.field} = @${f.field}`).join(", ");
-      const vals      = Object.fromEntries(fields.map(f => [f.field, f.newValue]));
-      db.prepare(`UPDATE projects SET ${setClause}, updated_at = datetime('now') WHERE id = @id`)
-        .run({ ...vals, id: projectId });
-    }
-
     // Mark batch applied
     db.prepare(
       "UPDATE import_batches SET status = 'applied', applied_at = datetime('now') WHERE id = ?"
@@ -70,12 +60,12 @@ export async function POST(req: NextRequest, ctx: Ctx) {
 
     // Backward-compat: log to uploads table
     db.prepare("INSERT INTO uploads (filename, uploaded_by, rows_updated) VALUES (?, ?, ?)")
-      .run(batch.filename, batch.uploaded_by, byProject.size);
+      .run(batch.filename, batch.uploaded_by, result.projectIds.length);
   })();
 
   // The DB just changed — post a per-stage snapshot scoped to the projects that
   // moved in this sync (best-effort; never blocks the apply).
-  postStageReport([...byProject.keys()]).catch(() => {});
+  postStageReport(result.projectIds).catch(() => {});
 
-  return Response.json({ ok: true, applied: changes.length, projects: byProject.size });
+  return Response.json({ ok: true, applied: changes.length, projects: result.projectIds.length, created: result.created });
 }

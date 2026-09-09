@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     return Response.json({
       ok: false,
       error: result.newProjects.length > 0
-        ? `No changes to existing projects. New names not tracked yet: ${result.newProjects.join(", ")}.`
+        ? `No changes to existing projects. New names in the sheet: ${result.newProjects.join(", ")}.`
         : "No changes — the sheet matches Switchboard already.",
       newProjects: result.newProjects,
     });
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
   // Ping Slack so a synced batch never sits unreviewed (best-effort).
   const newNote = result.newProjects.length
-    ? ` ⚠️ ${result.newProjects.length} new project(s) not tracked yet: ${result.newProjects.join(", ")}.`
+    ? ` ${result.newProjects.length} new project(s) will be created on apply: ${result.newProjects.join(", ")}.`
     : "";
   notifySlack(
     `📥 *${result.changes.length} change${result.changes.length === 1 ? "" : "s"}* synced from the sheet across ` +

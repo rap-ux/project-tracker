@@ -3,6 +3,7 @@ import { auth }       from "@/auth";
 import db              from "@/lib/db";
 import { NextRequest } from "next/server";
 import ExcelJS         from "exceljs";
+import { stageColumnGrid, type StagedChange } from "@/lib/importer";
 
 // ── Row-oriented QBO column mapping ───────────────────────────────────────────
 const COL_MAP: Record<string, string> = {
@@ -131,13 +132,6 @@ function calcProjectCompletion(stage: string, sc: number): number {
 }
 
 // ── Compute diff between current DB values and proposed updates ───────────────
-interface StagedChange {
-  project_id:   number;
-  project_name: string;
-  field:        string;
-  old_value:    string | null;
-  new_value:    string;
-}
 
 function computeDiff(
   projectId:   number,
@@ -238,64 +232,21 @@ export async function POST(req: NextRequest) {
 
   let allChanges: StagedChange[] = [];
   const errors: string[] = [];
-  const newProjects: string[] = [];  // names in the file with no matching project
+  const newProjects: string[] = [];  // names in the file that will be CREATED on apply (column format)
+  const activated:   string[] = [];  // pipeline projects that will become tracked on apply
 
   // ── Column-oriented format ────────────────────────────────────────────────
+  // Shared with the Google Sheet sync (lib/importer.ts): same matching,
+  // unrecorded rule, new-project creation and pipeline activation.
   if (firstRow[0]?.trim().toLowerCase() === "last update") {
-    const grid     = lines.map(l => parseCSVLine(l));
-    const rawDate  = grid[0]?.[1]?.trim() ?? "";
-
-    const projectRow = grid.find(r => r[0]?.trim().toLowerCase() === "project");
-    if (!projectRow) return Response.json({ error: "Could not find 'Project' row in CSV" }, { status: 400 });
-
-    const projectNames = projectRow.slice(1);
-    const fieldData:     Record<string, string[]> = {};
-    const textFieldData: Record<string, string[]> = {};
-    for (const row of grid) {
-      const label = normaliseRowLabel(row[0] ?? "");
-      if (ROW_MAP[label])      fieldData[ROW_MAP[label]]          = row.slice(1);
-      if (TEXT_ROW_MAP[label]) textFieldData[TEXT_ROW_MAP[label]] = row.slice(1);
-    }
-
-    if (Object.keys(fieldData).length === 0 && Object.keys(textFieldData).length === 0) {
-      return Response.json({ error: "No recognised data rows found." }, { status: 400 });
-    }
-
-    for (let ci = 0; ci < projectNames.length; ci++) {
-      const name = projectNames[ci]?.trim();
-      if (!name) continue;
-
-      const proj = (
-        db.prepare("SELECT * FROM projects WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) LIMIT 1").get(name) ??
-        db.prepare("SELECT * FROM projects WHERE LOWER(TRIM(name)) LIKE LOWER(?) LIMIT 1").get(`${name.split(" ")[0]}%`)
-      ) as Record<string, any> | undefined;
-
-      if (!proj) { newProjects.push(name); continue; }
-
-      const updates: Record<string, number> = {};
-      for (const [dbField, vals] of Object.entries(fieldData)) {
-        const num = parseColVal(vals[ci] ?? "", dbField);
-        if (num !== null) updates[dbField] = num;
-      }
-
-      // Unrecorded rule: the sheet's "Actual TOTAL" already folds in the app's
-      // unrecorded ledger, so store actual = sheetTotal − unrecorded (keeps the
-      // effective total matching the sheet without double-counting).
-      if ("actual_total_hours" in updates) {
-        updates.actual_total_hours = Math.max(0, updates.actual_total_hours - (proj.unrecorded_hours || 0));
-      }
-      if ("actual_materials" in updates) {
-        updates.actual_materials = Math.max(0, updates.actual_materials - (proj.unrecorded_materials || 0));
-      }
-
-      const textUpdates: Record<string, string> = {};
-      for (const [dbField, vals] of Object.entries(textFieldData)) {
-        const v = (vals[ci] ?? "").trim();
-        if (v) textUpdates[dbField] = v;
-      }
-
-      if (Object.keys(updates).length === 0 && Object.keys(textUpdates).length === 0) continue;
-      allChanges.push(...computeDiff(proj.id, proj.name, proj, updates, textUpdates));
+    const grid = lines.map(l => parseCSVLine(l));
+    try {
+      const staged = stageColumnGrid(grid);
+      allChanges   = staged.changes;
+      newProjects.push(...staged.newProjects);
+      activated.push(...staged.activated);
+    } catch (e: any) {
+      return Response.json({ error: e.message ?? "Could not read the file" }, { status: 400 });
     }
   } else {
     // ── Row-oriented format ────────────────────────────────────────────────
@@ -344,6 +295,7 @@ export async function POST(req: NextRequest) {
         : "No changes detected — file values match what's already in the database.",
       errors,
       newProjects,
+      activated,
     });
   }
 
@@ -371,5 +323,6 @@ export async function POST(req: NextRequest) {
     changeCount:  allChanges.length,
     errors,
     newProjects,
+    activated,
   });
 }

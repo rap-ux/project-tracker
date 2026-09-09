@@ -22,13 +22,19 @@ const FIELD_LABELS: Record<string, string> = {
   project_completion:   "Project Completion",
   stage:                "Stage",
   foreman:              "Foreman",
+  is_pipeline:          "Pipeline → Tracked",
+  __create__:           "New tracked project",
 };
+// Rows where an up/down arrow makes no sense.
+const NO_ARROW_FIELDS = new Set(["is_pipeline", "__create__", "stage", "foreman"]);
 
 const DOLLAR_FIELDS  = new Set(["contract_value","total_invoiced","est_materials_budget","actual_materials"]);
 const PCT_FIELDS_DISP = new Set(["stage_completion","project_completion"]);
 
 function fmtVal(val: string | null | undefined, field: string): string {
   if (val === null || val === undefined || val === "") return "—";
+  if (field === "__create__")  return "Create";
+  if (field === "is_pipeline") return val === "0" ? "Tracked" : "Pipeline";
   const n = parseFloat(val);
   if (isNaN(n)) return val;
   if (DOLLAR_FIELDS.has(field))   return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 });
@@ -157,9 +163,12 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
     setUploading(false);
     if (data.ok) {
       const newNote = data.newProjects?.length
-        ? ` Note: ${data.newProjects.length} new project(s) not tracked yet (${data.newProjects.join(", ")}) — add with "+ Add Project", then re-upload.`
+        ? ` ${data.newProjects.length} new project(s) will be created when you apply: ${data.newProjects.join(", ")}.`
         : "";
-      setMsg({ text: `✅ ${data.changeCount} change(s) staged across ${data.projectCount} project(s). Review below.${newNote}`, ok: true });
+      const actNote = data.activated?.length
+        ? ` ${data.activated.length} pipeline project(s) will become tracked: ${data.activated.join(", ")}.`
+        : "";
+      setMsg({ text: `✅ ${data.changeCount} change(s) staged across ${data.projectCount} project(s). Review below.${newNote}${actNote}`, ok: true });
       setTab("pending");
       setTimeout(() => router.refresh(), 1500);
     } else {
@@ -563,8 +572,9 @@ export default function UploadsClient({ batches, changesByBatch, projects }: Pro
                             <tbody>
                               {projectChanges.map(c => {
                                 const isChecked    = checked.has(c.id);
-                                const hasIncrease  = c.old_value !== null && parseFloat(c.new_value) > parseFloat(c.old_value);
-                                const hasDecrease  = c.old_value !== null && parseFloat(c.new_value) < parseFloat(c.old_value);
+                                const arrows       = !NO_ARROW_FIELDS.has(c.field);
+                                const hasIncrease  = arrows && c.old_value !== null && parseFloat(c.new_value) > parseFloat(c.old_value);
+                                const hasDecrease  = arrows && c.old_value !== null && parseFloat(c.new_value) < parseFloat(c.old_value);
                                 return (
                                   <tr
                                     key={c.id}

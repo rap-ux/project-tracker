@@ -47,10 +47,9 @@ export async function POST(req: NextRequest) {
   if (result.changes.length === 0) {
     return Response.json({
       ok: false,
-      error: result.newProjects.length > 0
-        ? `No changes to existing projects. ${result.newProjects.length} name(s) in the sheet aren't tracked yet — add them with "+ Add Project" first: ${result.newProjects.join(", ")}.`
-        : "No changes — the sheet matches Switchboard already.",
+      error: "No changes — the sheet matches Switchboard already.",
       newProjects: result.newProjects,
+      activated:   result.activated,
     });
   }
 
@@ -64,5 +63,6 @@ export async function POST(req: NextRequest) {
     changeCount:  result.changes.length,
     projectCount,
     newProjects:  result.newProjects,
+    activated:    result.activated,
   });
 }
