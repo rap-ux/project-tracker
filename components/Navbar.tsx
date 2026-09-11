@@ -3,7 +3,7 @@
 import { signOut }     from "next-auth/react";
 import Link            from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import GlobalActivityButton from "./GlobalActivityButton";
 import AlertsBell            from "./AlertsBell";
 import GlobalSearch          from "./GlobalSearch";
@@ -145,13 +145,11 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
           </div>
         </Link>
 
-        {/* ── Operations Log button (allow-listed users, any role) ── */}
-        {reportsAllowed && (
+        {/* Non-owners have no primary links; give them the Operations Log alone */}
+        {!isOwner && reportsAllowed && (
           <Link href="/reports/inbox"
-            className={`hidden lg:flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-semibold border transition-colors whitespace-nowrap ${
-              reportsActive
-                ? "bg-[#00BAD6] border-[#00BAD6] text-[#07242a]"
-                : "border-[#00BAD6]/60 text-[#00BAD6] hover:bg-[#00BAD6] hover:text-[#07242a]"
+            className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap ${
+              reportsActive ? "text-[#00BAD6] bg-white/[0.07]" : "text-white/60 hover:text-white hover:bg-white/[0.06]"
             }`}>
             <NavIcon name="reports" size={16} />
             Operations Log
@@ -164,13 +162,25 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
             {primaryLinks.map(l => {
               const active = path === l.href;
               return (
-                <Link key={l.href} href={l.href}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-                    active ? "text-[#00BAD6] bg-white/[0.07]" : "text-white/60 hover:text-white hover:bg-white/[0.06]"
-                  }`}>
-                  <NavIcon name={l.icon} size={16} />
-                  {l.label}
-                </Link>
+                <React.Fragment key={l.href}>
+                  <Link href={l.href}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                      active ? "text-[#00BAD6] bg-white/[0.07]" : "text-white/60 hover:text-white hover:bg-white/[0.06]"
+                    }`}>
+                    <NavIcon name={l.icon} size={16} />
+                    {l.label}
+                  </Link>
+                  {/* Operations Log sits after Forecast (allow-listed users only) */}
+                  {l.href === "/forecast" && reportsAllowed && (
+                    <Link href="/reports/inbox"
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                        reportsActive ? "text-[#00BAD6] bg-white/[0.07]" : "text-white/60 hover:text-white hover:bg-white/[0.06]"
+                      }`}>
+                      <NavIcon name="reports" size={16} />
+                      Operations Log
+                    </Link>
+                  )}
+                </React.Fragment>
               );
             })}
 
