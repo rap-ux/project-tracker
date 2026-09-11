@@ -11,7 +11,7 @@ import { extractReport } from "./extract";
 import { rebuildFacts } from "./facts";
 import { resolveProject } from "./projects";
 import { getReport } from "./queries";
-import { AUDIO_DIR, CALLERS, isISODate, linesToJson, type ReportSource } from "./schema";
+import { AUDIO_DIR, CALLERS, isISODate, linesToJson, NOT_EXTRACTED, todayISO, type ReportSource } from "./schema";
 import { transcribeAudio, transcriptionAvailable } from "./transcribe";
 
 const MAX_AUDIO_BYTES = 200 * 1024 * 1024; // 200 MB
@@ -32,7 +32,7 @@ function optInt(form: FormData, key: string): number | null {
   return Number.isInteger(n) && n > 0 ? n : null;
 }
 
-export type ActionState = { error?: string } | undefined;
+export type ActionState = { error?: string; ok?: boolean } | undefined;
 
 /** Intake: paste a transcript and/or upload audio, run extraction, land on the draft. */
 export async function createReport(_prev: ActionState, form: FormData): Promise<ActionState> {
@@ -150,6 +150,75 @@ export async function unconfirmReport(form: FormData): Promise<void> {
   db.prepare(`UPDATE daily_reports SET status = 'draft', updated_at = ? WHERE id = ?`).run(new Date().toISOString(), id);
   const saved = getReport(id);
   if (saved) rebuildFacts(saved);
+  redirect(`/reports/${id}`);
+}
+
+/**
+ * Drop box (no login): a share link with a secret token lets Cole paste a
+ * transcript or upload a recording from his phone. It only WRITES a draft;
+ * nothing is read back. Extraction runs later from the review page.
+ */
+export async function dropTranscript(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const token = process.env.REPORTS_DROP_TOKEN;
+  if (!token || str(form, "token") !== token) return { error: "This link is not valid." };
+  try {
+    const jobName = str(form, "jobName") || "(job not given)";
+    const callDate = str(form, "callDate") || todayISO();
+    if (!isISODate(callDate)) throw new Error("Call date must be a date.");
+    const reporter = str(form, "reporter") || "(lead not given)";
+    const caller = str(form, "caller") || CALLERS[0];
+    let transcript = str(form, "transcript");
+    if (transcript.length > MAX_TRANSCRIPT_CHARS) throw new Error("Transcript is too long.");
+    let audioPath: string | null = null;
+    let source: ReportSource = "paste";
+    const audio = form.get("audio");
+    if (audio instanceof File && audio.size > 0) {
+      if (audio.size > MAX_AUDIO_BYTES) throw new Error("Audio file is larger than 200 MB.");
+      fs.mkdirSync(AUDIO_DIR, { recursive: true });
+      const safe = `${Date.now()}-${audio.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-80)}`;
+      audioPath = path.join(AUDIO_DIR, safe);
+      fs.writeFileSync(audioPath, Buffer.from(await audio.arrayBuffer()));
+      source = "audio";
+    }
+    if (!transcript && !audioPath) throw new Error("Paste the transcript or attach the recording.");
+    if (!transcript) transcript = "(audio only — transcript pending)";
+    const link = resolveProject(null, jobName);
+    const now = new Date().toISOString();
+    db.prepare(
+      `INSERT INTO daily_reports
+         (project_id, job_name, work_date, call_date, reporter, caller, source, transcript, audio_path, status,
+          accomplished, next_steps, blockers, materials, people, summary, extraction_notes, created_by, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', '[]', '[]', '[]', '[]', '[]', '', ?, ?, ?, ?)`,
+    ).run(link.project_id, jobName, callDate, callDate, reporter, caller, source, transcript, audioPath,
+      NOT_EXTRACTED + (link.project_id ? "" : ` Job "${jobName}" did not match a project yet.`), `drop:${caller}`, now, now);
+    return { ok: true };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+/** Review page: run (or re-run) extraction on an existing draft's transcript. */
+export async function extractDraft(form: FormData): Promise<void> {
+  await requireReportsUser();
+  const id = Number(req(form, "id"));
+  const r = getReport(id);
+  if (!r) redirect("/reports/inbox");
+  let notes: string;
+  try {
+    const extracted = await extractReport({ transcript: r.transcript, jobName: r.project_name ?? r.job_name, callDate: r.call_date, reporter: r.reporter });
+    notes = [
+      r.project_id ? "" : `Job "${r.job_name}" did not match a Switchboard project. Pick one before confirming.`,
+      extracted.work_date_hint ? `Work date: ${extracted.work_date_hint}` : "",
+      extracted.notes,
+    ].filter(Boolean).join("\n");
+    db.prepare(
+      `UPDATE daily_reports SET accomplished = ?, next_steps = ?, blockers = ?, materials = ?, people = ?, summary = ?, extraction_notes = ?, updated_at = ? WHERE id = ?`,
+    ).run(JSON.stringify(extracted.accomplished), JSON.stringify(extracted.next_steps), JSON.stringify(extracted.blockers),
+      JSON.stringify(extracted.materials), JSON.stringify(extracted.people), extracted.summary, notes, new Date().toISOString(), id);
+  } catch (e) {
+    db.prepare(`UPDATE daily_reports SET extraction_notes = ?, updated_at = ? WHERE id = ?`)
+      .run(`${NOT_EXTRACTED} Last attempt failed: ${e instanceof Error ? e.message : String(e)}`, new Date().toISOString(), id);
+  }
   redirect(`/reports/${id}`);
 }
 

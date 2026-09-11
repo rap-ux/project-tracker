@@ -877,6 +877,20 @@ db.exec(`
   END;
 `);
 
+// ── Volta (assistant) audit log: every question and answer, per channel ──────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS volta_messages (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    channel    TEXT NOT NULL,            -- 'web' | 'slack' | 'api'
+    user_email TEXT NOT NULL,
+    question   TEXT NOT NULL,
+    answer     TEXT NOT NULL,
+    tools_used TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_volta_messages_created ON volta_messages(created_at DESC);
+`);
+
 } // end: skip init during build
 
 export default db;

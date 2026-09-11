@@ -5,7 +5,7 @@ import Navbar from "@/components/Navbar";
 import ReportsSubnav from "@/components/reports/ReportsSubnav";
 import { reportsConfigured, reportsUser } from "@/lib/reports/access";
 
-// Gate for the whole Daily Reports section. Pages and actions ALSO call
+// Gate for the whole Operations Log (daily reports) section. Pages and actions ALSO call
 // requireReportsUser() themselves; the layout is the visible shell, not the
 // only line of defense.
 export default async function ReportsLayout({ children }: { children: React.ReactNode }) {
@@ -30,7 +30,7 @@ export default async function ReportsLayout({ children }: { children: React.Reac
           </>
         ) : (
           <div className="max-w-lg mx-auto mt-10 rounded-xl border border-border bg-surface p-6">
-            <h1 className="text-lg font-semibold text-text">Daily Reports is restricted</h1>
+            <h1 className="text-lg font-semibold text-text">The Operations Log is restricted</h1>
             <p className="mt-2 text-sm text-muted">
               This section holds call recordings and transcripts, so it has its own access list.
               {reportsConfigured()

@@ -20,7 +20,7 @@ Run locally: `npm run dev -- -p 3100` (3000 is taken by another app on Rafael's 
 
 ## Sections
 Dashboard, per-project pages, Foreman view, Forecast, Analytics, Bonuses, Clients,
-Timeline, Inputs, Sync (uploads), Report, Access log, Help. Plus **Daily Reports** (below).
+Timeline, Inputs, Sync (uploads), Report, Access log, Help. Plus **Operations Log** (below).
 
 ## Sync (KPIs sheet -> staged batch -> apply)
 Source of truth for numbers is Nicole's "Project Profitability Summary" Google Sheet, tab
@@ -49,9 +49,20 @@ Dev tools: `npx tsx scripts/kpi-dry-run.ts <KPIs.csv>` shows how each column wou
 and what would be staged (no writes). `npx tsx scripts/kpi-apply-test.ts <KPIs.csv>`
 stages, applies, verifies, then restores the LOCAL db.
 
+## Volta (assistant, added 2026-09-11)
+Read-only assistant over everything in the DB, scoped to the asking user. Widget bottom-right
+(`components/VoltaWidget.tsx`), Slack bot (`/api/slack/volta`), HTTP API for standalone
+clients (`/api/volta/chat` with `VOLTA_SERVICE_TOKEN`). Core in `lib/volta/`. Full
+architecture, Slack install steps, and the standalone design: **docs/VOLTA.md**.
+Audit log: `volta_messages`. Test without a key: `npx tsx scripts/volta-smoke.ts`.
+Needs `ANTHROPIC_API_KEY`; Slack needs `SLACK_SIGNING_SECRET` + `SLACK_BOT_TOKEN`.
+
 ---
 
-## Daily Reports (added 2026-09-08, beta)
+## Operations Log — daily reports (added 2026-09-08, beta)
+
+User-facing name is **Operations Log** (Rafael, 2026-09-11); routes stay under `/reports`
+and code keeps the `daily_reports` / `lib/reports` names.
 
 ### What it is
 Cole (owner) and Taimez (field manager) phone each job lead at the end of every day.
@@ -99,6 +110,21 @@ RingCentral poller); ported here because Switchboard already holds the project r
 - `app/api/reports/access`  — boolean for the Navbar link; `app/api/reports/audio/[id]` — recording stream
 - `components/Navbar.tsx`   — "Daily Reports" link shown to allow-listed users of any role
 - `scripts/reports-smoke.ts` — data-layer smoke test (`npx tsx scripts/reports-smoke.ts [--keep]`)
+
+### Drop box (added 2026-09-11)
+`https://<app>/drop/<REPORTS_DROP_TOKEN>` is a public, write-only page for Cole: paste a
+transcript or attach a recording from the phone, no login. It inserts a draft with
+`created_by = drop:<caller>` and `extraction_notes` starting with NOT_EXTRACTED; the review
+page shows **Run extraction** to build the bullets when an API key is present. Rotate the
+token by changing the env var. Do not share the link outside the managers.
+
+### Where the data lives
+- Transcripts: `daily_reports.transcript` in `data/projects.db` (Railway volume). Bullets in
+  the same row; searchable facts in `daily_report_facts`.
+- Recordings: files under `DATA_DIR/audio/` on the same volume, path in
+  `daily_reports.audio_path`, served only via `/api/reports/audio/[id]`.
+- Nothing goes to Basecamp, Drive, or a third-party host. The `.db` backup includes
+  transcripts; the audio files must be backed up from the volume separately.
 
 ### Access and privacy
 - Gate: `REPORTS_ALLOWED_EMAILS` (comma list), separate from the general login. Fails

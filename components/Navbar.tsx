@@ -83,7 +83,7 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
   const isOwner = role === "owner" || role === "admin";
   const [mobileOpen, setMobileOpen] = useState(false);
   const [moreOpen,   setMoreOpen]   = useState(false);
-  // Daily Reports has its own allow-list (REPORTS_ALLOWED_EMAILS). The link only
+  // Operations Log has its own allow-list (REPORTS_ALLOWED_EMAILS). The link only
   // shows for users on it, whatever their role. Cached per tab to avoid a
   // request on every navigation.
   const [reportsAllowed, setReportsAllowed] = useState(false);
@@ -144,14 +144,14 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
           </div>
         </Link>
 
-        {/* ── Daily Reports (allow-listed users, any role) ── */}
+        {/* ── Operations Log (allow-listed users, any role) ── */}
         {reportsAllowed && (
           <Link href="/reports/inbox"
             className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
               reportsActive ? "text-[#00BAD6] bg-white/[0.07]" : "text-white/60 hover:text-white hover:bg-white/[0.06]"
             }`}>
             <NavIcon name="reports" size={16} />
-            Daily Reports
+            Operations Log
           </Link>
         )}
 
@@ -296,14 +296,14 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
                 </div>
               </div>
 
-              {/* Daily Reports (allow-listed users, any role) */}
+              {/* Operations Log (allow-listed users, any role) */}
               {reportsAllowed && (
                 <Link href="/reports/inbox"
                   onClick={() => setMobileOpen(false)}
                   className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ${reportsActive ? "text-[#00BAD6]" : "text-white/85 hover:bg-surface/10"}`}
                   style={reportsActive ? { backgroundColor: "rgba(0,186,214,0.15)" } : undefined}>
                   <NavIcon name="reports" size={18} />
-                  Daily Reports
+                  Operations Log
                 </Link>
               )}
 

@@ -12,6 +12,7 @@ const SECRET_AUTH_ROUTES = [
   "/api/slack/weekly-digest",
   "/api/slack/stage-report",
   "/api/qbo/sync",
+  "/api/slack/volta",   // Slack Events API; verifies the Slack signing secret itself
 ];
 
 export async function proxy(req: NextRequest) {
@@ -19,6 +20,11 @@ export async function proxy(req: NextRequest) {
 
   // Secret-authenticated webhooks bypass the session gate (they self-protect).
   if (SECRET_AUTH_ROUTES.some(p => pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
+
+  // Operations Log drop box: token in the URL, write-only (see lib/reports/actions.ts)
+  if (pathname.startsWith("/drop/")) {
     return NextResponse.next();
   }
 

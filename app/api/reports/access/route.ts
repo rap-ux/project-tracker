@@ -1,5 +1,5 @@
 export const dynamic = "force-dynamic";
-// Tells the Navbar whether to show the Daily Reports link. Returns only a
+// Tells the Navbar whether to show the Operations Log link. Returns only a
 // boolean, never the allow-list itself.
 import { reportsUser } from "@/lib/reports/access";
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import PresenceTracker from "@/components/PresenceTracker";
+import VoltaWidget     from "@/components/VoltaWidget";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
 
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full bg-bg text-text antialiased">
         <PresenceTracker />
         {children}
+        <VoltaWidget />
       </body>
     </html>
   );

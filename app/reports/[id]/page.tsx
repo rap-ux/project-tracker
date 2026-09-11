@@ -4,10 +4,11 @@ import { notFound } from "next/navigation";
 import CopyButton from "@/components/reports/CopyButton";
 import ReviewForm from "@/components/reports/ReviewForm";
 import { requireReportsUser } from "@/lib/reports/access";
-import { deleteReport, unconfirmReport } from "@/lib/reports/actions";
+import { deleteReport, extractDraft, unconfirmReport } from "@/lib/reports/actions";
+import { extractionAvailable } from "@/lib/reports/extract";
 import { listProjects } from "@/lib/reports/projects";
 import { getReport } from "@/lib/reports/queries";
-import { CALLERS, jsonToLines, reportText } from "@/lib/reports/schema";
+import { CALLERS, jsonToLines, NOT_EXTRACTED, reportText } from "@/lib/reports/schema";
 
 type Ctx = { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string }> };
 
@@ -27,7 +28,22 @@ export default async function ReportPage({ params, searchParams }: Ctx) {
             Report #{r.id}{" "}
             <span className={r.status === "confirmed" ? "text-success" : "text-warning"}>({r.status})</span>
           </h2>
-          {saved && <span className="text-xs text-success">Draft saved</span>}
+          <div className="flex items-center gap-3">
+            {saved && <span className="text-xs text-success">Draft saved</span>}
+            {r.status === "draft" && (
+              <form action={extractDraft}>
+                <input type="hidden" name="id" value={r.id} />
+                <button
+                  type="submit"
+                  disabled={!extractionAvailable()}
+                  title={extractionAvailable() ? "Build the bullets from the transcript with Claude" : "ANTHROPIC_API_KEY is not set"}
+                  className="rounded-md border border-border-strong px-2.5 py-1 text-xs text-text hover:bg-surface-2 disabled:opacity-50"
+                >
+                  {r.extraction_notes.startsWith(NOT_EXTRACTED) ? "Run extraction" : "Re-run extraction"}
+                </button>
+              </form>
+            )}
+          </div>
         </div>
         <ReviewForm
           r={{

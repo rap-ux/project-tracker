@@ -55,6 +55,8 @@ export const CATEGORY_LABEL: Record<FactCategory, string> = {
 };
 
 export const CALLERS = ["Cole", "Taimez"];
+/** extraction_notes prefix for drafts that came in via the drop box and have not been through Claude yet. */
+export const NOT_EXTRACTED = "Not extracted yet. Use \"Run extraction\" to build the bullets from the transcript.";
 
 export function parseList(s: string | null | undefined): string[] {
   if (!s) return [];

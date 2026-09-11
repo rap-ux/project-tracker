@@ -1,4 +1,4 @@
-// Access gate for the Daily Reports section.
+// Access gate for the Operations Log (daily reports) section.
 //
 // Transcripts and audio are recordings of employees and customers, so this
 // section has its OWN allow-list, separate from the general Switchboard login.

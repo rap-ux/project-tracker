@@ -61,3 +61,21 @@ bottom of each day. Started 2026-09-08; earlier history lives in git only.
   KPIs csv) and apply the batch; then set wage rates on /inputs ($39 for the new
   jobs, $40 for Anita and Bridle Trail per the Inputs tab) and add builders/contacts.
   Anita and Bridle Trail have no foreman in the sheet.
+
+## 2026-09-11 — Volta, Operations Log rename, drop box
+- Rafael: build "Volta", an assistant bottom-right in Switchboard with access to all data
+  (projects, financials, operations, the Operations Log transcripts), plus architecture
+  for a standalone install and a Slack bot. Clarified that "Operations Log" is the name
+  for the daily-reports/transcripts section; UI renamed, routes unchanged.
+- Claude built: `lib/volta/` (access rules, curated read-only tools incl. Operations Log
+  search and admin-only SQL, agent loop on claude-opus-5), widget, `/api/volta/chat`
+  (session or service token), `/api/slack/volta` (Events API, signature-verified,
+  answers in `after()`), `volta_messages` audit table, docs/VOLTA.md. Tool smoke test
+  passes; the model itself has not been exercised (no API key on this machine).
+- Rafael: Cole struggles to get transcripts to Rafael, so the first useful piece is an
+  upload link Cole can use directly. Built `/drop/<token>` (public, write-only, no login)
+  and a "Run extraction" button on the review page so intake does not depend on the API
+  key or on Cole's tech comfort. Rafael asked where the data is stored: see HANDOFF
+  "Where the data lives" (SQLite + audio on the Railway volume, no third parties).
+- To go live: set REPORTS_DROP_TOKEN, REPORTS_ALLOWED_EMAILS, ANTHROPIC_API_KEY on
+  Railway; send Cole the drop link.
