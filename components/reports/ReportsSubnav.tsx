@@ -18,7 +18,7 @@ export default function ReportsSubnav() {
       </div>
       <div className="flex items-center gap-2 flex-wrap">
         <Link href="/reports/new" className="rounded-md bg-accent text-accent-foreground px-3 py-1.5 text-sm font-medium hover:bg-accent-strong">
-          + Add transcript
+          + Paste transcript
         </Link>
       <nav className="flex gap-1 rounded-lg bg-surface border border-border p-1 overflow-x-auto">
         {TABS.map((t) => {

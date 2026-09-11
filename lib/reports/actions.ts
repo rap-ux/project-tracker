@@ -222,6 +222,62 @@ export async function extractDraft(form: FormData): Promise<void> {
   redirect(`/reports/${id}`);
 }
 
+const TEXT_EXT = /\.(txt|md|vtt|srt|rtf|csv|json|log)$/i;
+
+/**
+ * Uploads tab: signed-in file upload. A text file becomes the transcript, an
+ * audio file is stored; both are allowed together. No extraction here, the
+ * draft lands in Uploads with "needs extraction". Files only; pasting lives
+ * on /reports/new and the drop box.
+ */
+export async function uploadFiles(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireReportsUser();
+  try {
+    const jobName = str(form, "jobName") || "(job not given)";
+    const callDate = str(form, "callDate") || todayISO();
+    if (!isISODate(callDate)) throw new Error("Call date must be a date.");
+    const reporter = str(form, "reporter") || "(lead not given)";
+    const caller = str(form, "caller") || CALLERS[0];
+    let transcript = "";
+    let audioPath: string | null = null;
+    let source: ReportSource = "paste";
+    const files = form.getAll("files").filter((f): f is File => f instanceof File && f.size > 0);
+    if (!files.length) throw new Error("Choose a transcript (.txt) or a recording.");
+    for (const f of files) {
+      if (TEXT_EXT.test(f.name) || f.type.startsWith("text/")) {
+        const text = (await f.text()).trim();
+        if (text.length > MAX_TRANSCRIPT_CHARS) throw new Error(`${f.name} is too long.`);
+        transcript = transcript ? `${transcript}
+
+${text}` : text;
+      } else if (f.type.startsWith("audio/") || /\.(m4a|mp3|wav|aac|ogg|caf|mp4|webm)$/i.test(f.name)) {
+        if (f.size > MAX_AUDIO_BYTES) throw new Error(`${f.name} is larger than 200 MB.`);
+        if (audioPath) throw new Error("One recording per upload.");
+        fs.mkdirSync(AUDIO_DIR, { recursive: true });
+        const safe = `${Date.now()}-${f.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-80)}`;
+        audioPath = path.join(AUDIO_DIR, safe);
+        fs.writeFileSync(audioPath, Buffer.from(await f.arrayBuffer()));
+        source = "audio";
+      } else {
+        throw new Error(`${f.name}: use a .txt transcript or an audio file. Word/PDF are not supported yet.`);
+      }
+    }
+    if (!transcript) transcript = "(audio only — transcript pending)";
+    const link = resolveProject(null, jobName);
+    const now = new Date().toISOString();
+    db.prepare(
+      `INSERT INTO daily_reports
+         (project_id, job_name, work_date, call_date, reporter, caller, source, transcript, audio_path, status,
+          accomplished, next_steps, blockers, materials, people, summary, extraction_notes, created_by, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', '[]', '[]', '[]', '[]', '[]', '', ?, ?, ?, ?)`,
+    ).run(link.project_id, jobName, callDate, callDate, reporter, caller, source, transcript, audioPath,
+      NOT_EXTRACTED + (link.project_id ? "" : ` Job "${jobName}" did not match a project yet.`), user.email, now, now);
+    return { ok: true };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 export async function deleteReport(form: FormData): Promise<void> {
   await requireReportsUser();
   const id = Number(req(form, "id"));

@@ -3,9 +3,11 @@ export const dynamic = "force-dynamic";
 // with a text preview that expands to the full transcript. Drafts (not yet
 // reviewed) float to the top.
 import Link from "next/link";
+import UploadBox from "@/components/reports/UploadBox";
 import { requireReportsUser } from "@/lib/reports/access";
+import { listProjects } from "@/lib/reports/projects";
 import { allUploads } from "@/lib/reports/queries";
-import { jobLabel, NOT_EXTRACTED } from "@/lib/reports/schema";
+import { CALLERS, jobLabel, NOT_EXTRACTED, todayISO } from "@/lib/reports/schema";
 
 export default async function UploadsPage({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
   await requireReportsUser();
@@ -27,7 +29,9 @@ export default async function UploadsPage({ searchParams }: { searchParams: Prom
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      <UploadBox projects={listProjects().map((p) => p.name)} callers={CALLERS} today={todayISO()} />
+
       <div className="flex items-center gap-2 flex-wrap">
         {chip(undefined, "All", all.length)}
         {chip("drafts", "Needs review", drafts.length)}
@@ -37,7 +41,7 @@ export default async function UploadsPage({ searchParams }: { searchParams: Prom
 
       {rows.length === 0 ? (
         <p className="rounded-xl border border-border bg-surface p-4 text-sm text-muted">
-          Nothing here yet. Transcripts arrive from the drop link, the Add transcript button, or (later) RingCentral.
+          Nothing here yet. Upload one above, paste with the button top right, or send Cole the drop link.
         </p>
       ) : (
         <ul className="space-y-2">
