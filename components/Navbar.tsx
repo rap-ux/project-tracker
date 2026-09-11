@@ -88,14 +88,15 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
   // request on every navigation.
   const [reportsAllowed, setReportsAllowed] = useState(false);
   useEffect(() => {
-    let cached: string | null = null;
-    try { cached = sessionStorage.getItem("reportsAllowed"); } catch {}
-    const lookup: Promise<{ allowed: boolean }> = cached !== null
-      ? Promise.resolve({ allowed: cached === "1" })
+    let cached: { allowed: boolean; at: number } | null = null;
+    try { cached = JSON.parse(sessionStorage.getItem("reportsAllowed") ?? "null"); } catch {}
+    const fresh = cached && Date.now() - cached.at < 5 * 60_000;
+    const lookup: Promise<{ allowed: boolean }> = fresh
+      ? Promise.resolve({ allowed: cached!.allowed })
       : fetch("/api/reports/access").then(r => r.ok ? r.json() : { allowed: false });
     lookup.then(j => {
       setReportsAllowed(!!j.allowed);
-      try { sessionStorage.setItem("reportsAllowed", j.allowed ? "1" : "0"); } catch {}
+      try { sessionStorage.setItem("reportsAllowed", JSON.stringify({ allowed: !!j.allowed, at: Date.now() })); } catch {}
     }).catch(() => {});
   }, []);
   const reportsActive = path.startsWith("/reports");
@@ -144,11 +145,13 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
           </div>
         </Link>
 
-        {/* ── Operations Log (allow-listed users, any role) ── */}
+        {/* ── Operations Log button (allow-listed users, any role) ── */}
         {reportsAllowed && (
           <Link href="/reports/inbox"
-            className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-              reportsActive ? "text-[#00BAD6] bg-white/[0.07]" : "text-white/60 hover:text-white hover:bg-white/[0.06]"
+            className={`hidden lg:flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-semibold border transition-colors whitespace-nowrap ${
+              reportsActive
+                ? "bg-[#00BAD6] border-[#00BAD6] text-[#07242a]"
+                : "border-[#00BAD6]/60 text-[#00BAD6] hover:bg-[#00BAD6] hover:text-[#07242a]"
             }`}>
             <NavIcon name="reports" size={16} />
             Operations Log
