@@ -202,7 +202,7 @@ export async function extractDraft(form: FormData): Promise<void> {
   await requireReportsUser();
   const id = Number(req(form, "id"));
   const r = getReport(id);
-  if (!r) redirect("/reports/inbox");
+  if (!r) redirect("/reports/uploads");
   let notes: string;
   try {
     const extracted = await extractReport({ transcript: r.transcript, jobName: r.project_name ?? r.job_name, callDate: r.call_date, reporter: r.reporter });
@@ -230,5 +230,5 @@ export async function deleteReport(form: FormData): Promise<void> {
     fs.unlinkSync(row.audio_path);
   }
   db.prepare(`DELETE FROM daily_reports WHERE id = ?`).run(id); // facts cascade
-  redirect("/reports/inbox");
+  redirect("/reports/uploads");
 }

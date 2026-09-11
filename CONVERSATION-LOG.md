@@ -79,3 +79,7 @@ bottom of each day. Started 2026-09-08; earlier history lives in git only.
   "Where the data lives" (SQLite + audio on the Railway volume, no third parties).
 - To go live: set REPORTS_DROP_TOKEN, REPORTS_ALLOWED_EMAILS, ANTHROPIC_API_KEY on
   Railway; send Cole the drop link.
+- Rafael: Operations Log should be two sections, Uploads (raw files with text preview) and
+  a running journal sectioned by month. Built as tabs Uploads / Journal / Ask with an
+  "+ Add transcript" button; inbox folded into Uploads as the "Needs review" filter;
+  Journal adds a job filter and per-day copy. Pushed.

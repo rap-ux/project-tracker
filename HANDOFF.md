@@ -104,8 +104,11 @@ RingCentral poller); ported here because Switchboard already holds the project r
 - `lib/reports/ask.ts`      — Q&A over confirmed reports with `[#id]` citations
 - `lib/reports/transcribe.ts` — STT stub (provider not chosen; paste required)
 - `lib/reports/actions.ts`  — server actions: createReport, saveReport, unconfirmReport, deleteReport
-- `app/reports/layout.tsx`  — gate + Navbar + sub-nav; pages: `inbox`, `new`, `[id]`, `today`,
-                              `jobs`, `jobs/[id]`, `ask`, `no-access`
+- `app/reports/layout.tsx`  — gate + Navbar + sub-nav. Tabs (2026-09-11): **Uploads** (every
+                              transcript/recording as stored, text preview, drafts flagged),
+                              **Journal** (confirmed reports as a diary, month -> day, filter by job,
+                              copy-day), **Ask**. Older routes still work: `inbox` -> uploads?filter=drafts,
+                              `new`, `[id]`, `today`, `jobs`, `jobs/[id]`, `no-access`
 - `components/reports/*`    — ProjectPicker (alias-aware), IntakeForm, ReviewForm, ReportCard, CopyButton, ReportsSubnav
 - `app/api/reports/access`  — boolean for the Navbar link; `app/api/reports/audio/[id]` — recording stream
 - `components/Navbar.tsx`   — "Daily Reports" link shown to allow-listed users of any role

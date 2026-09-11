@@ -147,7 +147,7 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
 
         {/* Non-owners have no primary links; give them the Operations Log alone */}
         {!isOwner && reportsAllowed && (
-          <Link href="/reports/inbox"
+          <Link href="/reports/uploads"
             className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap ${
               reportsActive ? "text-[#00BAD6] bg-white/[0.07]" : "text-white/60 hover:text-white hover:bg-white/[0.06]"
             }`}>
@@ -172,7 +172,7 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
                   </Link>
                   {/* Operations Log sits after Forecast (allow-listed users only) */}
                   {l.href === "/forecast" && reportsAllowed && (
-                    <Link href="/reports/inbox"
+                    <Link href="/reports/uploads"
                       className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                         reportsActive ? "text-[#00BAD6] bg-white/[0.07]" : "text-white/60 hover:text-white hover:bg-white/[0.06]"
                       }`}>
@@ -311,7 +311,7 @@ export default function Navbar({ userName, role, userEmail, userTitle }: NavbarP
 
               {/* Operations Log (allow-listed users, any role) */}
               {reportsAllowed && (
-                <Link href="/reports/inbox"
+                <Link href="/reports/uploads"
                   onClick={() => setMobileOpen(false)}
                   className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ${reportsActive ? "text-[#00BAD6]" : "text-white/85 hover:bg-surface/10"}`}
                   style={reportsActive ? { backgroundColor: "rgba(0,186,214,0.15)" } : undefined}>

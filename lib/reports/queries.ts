@@ -69,3 +69,26 @@ export function knownReporters(): string[] {
   const rows = db.prepare(`SELECT DISTINCT reporter FROM daily_reports`).all() as { reporter: string }[];
   return Array.from(new Set([...seeded, ...rows.map((r) => r.reporter)])).sort();
 }
+
+/** Every upload (any status), newest call first. Powers the Uploads tab. */
+export function allUploads(): Report[] {
+  return db.prepare(`${SELECT} ORDER BY r.call_date DESC, r.id DESC`).all() as Report[];
+}
+
+/** Confirmed reports grouped month -> day, newest first. Powers the Journal tab. */
+export function journal(): Array<{ month: string; label: string; days: Array<{ date: string; reports: Report[] }> }> {
+  const rows = db.prepare(`${SELECT} WHERE r.status = 'confirmed' ORDER BY r.work_date DESC, p.name, r.job_name, r.id`).all() as Report[];
+  const months = new Map<string, Map<string, Report[]>>();
+  for (const r of rows) {
+    const m = r.work_date.slice(0, 7);
+    if (!months.has(m)) months.set(m, new Map());
+    const days = months.get(m)!;
+    if (!days.has(r.work_date)) days.set(r.work_date, []);
+    days.get(r.work_date)!.push(r);
+  }
+  return Array.from(months.entries()).map(([month, days]) => ({
+    month,
+    label: new Date(month + "-01T12:00:00").toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+    days: Array.from(days.entries()).map(([date, reports]) => ({ date, reports })),
+  }));
+}
