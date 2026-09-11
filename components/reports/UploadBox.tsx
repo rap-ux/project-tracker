@@ -39,7 +39,7 @@ export default function UploadBox({ projects, callers, today }: { projects: stri
     <form ref={formRef} action={action} className="rounded-xl border border-border bg-surface p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-text">Upload a call</h2>
-        <span className="text-xs text-muted">.txt transcript, a recording, or both</span>
+        <span className="text-xs text-muted">.txt / .docx / .pdf transcript, a recording, or both</span>
       </div>
 
       <label
@@ -55,7 +55,7 @@ export default function UploadBox({ projects, callers, today }: { projects: stri
           name="files"
           type="file"
           multiple
-          accept=".txt,.md,.vtt,.srt,.rtf,.log,text/plain,audio/*,.m4a"
+          accept=".txt,.md,.vtt,.srt,.rtf,.log,.docx,.pdf,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,audio/*,.m4a"
           className="hidden"
           onChange={(e) => setNames(Array.from(e.target.files ?? []).map((f) => f.name))}
         />
@@ -67,7 +67,7 @@ export default function UploadBox({ projects, callers, today }: { projects: stri
         ) : (
           <>
             <span className="text-sm text-text font-medium">Drop files here or click to choose</span>
-            <span className="text-xs text-muted">Transcript from iPhone Notes saved as .txt, or the audio file itself</span>
+            <span className="text-xs text-muted">Transcript as .txt, Word or PDF, or the audio file itself</span>
           </>
         )}
       </label>

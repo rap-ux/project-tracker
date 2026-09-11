@@ -121,6 +121,11 @@ transcript or attach a recording from the phone, no login. It inserts a draft wi
 page shows **Run extraction** to build the bullets when an API key is present. Rotate the
 token by changing the env var. Do not share the link outside the managers.
 
+### Accepted files
+Uploads tab and drop box take `.txt/.md/.vtt/.srt` as-is, `.docx` via mammoth, `.pdf` via
+pdf-parse (`lib/reports/extractText.ts`), and audio (stored, not transcribed). Scanned PDFs
+with no text layer are rejected with a message. Old `.doc` is not supported.
+
 ### Where the data lives
 - Transcripts: `daily_reports.transcript` in `data/projects.db` (Railway volume). Bullets in
   the same row; searchable facts in `daily_report_facts`.

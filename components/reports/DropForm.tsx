@@ -50,14 +50,14 @@ export default function DropForm({ token, today, callers }: { token: string; tod
       </div>
 
       <div>
-        <label className={label}>Or the recording</label>
-        <input name="audio" type="file" accept="audio/*,.m4a" className="text-sm text-text" />
+        <label className={label}>Or a file (transcript as .txt / Word / PDF, or the recording)</label>
+        <input name="audio" type="file" accept=".txt,.docx,.pdf,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,audio/*,.m4a" className="text-sm text-text" />
       </div>
 
       <button type="submit" disabled={pending} className="w-full rounded-lg bg-accent text-accent-foreground px-4 py-3 text-base font-semibold hover:bg-accent-strong disabled:opacity-60">
         {pending ? "Sending…" : "Send to Operations Log"}
       </button>
-      <p className="text-xs text-muted text-center">Either a transcript or a recording is enough. Job and lead can be fixed later.</p>
+      <p className="text-xs text-muted text-center">A pasted transcript, a file, or a recording is enough. Job and lead can be fixed later.</p>
     </form>
   );
 }

@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import db from "@/lib/db";
 import { requireReportsUser } from "./access";
 import { extractReport } from "./extract";
+import { fileToText, isAudioFile, isDocFile, isTextFile } from "./extractText";
 import { rebuildFacts } from "./facts";
 import { resolveProject } from "./projects";
 import { getReport } from "./queries";
@@ -16,6 +17,7 @@ import { transcribeAudio, transcriptionAvailable } from "./transcribe";
 
 const MAX_AUDIO_BYTES = 200 * 1024 * 1024; // 200 MB
 const MAX_TRANSCRIPT_CHARS = 200_000;
+const MAX_DOC_BYTES = 25 * 1024 * 1024;
 
 function str(form: FormData, key: string): string {
   return String(form.get(key) ?? "").trim();
@@ -173,14 +175,22 @@ export async function dropTranscript(_prev: ActionState, form: FormData): Promis
     let source: ReportSource = "paste";
     const audio = form.get("audio");
     if (audio instanceof File && audio.size > 0) {
-      if (audio.size > MAX_AUDIO_BYTES) throw new Error("Audio file is larger than 200 MB.");
-      fs.mkdirSync(AUDIO_DIR, { recursive: true });
-      const safe = `${Date.now()}-${audio.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-80)}`;
-      audioPath = path.join(AUDIO_DIR, safe);
-      fs.writeFileSync(audioPath, Buffer.from(await audio.arrayBuffer()));
-      source = "audio";
+      if (isTextFile(audio) || isDocFile(audio)) {
+        if (audio.size > MAX_DOC_BYTES) throw new Error("File is larger than 25 MB.");
+        const text = await fileToText(audio);
+        transcript = transcript ? `${transcript}
+
+${text}` : text;
+      } else {
+        if (audio.size > MAX_AUDIO_BYTES) throw new Error("Audio file is larger than 200 MB.");
+        fs.mkdirSync(AUDIO_DIR, { recursive: true });
+        const safe = `${Date.now()}-${audio.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-80)}`;
+        audioPath = path.join(AUDIO_DIR, safe);
+        fs.writeFileSync(audioPath, Buffer.from(await audio.arrayBuffer()));
+        source = "audio";
+      }
     }
-    if (!transcript && !audioPath) throw new Error("Paste the transcript or attach the recording.");
+    if (!transcript && !audioPath) throw new Error("Paste the transcript, or attach a file or recording.");
     if (!transcript) transcript = "(audio only — transcript pending)";
     const link = resolveProject(null, jobName);
     const now = new Date().toISOString();
@@ -222,7 +232,6 @@ export async function extractDraft(form: FormData): Promise<void> {
   redirect(`/reports/${id}`);
 }
 
-const TEXT_EXT = /\.(txt|md|vtt|srt|rtf|csv|json|log)$/i;
 
 /**
  * Uploads tab: signed-in file upload. A text file becomes the transcript, an
@@ -244,13 +253,14 @@ export async function uploadFiles(_prev: ActionState, form: FormData): Promise<A
     const files = form.getAll("files").filter((f): f is File => f instanceof File && f.size > 0);
     if (!files.length) throw new Error("Choose a transcript (.txt) or a recording.");
     for (const f of files) {
-      if (TEXT_EXT.test(f.name) || f.type.startsWith("text/")) {
-        const text = (await f.text()).trim();
+      if (isTextFile(f) || isDocFile(f)) {
+        if (f.size > MAX_DOC_BYTES) throw new Error(`${f.name} is larger than 25 MB.`);
+        const text = await fileToText(f);
         if (text.length > MAX_TRANSCRIPT_CHARS) throw new Error(`${f.name} is too long.`);
         transcript = transcript ? `${transcript}
 
 ${text}` : text;
-      } else if (f.type.startsWith("audio/") || /\.(m4a|mp3|wav|aac|ogg|caf|mp4|webm)$/i.test(f.name)) {
+      } else if (isAudioFile(f)) {
         if (f.size > MAX_AUDIO_BYTES) throw new Error(`${f.name} is larger than 200 MB.`);
         if (audioPath) throw new Error("One recording per upload.");
         fs.mkdirSync(AUDIO_DIR, { recursive: true });
@@ -259,7 +269,7 @@ ${text}` : text;
         fs.writeFileSync(audioPath, Buffer.from(await f.arrayBuffer()));
         source = "audio";
       } else {
-        throw new Error(`${f.name}: use a .txt transcript or an audio file. Word/PDF are not supported yet.`);
+        throw new Error(`${f.name}: use a .txt, .docx or .pdf transcript, or an audio file.`);
       }
     }
     if (!transcript) transcript = "(audio only — transcript pending)";
